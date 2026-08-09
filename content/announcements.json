@@ -1,0 +1,34 @@
+[
+  {
+    "id": "team-pictures-2026",
+    "date": "Sunday, August 9",
+    "title": "Team Pictures",
+    "summary": "Picture day at the KOHS Main Gym. Freshmen 9:00 AM, Flex 9:40 AM, JV 10:20 AM, Varsity 11:00 AM.",
+    "verified": true
+  },
+  {
+    "id": "rosters-posted-2026",
+    "date": "Posted Monday, August 3",
+    "title": "2026 Rosters Are Posted",
+    "summary": "Congratulations, Panthers! Varsity, Junior Varsity, Flex, and Freshman rosters are final for the 2026 season.",
+    "actionLabel": "See the teams",
+    "actionHref": "/teams",
+    "verified": true
+  },
+  {
+    "id": "schedule-published-2026",
+    "date": "2026 Season",
+    "title": "Full Season Schedule Published",
+    "summary": "Preseason, district, and playoff dates are now listed with times for all four levels.",
+    "actionLabel": "View schedule",
+    "actionHref": "/schedule",
+    "verified": true
+  },
+  {
+    "id": "meet-the-panthers-2026",
+    "date": "Thursday, August 6",
+    "title": "Meet the Panthers",
+    "summary": "The program introduced the 2026 players, coaches, and teams in the KO Gym.",
+    "verified": true
+  }
+]

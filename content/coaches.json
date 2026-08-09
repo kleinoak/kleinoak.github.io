@@ -1,0 +1,5 @@
+[
+  { "name": "Coach Jenkins", "title": "Head Coach", "bioAvailable": false },
+  { "name": "Coach Rehr", "title": "Assistant Coach", "bioAvailable": false },
+  { "name": "Coach Patillo", "title": "Assistant Coach", "bioAvailable": false }
+]

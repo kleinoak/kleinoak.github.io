@@ -1,0 +1,52 @@
+import type { Metadata } from "next";
+import { Mail } from "lucide-react";
+import { Container } from "@/components/ui/Container";
+import { PageHero } from "@/components/layout/PageHero";
+import { CoachCard } from "@/components/cards/CoachCard";
+import { coaches } from "@/data/teams";
+import { site } from "@/data/site";
+
+export const metadata: Metadata = { title: "Coaches" };
+
+export default function CoachesPage() {
+  return (
+    <>
+      <PageHero
+        eyebrow="Leadership"
+        title="Coaches"
+        description="The coaching staff behind Klein Oak Panther Volleyball."
+      />
+
+      <section className="py-16 sm:py-20">
+        <Container>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {coaches.map((coach) => (
+              <CoachCard key={coach.name} coach={coach} />
+            ))}
+          </div>
+
+          <div className="mt-12 rounded-sm border border-border bg-surface p-8">
+            <h2 className="font-display text-lg font-semibold uppercase tracking-tight text-primary">
+              Coach biographies pending
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-text-muted">
+              Coach names and titles above are taken from the current Klein Oak Volleyball site.
+              Biographies, photos, and staff contact details are not published there yet and have
+              not been invented for this prototype — they can be added once the program confirms
+              them.
+            </p>
+            <div className="mt-6">
+              <a
+                href={`mailto:${site.contactEmail}`}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-sm bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-primary-soft"
+              >
+                <Mail aria-hidden="true" className="h-4 w-4" />
+                Contact the Program
+              </a>
+            </div>
+          </div>
+        </Container>
+      </section>
+    </>
+  );
+}

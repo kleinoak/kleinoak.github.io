@@ -1,0 +1,38 @@
+name: Check pull request
+
+# Content proposed from the /admin editor ("Ask for review first") arrives as a
+# pull request. This proves it is valid and that the site still builds before
+# anyone merges it.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Validate content
+        run: npm run validate:content
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build static site
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.SITE_BASE_PATH }}
+        run: npm run build

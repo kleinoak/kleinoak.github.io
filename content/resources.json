@@ -1,0 +1,37 @@
+[
+  {
+    "id": "parent-portal",
+    "title": "Rank One Parent Portal",
+    "description": "Klein ISD's official system for schedules, forms, and communication. Sign in or create an account here.",
+    "href": "https://kleinisd.rankone.com/New/NewParentLogin.aspx",
+    "verified": true
+  },
+  {
+    "id": "live-schedule",
+    "title": "Live Match Schedule (Rank One)",
+    "description": "The program's official Rank One schedule. Most accurate for changes, and you can sync games to your personal calendar.",
+    "href": "https://www.rankone.com/Schedules/View_Schedule_All_Web.aspx?P=0&D=68683AA1-0C8E-4F59-8F36-843B0E3A1B91&S=946&Sp=5&Mt=0",
+    "verified": true
+  },
+  {
+    "id": "camp-registration",
+    "title": "Camp Registration",
+    "description": "Browse and register for Klein Oak Volleyball camps through Klein ISD's official camp store.",
+    "href": "https://kleinisd.store.rankone.com/camp/list",
+    "verified": true
+  },
+  {
+    "id": "spirit-wear",
+    "title": "Spirit Wear",
+    "description": "Klein Oak Volleyball spirit wear. The program lists this as coming soon — no store link has been published yet.",
+    "verified": false,
+    "note": "Marked \"Coming Soon\" by the program — check back or ask the Booster Club."
+  },
+  {
+    "id": "booster-contact",
+    "title": "Booster Club Email",
+    "description": "Questions about sponsorships, volunteering, or the program should go to the Booster Club.",
+    "href": "mailto:kovolleyballbooster@gmail.com",
+    "verified": true
+  }
+]

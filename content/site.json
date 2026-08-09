@@ -1,0 +1,17 @@
+{
+  "name": "Klein Oak Volleyball",
+  "shortName": "KO Volleyball",
+  "mascot": "Panthers",
+  "tagline": "Compete Together. Grow Together. Win Together.",
+  "taglineIsPrototypeCopy": true,
+  "contactEmail": "kovolleyballbooster@gmail.com",
+  "parentPortalUrl": "https://kleinisd.rankone.com/New/NewParentLogin.aspx",
+  "rankOneScheduleUrl": "https://www.rankone.com/Schedules/View_Schedule_All_Web.aspx?P=0&D=68683AA1-0C8E-4F59-8F36-843B0E3A1B91&S=946&Sp=5&Mt=0",
+  "campBrochureUrl": "https://kleinisd.store.rankone.com/camp/list",
+  "socials": {
+    "facebook": "https://www.facebook.com/profile.php?id=100066614558789",
+    "instagram": "https://www.instagram.com/kleinoakvolleyball/",
+    "tiktok": "https://www.tiktok.com/@kleinoakvb",
+    "twitter": "https://twitter.com/oak_volleyball"
+  }
+}

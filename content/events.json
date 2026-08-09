@@ -1,0 +1,76 @@
+[
+  {
+    "id": "tryouts-9th",
+    "date": "August 1 & 3",
+    "title": "9th Grade Tryouts",
+    "location": "Klein Oak High School Gym",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "tryouts-10-12",
+    "date": "August 1 & 3",
+    "title": "10th–12th Grade Tryouts",
+    "location": "Klein Oak High School Gym",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "rosters-posted",
+    "date": "August 3",
+    "time": "8:00 PM",
+    "title": "2026 Team Rosters Posted",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "practice-starts",
+    "date": "August 4",
+    "title": "First Practice",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "meet-the-panthers",
+    "date": "August 6",
+    "time": "6:00 PM",
+    "title": "Meet the Panthers",
+    "location": "Klein Oak High School Gym",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "team-bonding",
+    "date": "August 8",
+    "title": "Mandatory Team Bonding",
+    "location": "Bowlero",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "team-pictures",
+    "date": "August 9",
+    "time": "From 9:00 AM",
+    "title": "Team Pictures",
+    "location": "KOHS Main Gym",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "daily-practice-begins",
+    "date": "August 12",
+    "title": "Daily Practice Schedule Begins",
+    "location": "Klein Oak High School",
+    "status": "confirmed",
+    "verified": true
+  },
+  {
+    "id": "first-district-match",
+    "date": "August 18",
+    "time": "4:30 PM",
+    "title": "First District Match vs. Klein",
+    "location": "Away",
+    "status": "confirmed",
+    "verified": true
+  }
+]
