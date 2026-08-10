@@ -1,23 +1,23 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { site } from "@/data/site";
-import { teams } from "@/data/teams";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-primary text-white">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(135deg, #fff 0px, #fff 1px, transparent 1px, transparent 28px)",
-        }}
-      />
-      <Container className="relative flex flex-col gap-8 py-20 sm:py-28 lg:flex-row lg:items-center lg:justify-between lg:py-32">
-        <div className="max-w-2xl">
+    <section className="relative overflow-hidden bg-black text-white">
+      <Container className="relative flex flex-col items-center gap-10 py-20 sm:py-24 lg:flex-row lg:gap-14 lg:py-28">
+        <Image
+          src="/images/brand/panther-logo.png"
+          alt="Klein Oak Panthers Volleyball"
+          width={695}
+          height={646}
+          priority
+          sizes="(min-width: 1024px) 26rem, (min-width: 640px) 20rem, 18rem"
+          className="w-72 flex-none sm:w-80 lg:w-[26rem]"
+        />
+
+        <div className="max-w-2xl text-center lg:text-left">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">
             Klein Oak High School · Panther Volleyball
           </p>
@@ -28,11 +28,11 @@ export function Hero() {
             <br />
             <span className="text-accent">Win Together.</span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-white/75">
+          <p className="mt-6 max-w-xl text-lg text-white/75 max-lg:mx-auto">
             Varsity, Junior Varsity, Flex, and Freshman volleyball at Klein Oak High School — built on
             discipline, teamwork, and Panther pride.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-start">
             <Button href="/schedule" variant="primary">
               View Schedule
             </Button>
@@ -40,25 +40,6 @@ export function Hero() {
               Camps &amp; Tryouts
             </Button>
           </div>
-        </div>
-
-        <div className="w-full max-w-sm rounded-sm border border-white/15 bg-white/5 p-6 lg:max-w-xs">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-white/60">
-            Program Levels
-          </p>
-          <ul className="mt-3 space-y-2.5">
-            {teams.map((team) => (
-              <li key={team.slug}>
-                <Link
-                  href={`/teams/${team.slug}`}
-                  className="flex items-center justify-between rounded-sm border border-white/10 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide hover:border-accent"
-                >
-                  {team.name}
-                  <ArrowRight aria-hidden="true" className="h-4 w-4 text-accent" />
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
       </Container>
       <p className="sr-only">{site.tagline} (prototype messaging)</p>

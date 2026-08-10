@@ -124,3 +124,84 @@
 - [ ] **Have the program proof-read the transcribed rosters and schedule.** 61 student names and ~39 schedule rows were read off two published images by hand; a misspelled player name is a real harm, and only the program can confirm them. Also confirm they want rosters on this site at all.
 - [ ] Identify the sponsor logos published without a readable business name (one platinum, two gold, one black) — they were left out rather than guessed at.
 - [ ] Resolve the Booster Club email discrepancy: the sponsorships page shows both `kovolleyballbooster@gmail.com` and `khsvolleyballbosterclub@gmail.com`; the board page shows only the former, which is what this site uses.
+
+---
+
+## 20260809
+
+Branch `20260809/feature/landing-upgrades`. A small, self-contained aesthetics pass on the home page hero, specified by an annotated screenshot in `IDLC.md`: put the faceted panther logo in the hero, and make the hero background plain black with the diagonal stripes removed.
+
+### Decisions
+- **"The faceted panther logo" is option 1a** from `logo-redesign/ko-panthers-logo-options.html` — the flat-plane crest, named "Faceted Panther" in that file. The three `modern_panther_logo_variant_*.png` renders in the same folder are a different, more illustrative direction and were left alone; the faceted mark is the one that survives being shrunk.
+- **Shipped as an inline SVG component, not a PNG.** The source artwork is already vector, so `src/components/icons/PantherMark.tsx` carries the paths directly: sharp at any size, no extra network request, and it recolours with a Tailwind text class. This follows the existing `SocialIcons.tsx` convention rather than introducing an image asset.
+- **The face details are masked out, not painted black.** The original artwork draws the eyes, snout, and cheek notches as black shapes on top of the gold plane, which only looks right on a black background. Replacing that with an SVG `<mask>` makes them genuinely transparent, so the same component works on black, gold, or white. This also sidesteps a real geometry problem: the two cheek-notch triangles straddle the outer silhouette edge, so an `even-odd` single-path knockout would have left visible spurs outside the head.
+- **The mark uses the site's existing gold (`--color-accent`, `#c6a15b`), not the logo document's `#F5B317`.** The hero eyebrow, headline accent, and buttons are all already on the site token; introducing a second, brighter gold a few pixels away from them would have read as a mistake. Worth revisiting only if the program adopts the logo document's palette site-wide.
+- **"Plain black" is taken literally — `bg-black` (`#000`), not the `--color-primary` near-black (`#0d0d0d`).** The rest of the site's dark surfaces keep using the token; only the hero band is true black, which is what the annotation asked for.
+
+### Accomplishments
+- [x] New `src/components/icons/PantherMark.tsx` — the faceted crest, `currentColor`-driven, with a `maskId` prop so more than one instance can safely render on a page.
+- [x] `Hero.tsx`: mark added above the eyebrow line at `h-24 w-24` (`sm:h-28 sm:w-28`); background changed from `bg-primary` to `bg-black`; the absolutely-positioned `repeating-linear-gradient` stripe overlay deleted outright rather than hidden.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean.
+- [x] Rendered HTML confirms the mark is present once, `bg-black` is applied, and no `repeating-linear-gradient` remains anywhere on the page.
+- [x] Screenshot-verified at 1440px and 390px, and compared against a before-shot taken with the change stashed — the stripes are visibly gone and nothing else in the hero moved. (Both shots clip identically at 390px in headless Chrome, which emulates no mobile viewport; that is a capture artifact, not page overflow, and it is unchanged by this work.)
+
+### Not yet done
+- [ ] **The header still uses the `KO` text lockup**, not the panther mark. The annotation only covered the hero, so the change stops there — but a program crest in the hero and a placeholder monogram in the sticky header directly above it is an inconsistency someone will notice.
+- [ ] Decide whether the faceted mark is the program's actual logo or an exploration. Nothing else — favicon, footer, `/admin`, social cards — has been switched over, and it should not be until the Booster Club has picked a direction.
+- [ ] The three `modern_panther_logo_variant_*.png` files are untracked working files in `logo-redesign/`; either commit them as part of the brand exploration record or drop them.
+
+### Update — full logo lockup + brand yellow (20260809, same branch)
+
+**Context**: a second annotated pass on the same hero. Three asks: use the *actual* faceted logo rather than the bare icon, drop the Program Levels card and give the freed width to the logo, and replace the site's faded gold with the yellow from the logo.
+
+**Decisions**
+- **"The actual faceted logo" is the lockup, not a different drawing.** The crest geometry shipped earlier already matches the reference rendering path-for-path; what was missing is everything around it — the wordmark, the flanking rules, the scale, and the saturated yellow. So `PantherMark` is unchanged and a new `PantherLockup` composes it with the wordmark.
+- **The wordmark is split across the two lines of the existing design: `KLEIN OAK` large in white, `VOLLEYBALL` small in gold between two rules.** The annotation reads `Change to "KLEIN OAK VOLLEYBALL"` with the arrow landing between the reference's two lines. Read as a whole the lockup now says exactly that, and the designed two-line structure survives. **The alternative reading — swap only the big word, giving `KLEIN OAK VOLLEYBALL` stacked above a second `VOLLEYBALL` — was rejected as redundant, but it is a one-line change in `PantherLockup.tsx` if that was the intent.**
+- **The lockup scales from a single width using CSS container queries.** It declares `@container` and sizes the mark, wordmark, rules, and gaps in `cqw`/percentages, so the caller passes `w-64 sm:w-80 lg:w-96` and everything inside stays in proportion. The alternative — a parallel set of `text-*` breakpoints for each element — drifts the moment anyone touches one of them.
+- **`--color-accent` becomes `#f5b317`**, the "Klein Oak Gold" already named in `logo-redesign/ko-panthers-logo-options.html`. The screenshot could not be sampled directly (the sandbox refuses to read `~/Desktop`), so the value comes from the brand document rather than a pixel measurement.
+- **The gold had to split into a dark-surface and a light-surface value, because no single yellow can do both.** `#f5b317` is 11.3:1 on black and 1.9:1 on white — vivid where the brand wants it, illegible as text on a light page. Audited every `text-accent` in the codebase first: all of them sit on `bg-primary`, `bg-black`, or a dark card, and all of them got better. Light surfaces already used `--color-accent-strong`, so that token absorbed the constraint instead: **`#a9812f` → `#8a6a0a`**, the logo document's own link gold, which raises contrast on white from 3.58:1 (a pre-existing AA failure for normal text) to 5.06:1 while reading as a richer, more saturated gold than the muddy value it replaces.
+- **Removing Program Levels strands nothing.** The four team pages remain linked from the primary nav, from `QuickAccess` ("Team Information"), and from the `TeamExperience` section further down the same page, which renders a `TeamCard` per level.
+
+**Accomplishments**
+- [x] New `src/components/brand/PantherLockup.tsx`; `PantherMark.tsx` moved from `components/icons/` into the new `components/brand/` folder so the two brand pieces live together (`components/icons/` keeps the social glyphs).
+- [x] `Hero.tsx` rebuilt: lockup on the left at `w-64 sm:w-80 lg:w-96`, the eyebrow/headline/blurb/buttons moved into the right-hand column, the Program Levels card deleted. Stacks to a single centred column below `lg`, so the phone layout is lockup-then-copy rather than a squeezed two-up.
+- [x] `globals.css`: both gold tokens retargeted, each with a comment saying which background it is for.
+
+**Verified**
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 16 static routes.
+- [x] Screenshot-verified at 1440px (home, teams, schedule, sponsors) and 430px. The yellow is vivid on every dark surface; light-surface eyebrows, icons, and links stay legible on the darker token.
+- [x] Confirmed no `text-accent` anywhere in `src/` renders on a light background.
+
+**Not yet done**
+- [ ] **Confirm the wordmark reading** — `KLEIN OAK` over `VOLLEYBALL` versus `KLEIN OAK VOLLEYBALL` over `VOLLEYBALL`. See the decision above.
+- [ ] **The nav's active-link gold is now darker, not brighter.** That is the accessibility constraint, not an oversight: gold text on a white header cannot be vivid and legible at once. If the program wants the header to *look* brighter, the fix is a dark header bar, not a lighter gold — worth raising rather than quietly reverting the contrast.
+- [ ] The header monogram is still the `KO` text block while the hero now carries the full crest — the inconsistency called out last pass is now more visible, not less.
+
+### Update — hero logo replaced with the illustrated panther mark (20260809, same branch)
+
+**Context**: a third brand direction. The faceted flat-geometry crest is out; the hero now carries `logo-redesign/panther-black-high-res-with-words-01.png` — an illustrated panther head over a gold volleyball, with a soft glow and the `PANTHERS / KLEIN OAK · VOLLEYBALL` wordmark already baked in.
+
+**Decisions**
+- **This one has to be a raster.** The previous two passes shipped inline SVG on the argument that the art was already vector. This art is not: the glow is a soft radial falloff that vector shapes do not reproduce. So the hero uses `next/image` against a prepared PNG.
+- **The black backing was converted to real transparency rather than left as a square.** The source is a 1024px square with a white frame and a `#0d0d0d` panel, and `#0d0d0d` on a `#000` hero is a faintly visible grey box. Since the art is light-on-black, luminance is opacity: strip the black level, set `alpha = max(R,G,B)`, un-premultiply the colour. The logo now composites back to the exact original on black and degrades gracefully on any other dark surface.
+- **Two bugs found and fixed during that conversion, both worth remembering** — the recipe is written up in `PROJECT-DOCUMENTATION.md`:
+  - Un-premultiplying a near-zero alpha divides by almost nothing and produces bright white. Left in, those invisible pixels got rounded up by the palette step into **a light-grey haze filling the entire logo box** — caught on the first screenshot. Fix: zero RGB and alpha below a cutoff of 10 *before* dividing.
+  - Cropping the white frame by bounding box alone leaves a 1–2px anti-aliased rim, which survives as a bright edge. Fix: detect the panel by requiring ≥90% dark pixels per row/column, then inset 4px.
+- **Quantised to 256 colours only after the cutoff was in place.** 395 KB → **74 KB** with corners verified fully transparent and no visible banding in the glow. Order matters here: quantising first is what amplified the white-pixel bug.
+- **Deleted `PantherMark.tsx` and `PantherLockup.tsx`.** They had no remaining references, and leaving two competing logo implementations in `src/` is how the wrong one eventually ships. Both are recoverable from commit `7aeecda` if the faceted direction comes back.
+
+**Accomplishments**
+- [x] `public/images/brand/panther-logo.png` — 695×646, ~74 KB, transparent background, tight-trimmed.
+- [x] `Hero.tsx` uses `next/image` with `priority` (it is the largest above-the-fold element), explicit intrinsic dimensions, and a `sizes` hint matching the three rendered widths. Placement adjusted for the new near-square aspect: `w-72 sm:w-80 lg:w-[26rem]`, hero padding tightened from `py-20/28/32` to `py-20/24/28` since the mark is bulkier than the tall faceted lockup.
+- [x] `src/components/brand/` removed.
+
+**Verified**
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 16 static routes, and the asset lands at `out/images/brand/panther-logo.png`.
+- [x] Screenshot-verified at 1440px and 430px: the glow blends into the hero with no box, halo edge, or grey patch.
+
+**Not yet done**
+- [ ] **The site now carries two unrelated panther identities**: this illustrated mark in the hero, and the `KO` monogram in the header on every page. That was a minor inconsistency when the hero held the faceted crest; with a fully illustrated logo it is conspicuous.
+- [ ] `logo-redesign/` now holds three more untracked source renders (`panther-black-hero-01.png`, `panther-black-high-res.png`, and the one used here). Decide what belongs in the repo as the brand record.
+- [ ] The wordmark says `PANTHERS / KLEIN OAK · VOLLEYBALL`, which reinstates "Panthers" as the lead word — the opposite of the previous pass's annotation. Worth confirming which wording the program actually wants before this reaches anyone.

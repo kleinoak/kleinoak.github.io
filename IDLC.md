@@ -709,3 +709,36 @@ It just needs a CMS without a database since this will be hosted in Github pages
 Design and implement a CMS for this so parents and volunteers who have Github accounts and are invited to collaborate can manage the website.
 
 Create a document called PROJECT-DOCUMENTATION.md and PROJECT-LOG.md. Pattern those files after /Users/gojo/Workspace/business/velocity-members/
+
+
+## ------------------
+## 🟨 20260809
+## ------------------
+
+# 2 🟩
+Create a branch for this new set of enhancements called `20260809/feature/landing-upgrades`
+
+Lets prepare some aesthetics upgrade. 
+I have attached here a rendering of the `faceted panther logo`. Use it in the landing page.
+Change the background of the hero banner to plain black.
+See screenshot for more details. 🟡
+
+Update project log and documentation once done.
+
+# 3 ✅
+
+Make the faceted panther logo stand-out by using the actual faceted logo. See screenshot of updates to the faceted logo. 🟡
+Remove the program levels to make way for the recalibrated faceted logo. Retain the hero blurb and move it to the right accordingly. See screenshot 
+
+Also, for the entire site, use the yellow shade from the faceted logo. The current one looks faded yellow.
+
+Update project log and documentation once done.
+
+
+# 4
+
+Let's use this for the hero logo.
+Update project log and documentation once done.
+
+
+

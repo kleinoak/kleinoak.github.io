@@ -5,8 +5,8 @@
   --color-primary: #0d0d0d; /* panther black */
   --color-primary-soft: #1f1f1f;
   --color-secondary: #3f3f46; /* charcoal, secondary text/surfaces */
-  --color-accent: #c6a15b; /* vegas gold */
-  --color-accent-strong: #a9812f; /* deeper gold for contrast on light bg */
+  --color-accent: #f5b317; /* klein oak gold — the faceted logo yellow; dark surfaces only */
+  --color-accent-strong: #8a6a0a; /* same gold darkened for text on light bg (5.1:1 on white) */
   --color-background: #ffffff;
   --color-surface: #f6f5f2; /* warm off-white card surface */
   --color-surface-dark: #17171a;

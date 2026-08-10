@@ -222,7 +222,9 @@ ko-volleyball-web/
 │   │       └── ui.tsx              # Panel, Banner, AdminButton primitives
 │   ├── components/                 # site header, footer, cards, home sections
 │   └── data/                       # thin typed loaders over content/*.json
+├── logo-redesign/                  # brand exploration — logo options + source renders
 ├── public/
+│   ├── images/brand/               # prepared logo art (hero lockup)
 │   ├── images/uploads/             # photos committed by the editor
 │   └── robots.txt                  # disallows /admin
 ├── .github/workflows/
@@ -236,6 +238,18 @@ ko-volleyball-web/
 ```
 
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
+
+**The hero logo is a prepared raster, and the preparation matters.** The mark is `public/images/brand/panther-logo.png`, derived from `logo-redesign/panther-black-high-res-with-words-01.png`. It cannot be an SVG: the artwork carries a soft gold glow that vector shapes will not reproduce.
+
+The source ships as a 1024px square with a white frame and a `#0d0d0d` panel behind the art. Dropped onto the black hero unchanged, that panel reads as a faintly visible grey square. Three steps fix it, and any re-export of the logo needs the same treatment:
+
+1. **Crop to the dark panel and inset past its rim.** The frame's edge is anti-aliased, so a bounding box alone leaves a 1–2px white line.
+2. **Convert the black backing to real transparency.** The art is light-on-black, so luminance *is* opacity: subtract the panel's own black level, take `alpha = max(R,G,B)`, and un-premultiply (`RGB × 255 ÷ alpha`). The result composites back to the exact original on black while the glow becomes a genuine soft alpha halo. **Zero out RGB and alpha below ~10 first** — dividing a near-zero alpha manufactures bright white pixels, which is how an early attempt produced a light haze filling the whole logo box.
+3. **Trim to the visible bounding box, then quantize to 256 colours.** Quantising is only safe *after* step 2's cutoff; done before it, the palette rounds those invisible white pixels up to visible opacity. Final asset: 695×646, ~74 KB.
+
+Because the background is genuinely transparent, the logo sits correctly on any dark surface, not just the exact hero colour. It is not editable through `/admin` — this is brand identity, not content.
+
+**The gold is two tokens, and which one you use depends on the background.** `--color-accent` (`#f5b317`) is the logo yellow and is for dark surfaces only: it hits 11.3:1 on black but just 1.9:1 on white, so it must never carry text on a light background. `--color-accent-strong` (`#8a6a0a`) is the same hue darkened until it clears 5.1:1 on white, and is what light-background text, links, and icons use. Every `text-accent` in the codebase currently sits on `bg-primary`, `bg-black`, or a dark card; light surfaces use `text-accent-strong`. Preserve that split when adding anything gold.
 
 ---
 
