@@ -12,7 +12,6 @@ export type Site = {
   contactEmail: string;
   parentPortalUrl: string;
   rankOneScheduleUrl: string;
-  campBrochureUrl: string;
   socials: {
     facebook?: string;
     instagram?: string;
@@ -40,7 +39,6 @@ export const nav = [
   },
   { label: "Coaches", href: "/coaches" },
   { label: "Schedule", href: "/schedule" },
-  { label: "Camps & Tryouts", href: "/camps-tryouts" },
   { label: "Resources", href: "/resources" },
   { label: "Sponsors", href: "/sponsors" },
   { label: "Contact", href: "/contact" },

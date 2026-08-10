@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/layout/PageHero";
 import { CoachCard } from "@/components/cards/CoachCard";
 import { coaches } from "@/data/teams";
+import { administration } from "@/data/administration";
 import { site } from "@/data/site";
 
 export const metadata: Metadata = { title: "Coaches" };
@@ -19,7 +20,7 @@ export default function CoachesPage() {
 
       <section className="py-16 sm:py-20">
         <Container>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {coaches.map((coach) => (
               <CoachCard key={coach.name} coach={coach} />
             ))}
@@ -45,6 +46,19 @@ export default function CoachesPage() {
               </a>
             </div>
           </div>
+
+          {administration.length > 0 && (
+            <div className="mt-16">
+              <h2 className="font-display text-2xl font-bold uppercase tracking-tight text-primary sm:text-3xl">
+                Program Administration
+              </h2>
+              <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {administration.map((person) => (
+                  <CoachCard key={person.name} coach={person} />
+                ))}
+              </div>
+            </div>
+          )}
         </Container>
       </section>
     </>

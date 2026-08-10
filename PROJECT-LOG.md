@@ -241,3 +241,59 @@ The export was copied to `thecodinci.github.io/kovb/` for a manual deploy. Two t
 - [ ] **This repo's own Pages deploy has still never succeeded.** Both `deploy.yml` runs (PR #1 on 20260809, PR #2 on 20260810) failed at `actions/configure-pages@v5` with *"Get Pages site failed"* — `GET /repos/…/pages` returns 404, i.e. **Pages has never been enabled on `alfredsilvertonai/ko-volleyball-web`**. Fix is one setting: Settings → Pages → Source: GitHub Actions, then re-run the failed workflow. If that site is served from a project sub-path rather than a custom domain, it also needs the repository variable `SITE_BASE_PATH=/ko-volleyball-web` — which the fix in this branch is a prerequisite for.
 - [ ] The `codinci.com/kovb/` copy is a **manual, point-in-time export**. It has no pipeline: nothing rebuilds it when `main` changes, and `/admin` publishing does not reach it. Either wire up a workflow or treat it as a preview and say so.
 - [ ] Publishing that copy puts the **61 transcribed student names and the hand-read schedule on a public domain**, still unverified by the program. Flagged on every pass since 20260808 and still outstanding.
+
+---
+
+## 20260810 — Retire Camps & Tryouts; add a fourth coach
+
+Branch `20260810/feature/remove-camps-add-coach`, off `main` after PR #3.
+
+### Decisions
+- **"Remove Camps & Tryouts" was taken as retiring the whole surface, not just hiding a section.** Half-measures are worse than either extreme here: a nav entry pointing at a deleted page 404s, and a live page nothing links to is orphaned content that goes stale unwatched. So the page, the home section, the nav entry, the Quick Access tile, both call-to-action buttons, the data loader, the three CMS collections, and the three content files all went together.
+- **The CMS collections went with it.** `camps`, `tryouts`, and `tryout-milestones` existed only to feed that page; leaving them would show a volunteer an editable "Camps & tryouts" group in `/admin` whose changes appear nowhere. Recoverable from git when next season's camps are announced — that is the intended way back, not a hidden page.
+- **`site.campBrochureUrl` was removed too.** Its only consumer was a hardcoded "Camp Registration" link in the footer. Left in place it would have been a `required: true` field in Site Settings that no page reads — exactly the kind of thing that survives for years because nobody can prove it is dead.
+- **Two link slots needed refilling rather than deleting**, since dropping them would have left a lone button in the hero and a 3-of-4 gap in the Quick Access grid: the hero's second CTA is now `Teams & Rosters` → `/teams`, and the Quick Access tile is now `Coaches` → `/coaches`. The team-detail pages' ghost button became `Meet the Coaches`.
+- **The coaches grid moved from `sm:grid-cols-3` to `sm:grid-cols-2 lg:grid-cols-4`**, matching the pattern the team grids already use. Three coaches fitted a 3-up row exactly; the fourth would have been stranded alone on a second row.
+
+### Deliberately left in place
+Three things still mention camps or tryouts. Each is a content decision rather than part of this structural change, and each is editable at `/admin` without a developer:
+- **`Camp Registration` in Parent Resources** — an external link to Klein ISD's Rank One camp store, which is evergreen and not tied to the retired page. Removing it is a one-click content edit if the program wants it gone.
+- **`9th Grade Tryouts` and `10th–12th Grade Tryouts` in Key Dates** — dated August 1 & 3, part of the season timeline the page exists to record. They read as history, not as an invitation.
+- **"From first camp to senior night"** in the Culture section — prose about athlete development, not a pointer to anything.
+
+### Accomplishments
+- [x] Removed: `src/app/(site)/camps-tryouts/`, `src/components/home/CampsTryouts.tsx`, `src/data/camps.ts`, `content/camps.json`, `content/tryouts.json`, `content/tryout-milestones.json`, three schema collections, `campBrochureUrl` (schema + type + content), the footer camp link.
+- [x] Updated: nav, home page composition, hero CTA, Quick Access tile, team-detail CTA, root metadata description, the `/admin` sign-in blurb (it listed "camps" among what the editor manages).
+- [x] Added `Coach Studdard`, Assistant Coach, to `content/coaches.json` — fourth entry, same shape as the others, `bioAvailable: false` so the card shows "Bio coming soon" like the rest.
+
+### Verified
+- [x] `validate:content` → **10 files** (was 13); `tsc --noEmit` clean; `eslint` clean; `next build` → **15 routes** (was 16, `/camps-tryouts` gone).
+- [x] Served the export and confirmed `/`, `/coaches/`, `/teams/varsity/` return 200 and `/camps-tryouts/` returns **404**.
+- [x] Swept every built HTML page for "camp"/"tryout" and accounted for all six remaining occurrences — the three listed above, and nothing else.
+- [x] Screenshot-verified: nav without the entry, hero with the new CTA, Quick Access with the Coaches tile, and all four coaches on one row.
+
+### Update — program administration, ported back from hand-edited build output (20260810, same branch)
+
+**Context**: while redeploying the `codinci.com/kovb/` export, the target folder turned out to contain a hand-edit that existed **only in generated HTML**. Commit `6c28d70` in `thecodinci.github.io` had patched `kovb/coaches/index.html` (and every copy of the RSC flight payload, to keep hydration consistent) to add the head coach's full name and a Program Administration section — names taken from the program's 2026-27 schedule PDF. A rebuild would have erased all of it without a trace.
+
+**Decisions**
+- **Ported into source rather than re-patching the output.** Editing built HTML is not a deploy step that survives anything; the same edit would have had to be redone by hand after every single build, and would eventually be lost on a build nobody thought to check. The fix belongs in `content/`.
+- **Program administration is its own collection, not extra rows in `coaches`.** An athletic director and a principal are not coaching staff — merging them would put "Bio coming soon" under a principal's name and make the Coaches page claim things it should not. Separate collection, separate section, same card component.
+- **`CoachCard` now hides the bio line only when `bioAvailable === false`, rather than on any falsy value.** Administration entries simply omit the field, so they render clean without needing a dishonest `bioAvailable: true`. Behaviour for coaches is unchanged — every coach record sets the flag explicitly.
+- **`content/coaches.json` was reserialized to the CMS's canonical shape** (`JSON.stringify(value, null, 2)`, per `serialize()` in `validation.ts`). The old compact one-object-per-line formatting was hand-written and would have been rewritten by the first `/admin` publish anyway; doing it now keeps a future volunteer's diff to the field they actually changed.
+
+**Accomplishments**
+- [x] `content/administration.json` — Brandon Carpenter (Athletic Director), Thomas Hensley (Principal).
+- [x] New `administration` CMS collection and `src/data/administration.ts` loader, so both entries are editable at `/admin` like everything else.
+- [x] Head coach is now `Coach Bill Jenkins` in `content/coaches.json`.
+- [x] Program Administration section on the Coaches page, below the biographies note, on the same 4-up grid.
+- [x] Documentation: content-model table, project layout and file count, and two stale "camps" references in the Overview and Purpose sections left over from the retirement above.
+
+**Verified**
+- [x] `validate:content` → 11 files; `tsc --noEmit` clean; `eslint` clean; `NEXT_PUBLIC_BASE_PATH=/kovb` build → 15 routes with no unprefixed asset paths.
+- [x] Deployed to `thecodinci.github.io/kovb/` and served that repo root: `/kovb/`, `/kovb/coaches/`, `/kovb/teams/varsity/` and the host site's own `/` all 200; `/kovb/camps-tryouts/` 404s. Screenshot confirms the rendered page matches the hand-edited version it replaces.
+
+**Not yet done**
+- [ ] The head coach's avatar initials now read **CBJ**, not **BJ** as in the hand-edit, because `initials()` derives from the full name and the name field includes the word "Coach". Cosmetic; fix by storing the name without the honorific, or by having `initials()` skip it.
+- [ ] **Names came from a schedule PDF, not from the program's website.** They are real people's names on a public page — worth the same confirmation the rosters are still waiting on.
+- [ ] The `kovb/` deployment is still a manual copy with no pipeline. The failure mode this entry documents — an edit that lives only in built output — is one a real deploy pipeline would have made impossible.

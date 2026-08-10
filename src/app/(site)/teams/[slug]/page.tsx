@@ -91,8 +91,8 @@ export default async function TeamDetailPage({ params }: { params: Params }) {
               <Button href="/schedule" variant="secondary">
                 View Schedule
               </Button>
-              <Button href="/camps-tryouts" variant="ghost">
-                Camps &amp; Tryouts
+              <Button href="/coaches" variant="ghost">
+                Meet the Coaches
               </Button>
             </div>
           </div>

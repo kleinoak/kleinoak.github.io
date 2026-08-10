@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s | Klein Oak Volleyball (Prototype)",
   },
   description:
-    "A local modernization prototype for the Klein Oak High School Panther Volleyball program: teams, schedule, camps & tryouts, sponsors, and parent resources.",
+    "A local modernization prototype for the Klein Oak High School Panther Volleyball program: teams, schedule, coaches, sponsors, and parent resources.",
 };
 
 // The public site's header and footer live in `(site)/layout.tsx` so that the

@@ -6,7 +6,7 @@
 
 ## Overview
 
-`ko-volleyball-web` is the modernized website for the Klein Oak High School Panther Volleyball program: teams, key dates, camps and tryouts, coaches, sponsors, parent resources, and contact information. It is a Next.js App Router site exported as fully static HTML and served by GitHub Pages.
+`ko-volleyball-web` is the modernized website for the Klein Oak High School Panther Volleyball program: teams, key dates, match schedule, coaches, sponsors, parent resources, and contact information. It is a Next.js App Router site exported as fully static HTML and served by GitHub Pages.
 
 Bolted onto that static site is a content management system with **no server and no database**. The editor lives at `/admin`, runs entirely in the browser, and uses the GitHub repository itself as its data store. Content is JSON in `content/`; publishing is a commit; deploying is a GitHub Actions run.
 
@@ -16,7 +16,7 @@ Bolted onto that static site is a content management system with **no server and
 
 The volleyball program is run by coaches and Booster Club volunteers and has **no budget for hosted infrastructure** — no Contentful, no Sanity, no Netlify CMS backend, no database, no monthly bill. It also has no dedicated developer on call for routine content updates.
 
-The system exists so that a parent or volunteer with a GitHub account, invited as a repository collaborator, can change dates, announcements, camps, sponsors, and contact details on the live website without touching code, running a build, or asking anyone for help — while a developer keeps a full, reviewable git history of every change.
+The system exists so that a parent or volunteer with a GitHub account, invited as a repository collaborator, can change dates, announcements, rosters, sponsors, and contact details on the live website without touching code, running a build, or asking anyone for help — while a developer keeps a full, reviewable git history of every change.
 
 Cost of running this system: **$0**.
 
@@ -97,12 +97,10 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 |---|---|---|---|
 | Announcements | list | `content/announcements.json` | Home page |
 | Key dates | list | `content/events.json` | Home page, Schedule |
-| Camps | list | `content/camps.json` | Home page, Camps & Tryouts |
-| Tryout groups | list | `content/tryouts.json` | Home page, Camps & Tryouts |
-| Tryout milestones | list | `content/tryout-milestones.json` | Camps & Tryouts |
 | Teams | list | `content/teams.json` | Home, Teams, team detail pages |
 | Match schedule | list | `content/matches.json` | Schedule |
 | Coaches | list | `content/coaches.json` | Coaches |
+| Program administration | list | `content/administration.json` | Coaches |
 | Parent resources | list | `content/resources.json` | Resources |
 | Booster Club board | list | `content/booster-board.json` | Contact |
 | Sponsor tiers | list | `content/sponsor-tiers.json` | Home page, Sponsors |
@@ -186,10 +184,10 @@ Copy `.env.example` to `.env.local` to point `/admin` at a different repository 
 
 ```
 ko-volleyball-web/
-├── content/                        # THE CONTENT STORE (13 JSON files)
-│   ├── site.json  announcements.json  events.json  camps.json
-│   ├── tryouts.json  tryout-milestones.json  teams.json  coaches.json  matches.json
-│   └── resources.json  booster-board.json  sponsor-tiers.json  sponsor-steps.json
+├── content/                        # THE CONTENT STORE (11 JSON files)
+│   ├── site.json  announcements.json  events.json  teams.json
+│   ├── coaches.json  administration.json  matches.json  resources.json
+│   └── booster-board.json  sponsor-tiers.json  sponsor-steps.json
 ├── scripts/
 │   └── validate-content.mts        # prebuild + CI content gate
 ├── src/
@@ -199,7 +197,7 @@ ko-volleyball-web/
 │   │   │   ├── layout.tsx
 │   │   │   ├── page.tsx            # Home
 │   │   │   ├── teams/  teams/[slug]/  coaches/  schedule/
-│   │   │   └── camps-tryouts/  resources/  sponsors/  contact/
+│   │   │   └── resources/  sponsors/  contact/
 │   │   └── admin/                  # THE EDITOR — full-screen, outside (site)
 │   │       ├── layout.tsx          # noindex metadata
 │   │       └── page.tsx            # renders <AdminApp />

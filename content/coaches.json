@@ -1,5 +1,22 @@
 [
-  { "name": "Coach Jenkins", "title": "Head Coach", "bioAvailable": false },
-  { "name": "Coach Rehr", "title": "Assistant Coach", "bioAvailable": false },
-  { "name": "Coach Patillo", "title": "Assistant Coach", "bioAvailable": false }
+  {
+    "name": "Coach Bill Jenkins",
+    "title": "Head Coach",
+    "bioAvailable": false
+  },
+  {
+    "name": "Coach Rehr",
+    "title": "Assistant Coach",
+    "bioAvailable": false
+  },
+  {
+    "name": "Coach Patillo",
+    "title": "Assistant Coach",
+    "bioAvailable": false
+  },
+  {
+    "name": "Coach Studdard",
+    "title": "Assistant Coach",
+    "bioAvailable": false
+  }
 ]

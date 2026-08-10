@@ -1,4 +1,5 @@
-import { Coach } from "@/data/teams";
+/** Coaches carry a bio flag; administration entries have no bio to publish. */
+type Person = { name: string; title: string; bioAvailable?: boolean };
 
 function initials(name: string) {
   return name
@@ -7,7 +8,7 @@ function initials(name: string) {
     .join("");
 }
 
-export function CoachCard({ coach }: { coach: Coach }) {
+export function CoachCard({ coach }: { coach: Person }) {
   return (
     <article className="rounded-sm border border-border bg-background p-6 text-center">
       <div
@@ -20,7 +21,7 @@ export function CoachCard({ coach }: { coach: Coach }) {
         {coach.name}
       </h3>
       <p className="text-sm text-text-muted">{coach.title}</p>
-      {!coach.bioAvailable && (
+      {coach.bioAvailable === false && (
         <p className="mt-2 text-xs font-medium uppercase tracking-wide text-text-muted/70">
           Bio coming soon
         </p>

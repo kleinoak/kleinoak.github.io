@@ -26,7 +26,7 @@ export function SignIn() {
           Website Editor
         </h1>
         <p className="mt-3 text-sm text-text-muted">
-          Update announcements, dates, camps, teams, sponsors and contact details. Changes are saved
+          Update announcements, dates, teams, sponsors and contact details. Changes are saved
           to the website&apos;s GitHub repository and the site rebuilds itself — usually within a
           couple of minutes.
         </p>

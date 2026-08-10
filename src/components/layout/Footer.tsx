@@ -74,16 +74,6 @@ export function Footer() {
               </a>
             </li>
             <li>
-              <a
-                href={site.campBrochureUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/80 hover:text-accent"
-              >
-                Camp Registration
-              </a>
-            </li>
-            <li>
               <Link href="/resources" className="text-white/80 hover:text-accent">
                 All Resources
               </Link>

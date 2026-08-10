@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { CalendarDays, ClipboardList, LifeBuoy, Users } from "lucide-react";
+import { CalendarDays, LifeBuoy, UserRound, Users } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 
 const links = [
   { label: "Schedule", href: "/schedule", Icon: CalendarDays },
-  { label: "Camps & Tryouts", href: "/camps-tryouts", Icon: ClipboardList },
+  { label: "Coaches", href: "/coaches", Icon: UserRound },
   { label: "Parent Resources", href: "/resources", Icon: LifeBuoy },
   { label: "Team Information", href: "/teams", Icon: Users },
 ];

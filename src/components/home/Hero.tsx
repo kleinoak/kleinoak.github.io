@@ -37,8 +37,8 @@ export function Hero() {
             <Button href="/schedule" variant="primary">
               View Schedule
             </Button>
-            <Button href="/camps-tryouts" variant="ghost" className="border-white/40 text-white hover:bg-white/10">
-              Camps &amp; Tryouts
+            <Button href="/teams" variant="ghost" className="border-white/40 text-white hover:bg-white/10">
+              Teams &amp; Rosters
             </Button>
           </div>
         </div>
