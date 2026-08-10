@@ -297,3 +297,36 @@ Three things still mention camps or tryouts. Each is a content decision rather t
 - [ ] The head coach's avatar initials now read **CBJ**, not **BJ** as in the hand-edit, because `initials()` derives from the full name and the name field includes the word "Coach". Cosmetic; fix by storing the name without the honorific, or by having `initials()` skip it.
 - [ ] **Names came from a schedule PDF, not from the program's website.** They are real people's names on a public page — worth the same confirmation the rosters are still waiting on.
 - [ ] The `kovb/` deployment is still a manual copy with no pipeline. The failure mode this entry documents — an edit that lives only in built output — is one a real deploy pipeline would have made impossible.
+
+---
+
+## 20260810 — Schedule: per-team views
+
+Branch `20260810/feature/schedule-by-team`, off `main` after PR #4. Also carries the coach display reorder (Jenkins, Studdard, Patillo, Rehr) as its first commit.
+
+### The problem
+The schedule was "view all" only: three sections, every row showing four start times side by side. That is the shape the program publishes, and it is the right default — but almost every reader is following **one** level. A JV parent was scanning a four-column table and mentally discarding three quarters of it, on a phone, where those four times are a 2×2 grid inside every card.
+
+### Decisions
+- **A filter over the existing sections, not a new page per team.** Switching is instant, and — the deciding factor — the complete schedule stays in the prerendered HTML. Per-team routes would have meant five near-duplicate pages; reading the team from `?team=` would have meant `useSearchParams`, which on a statically exported page needs a `<Suspense>` boundary, and *the fallback is what ends up in the static HTML*. Neither is worth trading away a schedule that works with JavaScript off.
+- **The accepted cost: a filtered view is not linkable.** I built URL syncing first and then removed it. Reading the query string on mount requires setting state in an effect, which `react-hooks/set-state-in-effect` correctly rejects — and the lint rule is right, because the alternative (initialising state from `window.location` during render) is a hydration mismatch: the build-time HTML says "all", the client would say "varsity". If shareable per-team links are wanted later, per-team routes are the honest way to get them.
+- **Native radios in a `<fieldset>`, not buttons with click handlers.** Arrow-key navigation, focus management, and the "one of five" grouping announced to screen readers are all free from the platform. Styling is `peer-checked:` on a sibling `<span>`; the input stays in the accessibility tree via `sr-only` rather than `display:none`.
+- **One `columns` list drives both layouts.** `MatchSchedule` takes an optional `level` and narrows `levelColumns` to a single entry; the table's headers and cells, and the phone card's time grid, all map over that same list. The two layouts cannot drift out of sync, and the card grid collapses from two columns to one automatically.
+- **`x` hides a date; blank does not.** In the source data `"x"` means that level is explicitly not playing, so those dates are dropped from a filtered view. An empty cell means no time was published — the date may still belong to that level, so it stays visible and renders as "Not listed". Silently dropping those would be inventing information.
+- **The filter says what it hid.** "Showing Junior Varsity only — 37 dates. 2 dates where Junior Varsity is not playing are hidden." A filtered list that quietly shrinks invites "is my daughter's game missing from this site?". The line is `aria-live="polite"`, so it is announced on change.
+
+### Accomplishments
+- [x] New `src/components/schedule/ScheduleBrowser.tsx` — filter control, per-section filtering, counts, hidden-date disclosure, and an empty state for a level with no published dates.
+- [x] `MatchSchedule` takes an optional `level`; both the table and the phone cards narrow to one column from the same list.
+- [x] `schedule/page.tsx` reduced to composing sections and handing them to the browser component.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] The prerendered `out/schedule/index.html` contains all five filter labels **and** the full 39-date schedule — the no-JavaScript path is intact.
+- [x] Driven for real in headless Chrome over the DevTools Protocol, clicking the actual radios: All → 39 rows and 4 level columns per table; Junior Varsity → 37 rows, one "Junior Varsity" column, "2 dates … hidden"; Varsity → 36 rows, one column, "3 dates … hidden".
+- [x] **Cross-checked those counts against `content/matches.json` directly** — `x` counts per level are varsity 3, jv 2, flex 3, freshmen 1, matching the rendered totals exactly.
+- [x] Mobile (390px, device emulation): one time block per card instead of four, and `scrollWidth - clientWidth` measured **0** — no horizontal overflow.
+
+### Not yet done
+- [ ] A filtered schedule cannot be shared as a link. See the decision above; per-team routes are the way in if that becomes a real request.
+- [ ] The filter does not persist across page loads. Deliberate — the alternatives were the hydration mismatch and the lint rule above — but a parent who always wants JV re-picks it each visit. `localStorage` read in an event handler after mount would solve it without the render-time mismatch, if it proves annoying.

@@ -1,13 +1,16 @@
-import type { Match } from "@/data/matches";
+import type { Match, MatchTimes } from "@/data/matches";
 import { levelColumns } from "@/data/matches";
 
 /**
  * The season schedule, rendered twice: a table on wide screens where the
- * four levels read best side by side, and one card per match on phones,
- * where a four-column table cannot fit without horizontal scrolling.
+ * levels read best side by side, and one card per match on phones, where a
+ * four-column table cannot fit without horizontal scrolling.
  *
  * Only one of the two is ever displayed, so assistive technology sees a
  * single copy.
+ *
+ * `level` narrows both layouts to one team's start times. Everything below
+ * works off the resulting column list, so the two layouts cannot drift.
  */
 
 /** A blank cell means "no entry for this level"; "x" means "not playing". */
@@ -58,8 +61,19 @@ function HomeAway({ location }: { location?: string }) {
   return <span className="text-text-muted">{location}</span>;
 }
 
-export function MatchSchedule({ matches, caption }: { matches: Match[]; caption: string }) {
+export function MatchSchedule({
+  matches,
+  caption,
+  level,
+}: {
+  matches: Match[];
+  caption: string;
+  /** Show only this level's start times. Omit for all four. */
+  level?: keyof MatchTimes;
+}) {
   if (matches.length === 0) return null;
+
+  const columns = level ? levelColumns.filter((column) => column.key === level) : levelColumns;
 
   return (
     <>
@@ -78,7 +92,7 @@ export function MatchSchedule({ matches, caption }: { matches: Match[]; caption:
               <th scope="col" className="py-3 pr-4 font-semibold text-primary">
                 Location
               </th>
-              {levelColumns.map((column) => (
+              {columns.map((column) => (
                 <th
                   key={column.key}
                   scope="col"
@@ -107,7 +121,7 @@ export function MatchSchedule({ matches, caption }: { matches: Match[]; caption:
                 <td className="py-3 pr-4">
                   <HomeAway location={match.location} />
                 </td>
-                {levelColumns.map((column) => (
+                {columns.map((column) => (
                   <td key={column.key} className="py-3 pr-4 text-right tabular-nums">
                     <TimeValue value={match.times[column.key]} />
                   </td>
@@ -134,8 +148,8 @@ export function MatchSchedule({ matches, caption }: { matches: Match[]; caption:
               {match.day ? ` · ${match.day}` : ""}
             </p>
 
-            <dl className="mt-4 grid grid-cols-2 gap-2">
-              {levelColumns.map((column) => (
+            <dl className={`mt-4 grid gap-2 ${columns.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+              {columns.map((column) => (
                 <div key={column.key} className="rounded-sm bg-surface px-3 py-2">
                   <dt className="text-xs font-semibold uppercase tracking-wide text-text-muted">
                     {column.label}

@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/layout/PageHero";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import { EventCard } from "@/components/cards/EventCard";
 import { Button } from "@/components/ui/Button";
-import { MatchSchedule } from "@/components/schedule/MatchSchedule";
+import { ScheduleBrowser } from "@/components/schedule/ScheduleBrowser";
 import { programEvents } from "@/data/events";
 import { matchSections, matchesInSection } from "@/data/matches";
 import { site } from "@/data/site";
 
 export const metadata: Metadata = { title: "Schedule" };
+
+const scheduleSections = matchSections
+  .map((section) => ({ ...section, matches: matchesInSection(section.key) }))
+  .filter((section) => section.matches.length > 0);
 
 export default function SchedulePage() {
   return (
@@ -41,32 +44,7 @@ export default function SchedulePage() {
         </Container>
       </section>
 
-      {matchSections.map((section, index) => {
-        const sectionMatches = matchesInSection(section.key);
-        if (sectionMatches.length === 0) return null;
-
-        return (
-          <section
-            key={section.key}
-            aria-labelledby={`${section.key}-heading`}
-            className={index % 2 === 0 ? "pb-12 sm:pb-16" : "bg-surface py-12 sm:py-16"}
-          >
-            <Container>
-              <div id={`${section.key}-heading`}>
-                <SectionHeading
-                  eyebrow={`${sectionMatches.length} ${sectionMatches.length === 1 ? "date" : "dates"}`}
-                  title={section.label}
-                  description={section.description}
-                />
-              </div>
-              <MatchSchedule
-                matches={sectionMatches}
-                caption={`${section.label} schedule with start times for Varsity, Junior Varsity, Flex and Freshman`}
-              />
-            </Container>
-          </section>
-        );
-      })}
+      <ScheduleBrowser sections={scheduleSections} />
 
       <section aria-labelledby="program-dates-heading" className="bg-primary py-16 sm:py-20">
         <Container>

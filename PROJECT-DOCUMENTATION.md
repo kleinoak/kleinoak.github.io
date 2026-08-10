@@ -235,6 +235,12 @@ ko-volleyball-web/
 └── IMPLEMENTATION_SUMMARY.md       # the 2026-08-02 prototype build report
 ```
 
+**The public site ships two client components, and both earn it.** `Header` (menus) and `ScheduleBrowser` (the schedule's team filter). Everything else is a server component rendered to static HTML at build time.
+
+`ScheduleBrowser` filters in the browser rather than giving each team its own route. That is a deliberate trade: switching teams is instant, and — more importantly — the **complete schedule stays inside the prerendered HTML**, so search engines and a reader with JavaScript disabled still get every date. A `/schedule/varsity/` route would have meant either five near-duplicate pages, or reading the team from a query string with `useSearchParams`, which on a statically exported page requires a `<Suspense>` boundary whose fallback is what lands in the HTML. The cost of the choice is that a filtered view cannot be linked or bookmarked.
+
+The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, not buttons with click handlers. Arrow-key navigation, focus management, and the "one of five" relationship announced to screen readers all come from the native control rather than being reimplemented.
+
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
 
 **Every image `src` must go through `assetPath()` (`src/lib/asset.ts`).** `next/image` does not rewrite `src` when the image is `unoptimized` — which it always is here, because Pages cannot run Next's optimizer. A bare `/images/…` src therefore resolves against the *domain* root and 404s whenever the site is served from a sub-path: a GitHub Pages project site, or a folder inside another Pages repo. `assetPath()` prefixes `NEXT_PUBLIC_BASE_PATH`. This applies equally to literal paths in components and to paths coming out of `content/*.json`. Nothing in the build catches a missed call, so the check is `grep` the export for `src="/` paths that lack the base path.
