@@ -239,6 +239,8 @@ ko-volleyball-web/
 
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
 
+**Every image `src` must go through `assetPath()` (`src/lib/asset.ts`).** `next/image` does not rewrite `src` when the image is `unoptimized` — which it always is here, because Pages cannot run Next's optimizer. A bare `/images/…` src therefore resolves against the *domain* root and 404s whenever the site is served from a sub-path: a GitHub Pages project site, or a folder inside another Pages repo. `assetPath()` prefixes `NEXT_PUBLIC_BASE_PATH`. This applies equally to literal paths in components and to paths coming out of `content/*.json`. Nothing in the build catches a missed call, so the check is `grep` the export for `src="/` paths that lack the base path.
+
 **The hero logo is a prepared raster, and the preparation matters.** The mark is `public/images/brand/panther-logo.png`, derived from `logo-redesign/panther-black-high-res-with-words-01.png`. It cannot be an SVG: the artwork carries a soft gold glow that vector shapes will not reproduce.
 
 The source ships as a 1024px square with a white frame and a `#0d0d0d` panel behind the art. Dropped onto the black hero unchanged, that panel reads as a faintly visible grey square. Three steps fix it, and any re-export of the logo needs the same treatment:

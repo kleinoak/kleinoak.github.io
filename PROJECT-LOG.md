@@ -205,3 +205,39 @@ Branch `20260809/feature/landing-upgrades`. A small, self-contained aesthetics p
 - [ ] **The site now carries two unrelated panther identities**: this illustrated mark in the hero, and the `KO` monogram in the header on every page. That was a minor inconsistency when the hero held the faceted crest; with a fully illustrated logo it is conspicuous.
 - [ ] `logo-redesign/` now holds three more untracked source renders (`panther-black-hero-01.png`, `panther-black-high-res.png`, and the one used here). Decide what belongs in the repo as the brand record.
 - [ ] The wordmark says `PANTHERS / KLEIN OAK · VOLLEYBALL`, which reinstates "Panthers" as the lead word — the opposite of the previous pass's annotation. Worth confirming which wording the program actually wants before this reaches anyone.
+
+---
+
+## 20260810
+
+Branch `20260810/fix/asset-base-path`, off `main` after PR #2 squash-merged.
+
+### Context
+Building a static export for a sub-path deployment (`codinci.com/kovb/`, a folder inside an existing `*.github.io` repo) surfaced a bug that had been latent since the static-export work: **`next/image` does not apply `basePath` to `src` when the image is `unoptimized`.** Pages cannot run Next's optimizer, so every image on this site is unoptimized, and every image `src` was being emitted root-relative. The hero logo and the Junior Varsity team photo both 404'd.
+
+This was never specific to the `codinci.com` deployment. It would have broken the **GitHub Pages project-site** case the repo was designed for — `https://<user>.github.io/ko-volleyball-web` with `SITE_BASE_PATH` set — which is exactly the configuration `.env.example` documents. It went unnoticed because no sub-path build had ever been produced: the repo's own Pages deploy has never once succeeded (Pages was never enabled; see the deploy note below).
+
+### Decisions
+- **Fixed with a shared `assetPath()` helper (`src/lib/asset.ts`) rather than a per-call-site string concat**, because the same rule has to hold for paths that arrive from `content/*.json` — a volunteer uploading a photo through `/admin` must not have to know about base paths. `src/cms/components/FieldInput.tsx` already had a local `basePath` const; the new helper is the general form of it.
+- **Not fixed by dropping `basePath` and using relative URLs.** Relative paths would break the App Router's client-side navigation, and `basePath` is the mechanism Next provides for exactly this.
+- **No automated guard added.** Nothing in `tsc`, `eslint`, or `next build` can catch a missed `assetPath()` call, and inventing a lint rule for two call sites is not worth it. The documentation records the `grep` check instead.
+
+### Accomplishments
+- [x] `src/lib/asset.ts` — `assetPath()`, prefixes `NEXT_PUBLIC_BASE_PATH`, pass-through for non-root-relative values.
+- [x] Applied at both image call sites: `Hero.tsx` (brand logo) and `teams/[slug]/page.tsx` (team photo).
+- [x] Documented the rule in `PROJECT-DOCUMENTATION.md` next to the logo-preparation notes.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean.
+- [x] `NEXT_PUBLIC_BASE_PATH=/kovb npm run build` → 16 routes, and a sweep of the whole export for `(href|src)="/…"` paths lacking the `/kovb` prefix returns **nothing**. Before the fix it returned both images.
+- [x] End-to-end: served the target `*.github.io` repo root locally and confirmed `/kovb/`, `/kovb/teams/`, `/kovb/schedule/`, the logo, the `_next` CSS and JS chunks, and the repo's own existing `/` all return 200. Screenshot renders correctly.
+
+### Deployment note (`codinci.com/kovb/`)
+The export was copied to `thecodinci.github.io/kovb/` for a manual deploy. Two things that deployment depends on, recorded because they are easy to lose:
+- **Built with `NEXT_PUBLIC_BASE_PATH=/kovb`.** A default build puts every asset at the domain root and the site renders unstyled.
+- **`.nojekyll` was added at the *repo root*, not just in `kovb/`.** Jekyll strips paths beginning with an underscore and Next puts all its assets in `_next/`. Verified first that the host repo has no `_config.yml`, Gemfile, or underscore directories, so disabling Jekyll cannot affect the existing site.
+
+### Not yet done
+- [ ] **This repo's own Pages deploy has still never succeeded.** Both `deploy.yml` runs (PR #1 on 20260809, PR #2 on 20260810) failed at `actions/configure-pages@v5` with *"Get Pages site failed"* — `GET /repos/…/pages` returns 404, i.e. **Pages has never been enabled on `alfredsilvertonai/ko-volleyball-web`**. Fix is one setting: Settings → Pages → Source: GitHub Actions, then re-run the failed workflow. If that site is served from a project sub-path rather than a custom domain, it also needs the repository variable `SITE_BASE_PATH=/ko-volleyball-web` — which the fix in this branch is a prerequisite for.
+- [ ] The `codinci.com/kovb/` copy is a **manual, point-in-time export**. It has no pipeline: nothing rebuilds it when `main` changes, and `/admin` publishing does not reach it. Either wire up a workflow or treat it as a preview and say so.
+- [ ] Publishing that copy puts the **61 transcribed student names and the hand-read schedule on a public domain**, still unverified by the program. Flagged on every pass since 20260808 and still outstanding.

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { assetPath } from "@/lib/asset";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { site } from "@/data/site";
@@ -8,7 +9,7 @@ export function Hero() {
     <section className="relative overflow-hidden bg-black text-white">
       <Container className="relative flex flex-col items-center gap-10 py-20 sm:py-24 lg:flex-row lg:gap-14 lg:py-28">
         <Image
-          src="/images/brand/panther-logo.png"
+          src={assetPath("/images/brand/panther-logo.png")}
           alt="Klein Oak Panthers Volleyball"
           width={695}
           height={646}

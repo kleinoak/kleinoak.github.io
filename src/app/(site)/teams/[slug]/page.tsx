@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
+import { assetPath } from "@/lib/asset";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/layout/PageHero";
 import { Button } from "@/components/ui/Button";
@@ -38,7 +39,7 @@ export default async function TeamDetailPage({ params }: { params: Params }) {
             {team.photo && (
               <figure className="mb-10">
                 <Image
-                  src={team.photo.src}
+                  src={assetPath(team.photo.src)}
                   alt={team.photo.alt}
                   width={team.photo.width}
                   height={team.photo.height}
