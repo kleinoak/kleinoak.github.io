@@ -147,6 +147,14 @@ export const collections: Collection[] = [
     fields: [
       { name: "id", label: "ID", type: "slug", required: true, deriveFrom: "title" },
       {
+        name: "startDate",
+        label: "Sort date",
+        type: "text",
+        required: true,
+        placeholder: "2026-08-06",
+        help: "YYYY-MM-DD, and it must be the real calendar date — the home page uses it to decide what is still upcoming. For a multi-day event use the first day.",
+      },
+      {
         name: "date",
         label: "Date",
         type: "text",
@@ -231,12 +239,26 @@ export const collections: Collection[] = [
     kind: "list",
     description:
       "The full season schedule — preseason, district, and playoffs — with a start time per level. Rank One remains the live source of truth for last-minute changes; this is the program's published plan.",
-    usedOn: ["Schedule page"],
+    usedOn: ["Schedule page", "Home page — Upcoming Events"],
     labelField: "opponent",
     identifierField: "id",
     itemNoun: "match",
     fields: [
       { name: "id", label: "ID", type: "slug", required: true, deriveFrom: "opponent" },
+      {
+        name: "startDate",
+        label: "Sort date",
+        type: "text",
+        placeholder: "2026-08-18",
+        help: "YYYY-MM-DD, the real calendar date — the home page uses it to decide what is still upcoming, so a match without one never appears there. For a tournament use the first day. Leave blank only while the program has not announced a date.",
+      },
+      {
+        name: "endDate",
+        label: "Last day",
+        type: "text",
+        placeholder: "2026-08-22",
+        help: "Optional — multi-day tournaments only. Keeps the event on the home page until it has finished.",
+      },
       {
         name: "section",
         label: "Part of season",

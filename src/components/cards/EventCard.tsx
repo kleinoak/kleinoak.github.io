@@ -1,8 +1,8 @@
 import { Clock, MapPin } from "lucide-react";
-import { ProgramEvent } from "@/data/events";
+import { CalendarEntry } from "@/data/calendar";
 import { Badge } from "@/components/ui/Badge";
 
-export function EventCard({ event }: { event: ProgramEvent }) {
+export function EventCard({ event }: { event: CalendarEntry }) {
   return (
     <article className="flex gap-4 rounded-sm border border-border bg-background p-5">
       <div className="flex w-16 flex-none flex-col items-center justify-center rounded-sm bg-primary text-white">
@@ -36,6 +36,18 @@ export function EventCard({ event }: { event: ProgramEvent }) {
             </span>
           )}
         </div>
+        {event.levelTimes && (
+          <dl className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+            {event.levelTimes.map((level) => (
+              <div key={level.label} className="inline-flex items-center gap-1.5">
+                <dt className="font-semibold uppercase tracking-wide text-[0.7rem] text-accent-strong">
+                  {level.label}
+                </dt>
+                <dd className="text-text-muted">{level.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
     </article>
   );

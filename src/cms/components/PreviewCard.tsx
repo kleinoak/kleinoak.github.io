@@ -41,12 +41,12 @@ export function PreviewCard({ collection, item }: { collection: Collection; item
         <EventCard
           event={{
             id: text(item, "id", "preview"),
+            startDate: text(item, "startDate"),
             date: text(item, "date", "Date"),
             time: text(item, "time") || undefined,
             title: text(item, "title", "Untitled"),
             location: text(item, "location") || undefined,
             status: item.status === "tentative" ? "tentative" : "confirmed",
-            verified: item.verified === true,
           }}
         />
       );

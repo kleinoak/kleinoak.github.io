@@ -16,6 +16,13 @@ export type MatchTimes = {
 
 export type Match = {
   id: string;
+  /**
+   * Sortable ISO date (YYYY-MM-DD); `endDate` is set only for multi-day
+   * tournaments. `date`/`day` stay the free-form display strings. Optional
+   * because the program has published one entry with no date yet.
+   */
+  startDate?: string;
+  endDate?: string;
   section: MatchSection;
   day?: string;
   date?: string;
