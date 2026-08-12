@@ -6,6 +6,29 @@ Work through it in order — [step 1](#1--decide-the-repository-name) determines
 
 ---
 
+## Status — 2026-08-12
+
+**Decided:**
+- Repository: **`kleinoak/kleinoak.github.io`** — served at the domain root, so `SITE_BASE_PATH` stays **unset**.
+- Account stays a **User**, not an Organization. Accepted risk: production is tied to one person's credentials. Mitigate by putting the account on a program-owned email address and giving the board its recovery codes.
+
+**Production is live: <https://kleinoak.github.io/>**
+
+**Done:**
+- §2 SSH key registered; `github.com-kleinoak` alias in `~/.ssh/config` (all five aliases verified). `ssh -T` greets as `kleinoak`.
+- §3 Repo `kleinoak/kleinoak.github.io` created; `prod` remote added; `main` pushed (12 commits, full history).
+- §4 Pages on. Both `Build and deploy site` and `pages build and deployment` completed **success** on the first run.
+- §8 Production readiness — the prototype framing is out (PR #11).
+- Verified live: homepage 200 with stylesheet loading (44 KB), `/sponsors/`, `/schedule/`, `/teams/varsity/`, `/admin/`, a sponsor logo, and the form PDF all 200. Title reads `Klein Oak Volleyball`, no "(Prototype)", zero `/kovb/`-prefixed paths.
+
+**Still open — see [What only you can do](#what-only-you-can-do):**
+- §5 `GA_MEASUREMENT_ID` variable, when analytics is set up. **Leave `SITE_BASE_PATH` unset** — the site is root-served.
+- §7 Editors as collaborators, each with a *new* fine-grained token scoped to this repo.
+- §6 Custom domain, if wanted. Not `kleinoakvolleyball.com` until the program decides to cut over.
+- §10 Which repo is the source of truth now that two can accept `/admin` publishes.
+
+---
+
 ## What is true today
 
 Checked, not assumed:
@@ -204,3 +227,73 @@ The open question is which repo becomes the source of truth. Two repos both acce
 10. Custom domain last (§6)
 
 Getting §7 confirmed working before §6 means that if DNS misbehaves you are debugging one thing, not two.
+
+---
+
+## What only you can do
+
+Every step below needs a browser signed in as `kleinoak`. `gh` cannot stand in — it is authenticated as `bschwarzchild` and ignores the SSH aliases entirely.
+
+Do them in this order. Stop at the first one that does not behave as described.
+
+### 1. Register the SSH public key
+
+<https://github.com/settings/keys> → **New SSH key**. Title: `gojo mac`. Key:
+
+```text
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINLcD20LG7f8FZ/1WJbJUHn4FTUVaqABBxlMqicXRcAI kleinoak
+```
+
+Then confirm — this must greet you as **kleinoak**, not another account:
+
+```bash
+ssh -T git@github.com-kleinoak
+```
+
+### 2. Create the repository
+
+<https://github.com/new>, signed in as `kleinoak`.
+
+- Name: **`kleinoak.github.io`** — exactly this, or the site will not serve from the root
+- Public
+- **Do not** add a README, `.gitignore`, or licence — the first push must be clean
+
+### 3. Push (I can run this once 1 and 2 are done)
+
+```bash
+cd ~/Workspace/play/ko-volleyball-web
+git push prod main
+```
+
+The `prod` remote is already configured. This carries the full history across.
+
+### 4. Turn on Pages
+
+Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+Not "Deploy from a branch" — the workflow uploads an artifact, and branch mode ignores it and serves nothing.
+
+### 5. Let the first deploy run
+
+**Actions** tab → the `Build and deploy site` run should start on the push and go green in a couple of minutes. If it did not start, run it manually via **Run workflow**.
+
+### 6. Verify before anything else
+
+Open <https://kleinoak.github.io/> and check:
+
+- Page loads **with styling** — unstyled means `.nojekyll` or the base path is wrong
+- Sponsor logos appear on `/sponsors/`
+- The sponsorship-form PDF downloads
+- Tab title reads `Klein Oak Volleyball` with no "(Prototype)"
+
+**Do not set `SITE_BASE_PATH`.** For a root-served site it must stay unset; setting it breaks every asset path.
+
+### 7. Then, and only then
+
+- **Editors:** Settings → Collaborators → add with **Write**. Each editor needs a *new* fine-grained token scoped to this repo — existing tokens are scoped to the old one and will not work.
+- **Analytics:** follow `GOOGLE-ANALYTICS-SETUP.md`, adding `GA_MEASUREMENT_ID` as a repository **variable**.
+- **Custom domain:** §6 above. Leave `kleinoakvolleyball.com` alone until the program has decided to cut over — repointing that DNS *is* the cutover.
+
+### Ping me when step 6 passes
+
+I will then handle the `.env.local` for local builds, decide what `codinci.com/kovb/` becomes, and update the project log.

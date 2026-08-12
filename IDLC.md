@@ -757,10 +757,89 @@ Remove this at the sponsors page: "This is a partial sponsor list gathered from 
 Open a new window when the "Download the sponsorship form" is clicked.
 
 
-# 7
-
+# 7 🟡
+ 
 Two major updates that need to happen:
 
 First, let's add Google Analytics to the site so I can get analytics and reports. Outline steps that I need to take to make this happen. Write it in a file called GOOGLE-ANALYTICS-SETUP.md.
 
 The second major upgrade is to deploy this to a new github page that will serve as our PRODUCTION environment. The new github repo is https://github.com/kleinoak. Outline the steps for me to take to do the intiial setup in a md file called GITHUB-PROD-SETUP.md.
+
+
+# 8
+
+Create a web icon for the website similar to the "KO" in the logo.
+Update project log and documentation once done.
+
+
+
+## ------------------
+## PROD deployment next steps 20260812
+## ------------------
+
+Production is live at https://kleinoak.github.io/ — repo created, `main` pushed with full
+history, Pages serving from GitHub Actions, first deploy green. Verified: homepage and all
+routes 200, stylesheet loading, sponsor logos and the form PDF served, no "(Prototype)"
+anywhere, no `/kovb/` path prefixes.
+
+What is left, roughly in the order it matters.
+
+### Decide first — two repos can now publish
+
+`/admin` on production writes to `kleinoak/kleinoak.github.io`; `/admin` on a build of
+`alfredsilvertonai/ko-volleyball-web` writes to the old repo. If both accept edits they
+will diverge, and merging `content/*.json` by hand is miserable. Pick one source of truth
+— most likely production — and make the other a mirror.
+
+Related: name the three deployments so their roles are explicit.
+- `kleinoak.github.io` — PRODUCTION, auto-deploys from `main`
+- `codinci.com/kovb/` — staging, hand-deployed, no analytics ID
+- `alfredsilvertonai/ko-volleyball-web` — development source
+
+### Access (blocks real editors from using the site)
+
+- [ ] Add editors as collaborators with **Write** on the production repo.
+- [ ] Each editor issues a **new** fine-grained token scoped to `kleinoak/kleinoak.github.io`
+      — Contents: Read and write, nothing else. Tokens are per-repository, so existing ones
+      will not work and every editor must redo this. Expect support questions here.
+- [ ] Put the `kleinoak` account on a program-owned email address and give the board its
+      recovery codes. It is a personal User account, so whoever holds the password owns
+      production.
+
+### Analytics
+
+- [ ] Follow `GOOGLE-ANALYTICS-SETUP.md`: create the GA4 property, decide the privacy
+      settings, add `GA_MEASUREMENT_ID` as a repository **variable** (not a secret).
+- [ ] Implement the tag — `@next/third-parties` is not installed yet.
+- [ ] Leave `GA_MEASUREMENT_ID` unset on staging so prototype traffic stays out of
+      production reports.
+
+### Domain — only when the program has decided
+
+- [ ] Custom domain in Settings → Pages, DNS records, then Enforce HTTPS.
+- [ ] Do **not** repoint `kleinoakvolleyball.com` until the switch is agreed. That DNS
+      change *is* the cutover and is not reversible within the TTL window.
+
+### Content the program still needs to confirm
+
+- [ ] `spirit-wear` in `content/resources.json` is still marked unverified and renders with
+      a caution note.
+- [ ] The sponsor roster now carries real logos; nothing on the site marks it as
+      unconfirmed since the caveat paragraph was removed (request 5).
+- [ ] Coach biographies, photos, and staff contact details are still unpublished.
+- [ ] The tagline "Compete Together. Grow Together. Win Together." was written for the
+      prototype and is now marked official. Replace it if the program has a real one.
+
+### Engineering follow-ups
+
+- [ ] Nothing validates the sponsor tier ↔ logo join. Renaming a sponsor in one file and
+      not the other silently drops the logo, with no build error.
+- [ ] Add `public/.nojekyll` to the repo so every export carries it. CI already does
+      `touch out/.nojekyll`; hand-deploys to staging do not.
+- [ ] `SITE_BASE_PATH` must stay **unset** on production. The site is root-served and
+      setting it breaks every asset path.
+
+### Never do
+
+- Do not delete `public/images/junior-varsity-team.jpg` or its archive copy in
+  `logo-redesign/`.
