@@ -330,3 +330,41 @@ The schedule was "view all" only: three sections, every row showing four start t
 ### Not yet done
 - [ ] A filtered schedule cannot be shared as a link. See the decision above; per-team routes are the way in if that becomes a real request.
 - [ ] The filter does not persist across page loads. Deliberate — the alternatives were the hydration mismatch and the lint rule above — but a parent who always wants JV re-picks it each visit. `localStorage` read in an event handler after mount would solve it without the render-time mismatch, if it proves annoying.
+
+---
+
+## 20260812 — Sponsors: real logos, the form PDF, and a shorter footer
+
+Branch `20260812/feature/sponsors-logos-and-form`, off `main` after PR #8. Four requested changes to the Sponsors page and footer.
+
+### The problem
+The Sponsors page listed seven businesses as plain uppercase text. The people who paid for a Platinum spot were getting a wordmark rendered in the site's own font — the one thing a sponsor is actually buying is their mark on the page. Step 1 of "Become a Sponsor" said *"Complete the Sponsorship Form"* with no way to obtain it. And the footer still carried the prototype disclaimer.
+
+### Decisions
+- **Logos live in their own collection, joined by name.** A tier's `sponsors` is a `stringList` in the CMS, which cannot hold objects, so artwork could not be nested inside the tier without breaking the `/admin` editor for that collection. `content/sponsor-logos.json` is keyed by exact business name; a sponsor with no entry falls back to its name. That fallback is the point — a business can be listed the day it signs up, artwork or not. **The cost is a join with nothing enforcing it:** rename a sponsor in one file and not the other and the logo silently disappears. Documented rather than validated, for now.
+- **`bg-background` → `bg-white` on the sponsor card.** Supplied logos assume a white background; several of these are transparent PNGs with dark linework that would have sat on the site's off-white surface at slightly wrong contrast. This is the one visual change not explicitly requested, and it is there because the requested change would otherwise look subtly broken.
+- **The card scales artwork, rather than the artwork being pre-fitted.** `max-h-16 w-auto object-contain` inside a fixed `h-24` card, with real `width`/`height` on every entry so nothing reflows as images load. Seven logos with aspect ratios from 3.8:1 (GulfPoint) to 1:1 (TAV, NHE) sit on the same row without letterboxing.
+- **The PDF is content, not a hardcoded href.** Added `sponsorFormUrl` to `content/site.json` so the Booster Club can drop in next season's letter from `/admin` without a code change. It is a `public/` path, so it goes through `assetPath()` — the same sub-path trap that PR #3 fixed for images applies to any link into `public/`.
+- **`public/documents/`, not `public/resources/`.** `/resources` is already a route; a `public/resources/` directory would collide with it in the export.
+- **Corrected a stale note in the schema.** `sponsor-tiers`' help text read *"logos are not published without written permission from the sponsor."* That predates this change and now contradicts the code. Rewritten to describe the fallback behaviour and to say only publish artwork the sponsor supplied for the purpose — which is what step 3 of the program's own sponsorship instructions asks them to send.
+
+### Accomplishments
+- [x] Sponsors page eyebrow → "Community Support - Booster Club"; title → "2025 Sponsors".
+- [x] Seven logos sourced from the program's live site into `public/images/sponsors/`, with per-sponsor alt text using each business's full name as it appears in its own mark (e.g. "Blaine Tomball" → *Blaine Scelfo, State Farm agent in Tomball*).
+- [x] New `content/sponsor-logos.json` + `sponsor-logos` CMS collection (name + `image`), and `sponsorLogoFor()` in `src/data/sponsors.ts`.
+- [x] `SponsorLogoCard` renders artwork when present, the business name otherwise.
+- [x] "Download the Sponsorship Form (PDF)" in Get Involved, driven by `site.sponsorFormUrl`.
+- [x] Removed the prototype disclaimer from the footer.
+
+### Verified
+- [x] `tsc --noEmit` clean; `validate:content` → 12 files OK; `next build` → 15 routes.
+- [x] The supplied PDF is **byte-identical** (SHA-256) to the one already linked from the live site's Sponsorships page — publishing it exposes nothing new. It does contain a board member's personal mobile and email, which is why that was checked before linking rather than after.
+- [x] All seven logo files opened and eyeballed — real marks, not error placeholders or hotlink-blocked stubs.
+- [x] Built page driven in Chrome: eyebrow, title, three tiers, seven logos on white cards, and the PDF button all render; `/documents/sponsor-letter-2025-2026.pdf` serves 200 as `application/pdf`.
+- [x] Footer line absent from every built page checked (home, sponsors, teams, contact).
+
+### Not yet done
+- [ ] **Nothing validates the tier↔logo join.** A rename in one file drops the logo with no error. `validate-content.mts` already checks that referenced images exist; checking that every logo name matches a tier entry belongs next to it.
+- [ ] The home page Sponsors strip now shows Platinum logos too, via the shared card. Consistent, but it was not part of the request — worth a look to confirm it is wanted.
+- [ ] The page still carries the "partial sponsor list … Booster Club should confirm" caveat. Now that real artwork is published, confirming the roster matters more, not less.
+- [ ] `logo-redesign/` and the source `resources/` folder hold originals outside `public/`; only the copies under `public/` are served.

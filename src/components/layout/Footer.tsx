@@ -102,7 +102,6 @@ export function Footer() {
       <div className="border-t border-white/10 py-6">
         <Container className="flex flex-col items-center justify-between gap-2 text-xs text-white/50 sm:flex-row">
           <p>© {new Date().getFullYear()} Klein Oak Volleyball Booster Club. All rights reserved.</p>
-          <p>Local modernization prototype — not the official Klein Oak Volleyball website.</p>
         </Container>
       </div>
     </footer>

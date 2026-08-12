@@ -12,6 +12,8 @@ export type Site = {
   contactEmail: string;
   parentPortalUrl: string;
   rankOneScheduleUrl: string;
+  /** Path under `public/`, so it must go through `assetPath()` before use. */
+  sponsorFormUrl: string;
   socials: {
     facebook?: string;
     instagram?: string;

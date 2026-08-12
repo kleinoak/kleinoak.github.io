@@ -735,4 +735,18 @@ Also, for the entire site, use the yellow shade from the faceted logo. The curre
 Update project log and documentation once done.
 
 
+## ------------------
+## 🟨 20260811
+## ------------------
+
+# 4 Sponsors  and footer changes 
+1. In the  "Sponsors" page, change the label "Community Support" to "Community Support - Booster Club".
+2. At the "Get Involved" section of the Sponsor page, add a link to the actual Sponsorship Form. The pdf is at the reources folder.
+3. At the "Sponsors" page, change the title to "2025 Sponsors" and add the actual logo of the sponsors for each sponsor which is found at https://www.kleinoakvolleyball.com/
+4. At the footer, remove "Local modernization prototype — not the official Klein Oak Volleyball website."
+
+Update project log and documentation once done.
+
+
+
 

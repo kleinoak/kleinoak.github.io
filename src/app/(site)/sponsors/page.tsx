@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Mail } from "lucide-react";
+import { FileText, Mail } from "lucide-react";
+import { assetPath } from "@/lib/asset";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/layout/PageHero";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -14,8 +15,8 @@ export default function SponsorsPage() {
   return (
     <>
       <PageHero
-        eyebrow="Community Support"
-        title="Sponsors"
+        eyebrow="Community Support - Booster Club"
+        title="2025 Sponsors"
         description="Klein Oak Volleyball is booster-run and community-supported. Thank you to every sponsor that makes the program possible."
       />
 
@@ -59,6 +60,16 @@ export default function SponsorsPage() {
                 </li>
               ))}
             </ol>
+            <a
+              href={assetPath(site.sponsorFormUrl)}
+              className="mt-8 inline-flex items-center gap-2 rounded-sm border border-white/25 px-5 py-3 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:border-accent hover:bg-accent hover:text-primary"
+            >
+              <FileText aria-hidden="true" className="h-4 w-4" />
+              Download the Sponsorship Form
+              <span className="font-normal normal-case tracking-normal text-white/60">
+                (PDF)
+              </span>
+            </a>
           </div>
 
           <div className="rounded-sm border border-white/15 bg-white/5 p-8">

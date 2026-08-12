@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Stewart Builders",
+    "logo": {
+      "src": "/images/sponsors/stewart-builders.jpg",
+      "alt": "Stewart Builders logo",
+      "width": 600,
+      "height": 239
+    }
+  },
+  {
+    "name": "Planet Ford",
+    "logo": {
+      "src": "/images/sponsors/planet-ford.png",
+      "alt": "Randall Reed's Planet Ford, Spring TX logo",
+      "width": 600,
+      "height": 386
+    }
+  },
+  {
+    "name": "TAV",
+    "logo": {
+      "src": "/images/sponsors/tav.png",
+      "alt": "TAV Houston logo",
+      "width": 400,
+      "height": 400
+    }
+  },
+  {
+    "name": "GulfPoint",
+    "logo": {
+      "src": "/images/sponsors/gulfpoint.jpg",
+      "alt": "GulfPoint Services logo",
+      "width": 508,
+      "height": 132
+    }
+  },
+  {
+    "name": "NHE",
+    "logo": {
+      "src": "/images/sponsors/nhe.png",
+      "alt": "NH Elite Volleyball Club logo",
+      "width": 375,
+      "height": 375
+    }
+  },
+  {
+    "name": "Blaine Tomball",
+    "logo": {
+      "src": "/images/sponsors/blaine-tomball.jpg",
+      "alt": "Blaine Scelfo, State Farm agent in Tomball, logo",
+      "width": 600,
+      "height": 379
+    }
+  },
+  {
+    "name": "Blue Louis",
+    "logo": {
+      "src": "/images/sponsors/blue-louis.png",
+      "alt": "Blue Louis Boutique logo",
+      "width": 600,
+      "height": 298
+    }
+  }
+]

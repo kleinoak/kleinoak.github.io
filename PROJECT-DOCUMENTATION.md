@@ -104,8 +104,11 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 | Parent resources | list | `content/resources.json` | Resources |
 | Booster Club board | list | `content/booster-board.json` | Contact |
 | Sponsor tiers | list | `content/sponsor-tiers.json` | Home page, Sponsors |
+| Sponsor logos | list | `content/sponsor-logos.json` | Home page, Sponsors |
 | How to sponsor | singleton | `content/sponsor-steps.json` | Sponsors |
 | Site settings | singleton | `content/site.json` | Every page |
+
+**Why sponsor logos are a separate collection.** A tier's `sponsors` is a `stringList`, which cannot hold objects, so the artwork cannot live inside the tier. `sponsor-logos.json` is joined to a tier entry by exact business name. A sponsor with no matching entry renders as its name instead — so a business can be listed the moment it signs up, without waiting on artwork. The join is by name, which means **renaming a sponsor in one file and not the other silently drops the logo**; nothing validates the pairing.
 
 **Field types**: `text`, `textarea`, `slug`, `url`, `email`, `link`, `select`, `boolean`, `number`, `stringList`, `image`. Fields carry `required`, `maxLength`, `help`, `placeholder`, `options`, and `deriveFrom` (a slug generated from another field when left blank). Dotted names address nested keys (`socials.facebook`).
 
