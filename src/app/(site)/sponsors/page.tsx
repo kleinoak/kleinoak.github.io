@@ -37,12 +37,6 @@ export default function SponsorsPage() {
               </div>
             </div>
           ))}
-          <p className="text-sm text-text-muted">
-            This is a partial sponsor list gathered from the current live site — some sponsor
-            logos there carry no legible name and are intentionally omitted rather than guessed.
-            The Booster Club should confirm the complete, current sponsor roster before this
-            content is published anywhere official.
-          </p>
         </Container>
       </section>
 
@@ -62,12 +56,16 @@ export default function SponsorsPage() {
             </ol>
             <a
               href={assetPath(site.sponsorFormUrl)}
+              target="_blank"
+              // noopener/noreferrer: without it the opened tab gets a handle on
+              // this one via window.opener and could navigate it elsewhere.
+              rel="noopener noreferrer"
               className="mt-8 inline-flex items-center gap-2 rounded-sm border border-white/25 px-5 py-3 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:border-accent hover:bg-accent hover:text-primary"
             >
               <FileText aria-hidden="true" className="h-4 w-4" />
               Download the Sponsorship Form
               <span className="font-normal normal-case tracking-normal text-white/60">
-                (PDF)
+                (PDF, opens in a new tab)
               </span>
             </a>
           </div>

@@ -749,4 +749,9 @@ Update project log and documentation once done.
 
 
 
+# 5 
+Remove this at the sponsors page: "This is a partial sponsor list gathered from the current live site — some sponsor logos there carry no legible name and are intentionally omitted rather than guessed. The Booster Club should confirm the complete, current sponsor roster before this content is published anywhere official."
 
+
+# 6
+Open a new window when the "Download the sponsorship form" is clicked.
