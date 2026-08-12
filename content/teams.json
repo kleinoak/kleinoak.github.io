@@ -29,12 +29,6 @@
     "name": "Junior Varsity",
     "level": "Junior Varsity",
     "description": "The developmental step between Freshman and Varsity, building toward varsity-level competition.",
-    "photo": {
-      "src": "/images/junior-varsity-team.jpg",
-      "alt": "The Klein Oak Junior Varsity volleyball team photographed in the school gym, wearing gold and black Panther uniforms.",
-      "width": 1634,
-      "height": 1086
-    },
     "roster": [
       "Ella Dennison",
       "Madison McDaniel",

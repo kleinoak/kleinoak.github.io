@@ -735,10 +735,4 @@ Also, for the entire site, use the yellow shade from the faceted logo. The curre
 Update project log and documentation once done.
 
 
-# 4
-
-Let's use this for the hero logo.
-Update project log and documentation once done.
-
-
 
