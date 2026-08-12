@@ -43,7 +43,7 @@ export function Hero() {
           </div>
         </div>
       </Container>
-      <p className="sr-only">{site.tagline} (prototype messaging)</p>
+      <p className="sr-only">{site.tagline}</p>
     </section>
   );
 }

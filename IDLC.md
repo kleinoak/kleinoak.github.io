@@ -739,7 +739,7 @@ Update project log and documentation once done.
 ## 🟨 20260811
 ## ------------------
 
-# 4 Sponsors  and footer changes 
+# 4 Sponsors  and footer changes ✅
 1. In the  "Sponsors" page, change the label "Community Support" to "Community Support - Booster Club".
 2. At the "Get Involved" section of the Sponsor page, add a link to the actual Sponsorship Form. The pdf is at the reources folder.
 3. At the "Sponsors" page, change the title to "2025 Sponsors" and add the actual logo of the sponsors for each sponsor which is found at https://www.kleinoakvolleyball.com/
@@ -749,9 +749,18 @@ Update project log and documentation once done.
 
 
 
-# 5 
+# 5  ✅
 Remove this at the sponsors page: "This is a partial sponsor list gathered from the current live site — some sponsor logos there carry no legible name and are intentionally omitted rather than guessed. The Booster Club should confirm the complete, current sponsor roster before this content is published anywhere official."
 
 
-# 6
+# 6 ✅
 Open a new window when the "Download the sponsorship form" is clicked.
+
+
+# 7
+
+Two major updates that need to happen:
+
+First, let's add Google Analytics to the site so I can get analytics and reports. Outline steps that I need to take to make this happen. Write it in a file called GOOGLE-ANALYTICS-SETUP.md.
+
+The second major upgrade is to deploy this to a new github page that will serve as our PRODUCTION environment. The new github repo is https://github.com/kleinoak. Outline the steps for me to take to do the intiial setup in a md file called GITHUB-PROD-SETUP.md.

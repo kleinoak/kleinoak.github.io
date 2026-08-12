@@ -366,5 +366,34 @@ The Sponsors page listed seven businesses as plain uppercase text. The people wh
 ### Not yet done
 - [ ] **Nothing validates the tier↔logo join.** A rename in one file drops the logo with no error. `validate-content.mts` already checks that referenced images exist; checking that every logo name matches a tier entry belongs next to it.
 - [ ] The home page Sponsors strip now shows Platinum logos too, via the shared card. Consistent, but it was not part of the request — worth a look to confirm it is wanted.
-- [ ] The page still carries the "partial sponsor list … Booster Club should confirm" caveat. Now that real artwork is published, confirming the roster matters more, not less.
+- [x] ~~The page still carries the "partial sponsor list … Booster Club should confirm" caveat.~~ Removed in PR #10 below, at the program's request. The underlying point stands: nothing on the site now signals that the roster is unconfirmed.
 - [ ] `logo-redesign/` and the source `resources/` folder hold originals outside `public/`; only the copies under `public/` are served.
+
+---
+
+## 20260812 — Sponsors: caveat removed, form opens in a new tab
+
+Branch `20260812/content/sponsors-caveat-and-form-target`, off `main` after PR #9. IDLC requests 5 and 6. PR #10.
+
+### The problem
+Two small follow-ups to the sponsors work. The page still closed with a paragraph calling the roster partial and gathered from the live site — copy written when the list was a best-effort transcription, which read oddly under seven real sponsor logos. And the sponsorship form replaced the page with a PDF, so a parent reading "Become a Sponsor" lost the three steps the moment they opened the form they describe.
+
+### Decisions
+- **`rel="noopener noreferrer"` alongside `target="_blank"`.** Not requested, and not optional: without `noopener` the opened tab receives a `window.opener` handle on the Sponsors page and can navigate it. The cost is nil, so it goes in by default rather than being raised as a question.
+- **The label says so: "(PDF, opens in a new tab)".** A link that changes window context without warning is WCAG 3.2.5, and the surprise lands hardest on screen-reader users, who get no visual cue that a new tab appeared. Three words of copy is the entire fix.
+- **Removed the caveat rather than rewording it.** It was two claims: *this list is partial*, and *the Booster Club should confirm before publishing officially*. The first stopped being true once the roster carried real artwork. The second is still true — but it is guidance for the Booster Club, not for a parent reading the page, and it was being addressed to the wrong audience. **Nothing on the site now marks the roster as unconfirmed**; if that matters, the `verified` flag already used by other collections is the mechanism, not prose.
+- **Left the earlier entry's stale bullet struck through rather than deleted.** The log is a record of what was known when; silently editing a past "not yet done" into agreement with the present hides the fact that it was raised and then reversed.
+
+### Accomplishments
+- [x] Removed the provisional-roster paragraph from `sponsors/page.tsx`.
+- [x] Sponsorship form link opens in a new tab, with `rel="noopener noreferrer"` and a label that says so.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] Built page: caveat absent, tier headings and all seven logos still render, PDF link intact.
+- [x] Checked inside the **pushed** deploy commit, not just the local build: `target`, both `rel` values, the label, `/kovb/`-prefixed href, 7/7 logos, `.nojekyll` present.
+
+### Not yet done
+- [ ] Carried forward from PR #9: **nothing validates the tier↔logo join**, and the home page Sponsors strip now shows Platinum logos as a side effect.
+- [ ] No signal anywhere that the sponsor roster is unconfirmed, now the caveat is gone. `verified` is the existing mechanism if that is wanted.
+- [ ] Browsers differ on `target="_blank"` to a PDF — inline viewer in Chrome and Firefox, immediate download and a self-closing tab in some configurations. Nothing in the markup controls which.

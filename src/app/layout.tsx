@@ -20,11 +20,11 @@ const oswald = Oswald({
 
 export const metadata: Metadata = {
   title: {
-    default: "Klein Oak Volleyball (Prototype)",
-    template: "%s | Klein Oak Volleyball (Prototype)",
+    default: "Klein Oak Volleyball",
+    template: "%s | Klein Oak Volleyball",
   },
   description:
-    "A local modernization prototype for the Klein Oak High School Panther Volleyball program: teams, schedule, coaches, sponsors, and parent resources.",
+    "The Klein Oak High School Panther Volleyball program: teams, schedule, coaches, sponsors, and parent resources.",
 };
 
 // The public site's header and footer live in `(site)/layout.tsx` so that the

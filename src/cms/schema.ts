@@ -482,7 +482,7 @@ export const collections: Collection[] = [
         name: "taglineIsPrototypeCopy",
         label: "Tagline is placeholder copy",
         type: "boolean",
-        help: "Leave on until the Booster Club confirms the wording is official.",
+        help: "Turn on only if the tagline is a stand-in the Booster Club has not approved. Off means the wording is official.",
       },
       { name: "contactEmail", label: "Contact email", type: "email", required: true },
       { name: "parentPortalUrl", label: "Parent portal link", type: "url", required: true },

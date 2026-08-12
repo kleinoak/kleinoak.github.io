@@ -31,10 +31,8 @@ export default function CoachesPage() {
               Coach biographies pending
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-text-muted">
-              Coach names and titles above are taken from the current Klein Oak Volleyball site.
-              Biographies, photos, and staff contact details are not published there yet and have
-              not been invented for this prototype — they can be added once the program confirms
-              them.
+              Biographies, photos, and staff contact details are not published yet. They will be
+              added once the program confirms them.
             </p>
             <div className="mt-6">
               <a
