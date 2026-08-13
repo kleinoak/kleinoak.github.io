@@ -775,12 +775,27 @@ Also, check for a dynamic way to render upcoming events depending on actual date
 Update project log and documentation once done.
 
 
-# 9
+# 9 ✅
 
 I want to add an additional hero banner. Use the file `vbif-campaign.png` as the secondary banner.
 I'll leave it to you to design the interactive UIUX for the banners but make sure that onload, the current banner is displayed.
 
 Update project log and documentation once done.
+
+
+# 10 Google analytics proceed
+
+I have completed step 1 of the GOOGLE-ANALYTICS-SETUP.md.
+Please proceed with steps 3, 4 and 5.
+
+Here are the measurement id and stream id from Google Analytics.
+
+Measurement ID: G-HEED59B487
+Stream ID: 15424600817
+
+Update project log and documentation once done.
+
+
 
 ## ------------------
 ## PROD deployment next steps 20260812

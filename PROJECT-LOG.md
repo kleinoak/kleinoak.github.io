@@ -481,3 +481,42 @@ Re-encoded `vbif-campaign.png` (1,096 KB) to `vbif-campaign.webp` (**34 KB, 96.9
 - **Checked, not assumed:** compared 1:1 crops across the logo edge and the gradient background. WebP q80 is indistinguishable from the original and preserves the film grain; AVIF smooths it slightly. Confirmed in the browser that the WebP renders and decodes (1376×768, `image/webp`).
 - **`sharp` was already available** as a Next dependency — no new tooling. Earlier in the day I recorded that this machine had no rasteriser and skipped generating PNG icon variants; that was true of SVG rasterisers, but I had not checked for `sharp`, which handles raster-to-raster work. Worth remembering for the outstanding `apple-icon.png`.
 - The original PNG moved to `logo-redesign/vbif-campaign-source.png`, alongside the other brand sources. It is not served, but it does add 1.1 MB to the repository — consistent with the other source artwork already there, and worth dropping if repo size becomes a concern.
+
+---
+
+## 20260813 — Google Analytics wired in
+
+Branch `20260813/feature/google-analytics`. GA4 property `G-HEED59B487` created by the program; steps 3–5 of `GOOGLE-ANALYTICS-SETUP.md` implemented. GA had been parked pending policy review and was un-parked.
+
+### The problem
+No measurement of any kind. The program wanted to know which pages families actually use, and whether the sponsorship form gets downloaded — the one number a sponsor conversation can be built on.
+
+### Decisions
+- **The tag is guarded on `NEXT_PUBLIC_GA_ID`, and that guard is the environment strategy.** No ID means no tag is emitted at all, so `npm run dev` and the hand-deployed staging copy report nothing by construction. The alternative — one property plus a hostname filter — needs the filter applied correctly in every report forever. Confirmed both ways: a build without the variable contains **zero** `googletagmanager` references; a build with it contains the tag on every page.
+- **`process.env.NEXT_PUBLIC_GA_ID` appears as that exact literal.** Next inlines these by textual substitution at build time, so reading it through a variable or computed key silently yields `undefined` — a failure that looks like working code.
+- **`<GoogleAnalytics>` alone was not enough, and this was the real finding.** It injects gtag.js, which reports the document that loaded and nothing after. Every internal link here is a pushState navigation, so a visitor reading five pages would have reported as **one page view**. Measured rather than assumed: instrumenting `sendBeacon`, `fetch`, `XHR` and image beacons and then navigating produced **zero** outgoing hits, with `dataLayer` holding only `js` and `config`. Added `src/components/analytics/PageViews.tsx` to send `page_view` on pathname change. After the fix: exactly one `page_view` per navigation with the correct `page_path`, and no duplicate for the landing page.
+- **`usePathname`, never `useSearchParams`.** The latter forces a Suspense boundary in a statically exported route, and the *fallback* is what lands in the prerendered HTML — the same trap the schedule filter hit in PR #5. No route on this site is distinguished by a query string.
+- **The property setting now matters to the code.** Enhanced measurement's "page changes based on browser history events" does the same job as `PageViews`. Both active means every navigation counted twice, invisibly. Documented as a required toggle rather than left to chance, because the failure mode is inflated numbers that look plausible.
+- **A variable, not a secret.** The Measurement ID ships in the HTML by necessity; storing it as a secret would only obscure what is deployed.
+
+### Accomplishments
+- [x] `@next/third-parties` installed; `GoogleAnalytics` rendered in `src/app/layout.tsx` behind the ID guard.
+- [x] `src/components/analytics/PageViews.tsx` — route-change page views.
+- [x] `deploy.yml` passes `NEXT_PUBLIC_GA_ID: ${{ vars.GA_MEASUREMENT_ID }}`.
+- [x] `.env.example` documents the variable and why it is empty by default.
+- [x] `GOOGLE-ANALYTICS-SETUP.md` updated with a status block, the route-change finding, and the enhanced-measurement warning.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] Build without the ID: 0 `googletagmanager` references. Build with it: tag present on `/`, `/schedule/`, `/sponsors/`, `/teams/`.
+- [x] In Chrome: gtag.js injected, `window.gtag` a function, `dataLayer` configured with `G-HEED59B487`.
+- [x] Route tracking measured end to end by instrumenting all four GA transports across two client-side navigations.
+- [x] Confirmed `alfredsilvertonai/ko-volleyball-web` has **no** Pages site, so production is the only environment that can report.
+- [x] Confirmed production serves the Actions artifact, not repository source: `/package.json`, `/README.md`, `/src/app/layout.tsx` all 404.
+
+### Not yet done
+- [ ] **`GA_MEASUREMENT_ID` is not set on the production repo.** I have read-only access to `kleinoak/kleinoak.github.io` (403 on the variables API), so this is a manual step. **Until it is set, production collects nothing.**
+- [ ] **Enhanced measurement's history-event tracking must be turned off** or navigations double-count.
+- [ ] **Step 2 of the setup guide — the privacy work — was never done.** GA was parked for policy review and then un-parked without it. Google Signals and ad personalisation should be confirmed off, retention set deliberately, and the district asked whether it has a position on analytics for program-affiliated sites. The audience here is minors.
+- [ ] No consent banner and no privacy notice on the site. See the guide's §2; this is a decision, not an oversight.
+- [ ] `npm audit` reports 4 high-severity advisories in Next's own transitive `postcss` and `sharp`. Pre-existing, not introduced here; the fix bumps Next 16.2.12 → 16.3.0, which is a framework upgrade and its own piece of work.

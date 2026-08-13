@@ -6,6 +6,21 @@ Read [Before you start](#before-you-start) first. This site is a high school pro
 
 ---
 
+## Status — 2026-08-13
+
+**Property created.** Measurement ID `G-HEED59B487`, stream ID `15424600817`. Only the Measurement ID is used by the site; the stream ID is a reporting-side identifier and appears nowhere in the code.
+
+**Steps 3, 4 and 5 are implemented** — `@next/third-parties` installed, the tag wired into `src/app/layout.tsx` behind a `NEXT_PUBLIC_GA_ID` guard, route-change tracking added, and `deploy.yml` passing `vars.GA_MEASUREMENT_ID` through.
+
+**Two things are still yours:**
+
+1. **Set the repository variable** (below) — I have read-only access to `kleinoak/kleinoak.github.io`, so this cannot be done from here. Until it is set, production emits **no tag at all** and collects nothing.
+2. **Turn off Enhanced measurement → "Page changes based on browser history events"** — see [Route changes](#route-changes-the-part-that-does-not-work-out-of-the-box). Leaving it on double-counts every internal navigation.
+
+**Step 2 (privacy) was never worked through.** GA was parked pending policy review and then un-parked; the district question and the consent/privacy-notice decisions in §2 are still open.
+
+---
+
 ## Before you start
 
 **A Measurement ID is not a secret.** `G-XXXXXXXXXX` ships in the page source of every visitor's browser — it has to, that is how the tag works. Store it as a GitHub Actions **variable**, never a secret. The repo already uses this pattern for `SITE_BASE_PATH`.
@@ -78,7 +93,19 @@ Two details that matter:
 - **`process.env.NEXT_PUBLIC_GA_ID` must appear as that exact literal.** Next inlines these at build time by textual substitution; assigning it to a variable first, or building the name dynamically, silently produces `undefined`.
 - **The guard is the point.** Local `npm run dev` and any build without the variable set simply render no tag, so development traffic never reaches your reports.
 
-`GoogleAnalytics` handles App Router client-side navigations, which a raw `gtag` snippet does not — without it, only the first page of a visit is counted. Verify this in step 5 rather than trusting it.
+### Route changes: the part that does not work out of the box
+
+**`<GoogleAnalytics>` does not track client-side navigations.** It injects gtag.js, which reports the document that loaded and nothing after. Every internal link on this site is a pushState navigation, so a visitor who lands on the home page and reads four more would report as a **single page view**.
+
+This was measured, not assumed — instrumenting `sendBeacon`, `fetch`, `XHR` and image beacons and then navigating produced **zero** outgoing hits.
+
+So `src/components/analytics/PageViews.tsx` sends the `page_view` itself on pathname change. Confirmed after the fix: exactly one `page_view` per navigation, carrying the right `page_path`, and no duplicate for the landing page.
+
+> **⚠️ Turn off Enhanced measurement → "Page changes based on browser history events."**
+> *Admin → Data streams → your stream → Enhanced measurement → gear icon.*
+> Google's own history listener does the same job. With both active every internal navigation is counted **twice**, and the inflation is invisible unless you go looking for it. Everything else under Enhanced measurement — outbound clicks, file downloads, scroll depth — should stay on.
+
+`usePathname` is used deliberately, not `useSearchParams`: the latter forces a Suspense boundary in a statically exported route, and it is the *fallback* that ends up in the prerendered HTML. No route here is distinguished by a query string.
 
 **Add to `.env.example`** so the variable is discoverable:
 
@@ -94,9 +121,11 @@ NEXT_PUBLIC_GA_ID=
 
 Pick one. The first is cleaner and is what I would do:
 
-**Separate properties (recommended).** Create a second GA4 property for the prototype, or simply leave `NEXT_PUBLIC_GA_ID` unset for the `codinci.com/kovb/` builds so the prototype reports nothing. Production data stays pristine with no filtering to maintain.
+**Settled: staging reports nothing.** `NEXT_PUBLIC_GA_ID` is simply never set for the hand-built `codinci.com/kovb/` deploy, and the tag is guarded on it — with no ID, no tag is emitted at all. Nothing to filter, nothing to maintain, and no way to leak prototype traffic into production reports by forgetting a setting.
 
-**One property, filter by hostname.** Keep both on one ID and create an internal-traffic filter. Cheaper to set up, but every report needs the filter applied correctly forever, and it is easy to forget one.
+`alfredsilvertonai/ko-volleyball-web` has no Pages site, so it is not an environment at all. **Production is the only deployment that reports.**
+
+The alternative — one property with a hostname filter — was rejected: every report would need the filter applied correctly forever.
 
 Whichever you choose, also add your own devices under *Admin → Data collection → Define internal traffic*, then set the **Internal Traffic** filter to **Active** (it defaults to Testing, which does nothing). Otherwise your own visits inflate a small site's numbers substantially.
 
@@ -104,15 +133,24 @@ Whichever you choose, also add your own devices under *Admin → Data collection
 
 ## 5. 👤 Set the ID, deploy, and verify
 
-**In the production repo:** Settings → Secrets and variables → **Actions → Variables → New repository variable**
-- Name: `GA_MEASUREMENT_ID`
-- Value: your `G-XXXXXXXXXX`
+**👤 In the production repo** — <https://github.com/kleinoak/kleinoak.github.io/settings/variables/actions> → **New repository variable**
 
-Then `deploy.yml` needs one line in the build step's `env:` block, next to the existing ones:
+| | |
+|---|---|
+| Name | `GA_MEASUREMENT_ID` |
+| Value | `G-HEED59B487` |
+
+A **variable**, not a secret — it ships in the HTML regardless, and a secret would only make it harder to see what is deployed.
+
+Setting the variable does not rebuild anything on its own. Either re-run **Actions → Build and deploy site → Run workflow**, or wait for the nightly 06:00 Central rebuild to pick it up.
+
+`deploy.yml` already passes it through — this line is in place:
 
 ```yaml
 NEXT_PUBLIC_GA_ID: ${{ vars.GA_MEASUREMENT_ID }}
 ```
+
+**Nothing is needed in `alfredsilvertonai/ko-volleyball-web`** — it has no GitHub Pages site, so it never serves anything to a visitor.
 
 **For the hand-deployed `codinci.com/kovb/` site:** that path never runs CI, so a repo variable does nothing for it. It reads whatever is in your shell or `.env.local` at build time. This is exactly how you would accidentally ship production analytics onto the prototype, or ship no analytics at all to production — worth being deliberate about.
 
