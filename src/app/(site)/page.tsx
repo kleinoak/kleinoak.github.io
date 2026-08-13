@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/home/Hero";
+import { CampaignBanner } from "@/components/home/CampaignBanner";
+import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { Announcements } from "@/components/home/Announcements";
 import { UpcomingEvents } from "@/components/home/UpcomingEvents";
@@ -21,7 +23,14 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
-      <Hero />
+      {/* The program hero is first, so it is what renders on load — and the
+          only one that renders at all without JavaScript. */}
+      <HeroCarousel
+        slides={[
+          { id: "panthers", label: "Panther Volleyball", node: <Hero /> },
+          { id: "vbif", label: "VBIF", node: <CampaignBanner /> },
+        ]}
+      />
       <QuickAccess />
       <Announcements />
       <UpcomingEvents />
