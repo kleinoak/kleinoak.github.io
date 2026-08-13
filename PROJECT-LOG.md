@@ -432,3 +432,52 @@ Three unrelated things. The browser tab showed a scaffold favicon rather than th
 - [ ] No `apple-icon.png` / maskable icon — needs a rasteriser this machine does not have.
 - [ ] Google Analytics parked pending policy review, including the district question in `GOOGLE-ANALYTICS-SETUP.md` §2.
 - [ ] Carried forward: nothing validates the sponsor tier↔logo join; no `public/.nojekyll`; production and the development repo can both accept `/admin` publishes and have no agreed source of truth.
+
+---
+
+## 20260812 — A second hero banner, and a carousel to hold both
+
+Branch `20260812/feature/hero-carousel`. IDLC request 9. Adds the VBIF campaign artwork as a second hero banner, with the interaction design left open.
+
+### The problem
+One banner, two things to say. The requirement that shaped everything: **on load, the current banner is displayed** — the program hero must not be pushed aside by a campaign slide, and must not flicker into view after hydration.
+
+### Decisions
+- **Only the active slide is mounted.** The obvious build is to render both and hide one with CSS, and it is the classic carousel accessibility bug: a hidden slide still contains focusable links, so a keyboard user tabs into content nobody can see. Mounting one slide at a time makes that impossible by construction. Verified: the built page has **zero `<a>` elements** belonging to an inactive slide.
+- **The first slide is server-rendered; the second exists only in the RSC payload.** Confirmed in `out/index.html` — the Hero markup is present, and there is no `<img>` for the campaign anywhere in the DOM. So the program hero is the first paint, it is what renders with JavaScript disabled, and the requirement is satisfied structurally rather than by a timer that happens to start at zero.
+- **It does auto-rotate — with the things auto-rotation obliges you to add.** "On load, the current banner is displayed" implies it moves afterwards. So: 7s interval, an explicit pause/play control (WCAG 2.2.2 requires a mechanism to stop anything moving for more than five seconds), pause on hover and on focus so it cannot slide away mid-read or while tabbing, and **no rotation at all under `prefers-reduced-motion`** — the pause button is hidden in that case because there is nothing to pause.
+- **The carousel holds the tallest slide's height.** This was the largest defect found in testing, and only by measuring: at desktop the campaign slide was **81px** taller than the hero, and on a phone it was **407px shorter** — the stacked hero is roughly twice a banner image. Every rotation yanked the rest of the page up or down. A `ResizeObserver` records the tallest slide seen and applies it as a floor, reset on viewport change so a desktop measurement does not leave a tall empty band on a phone. Measured after the fix: **0px delta at 1440px and at 538px**.
+- **The campaign slide's padding matches Hero's exactly**, with the image width capped so its rendered height lands on Hero's. The floor alone would have worked, but matching the natural heights means the floor rarely has to do anything — belt and braces, and it keeps the desktop slide from being letterboxed.
+- **Nothing is overlaid on the artwork.** It carries its own wordmark; a heading or call to action would be invented copy, and nobody has told me what VBIF is. `object-contain`, never `cover` — cropping a logo lockup cuts the mark in half.
+- **Arrows sit at one-third height on phones, centre on larger screens.** At centre they overlapped the eyebrow line and clipped a letter. They are visible at every size deliberately: the dots sit at the bottom of an 841px slide on a phone, which is below the fold, so hiding the arrows on small screens would have left a phone user with no visible control at all.
+
+### Accomplishments
+- [x] `src/components/home/HeroCarousel.tsx` — client component: mounts one slide, arrows, dots, pause/play, arrow-key support, `aria-live` announcement, reduced-motion handling, and the height floor.
+- [x] `src/components/home/CampaignBanner.tsx` — the VBIF slide, height-matched to Hero.
+- [x] `public/images/brand/vbif-campaign.png` (1376×768) committed.
+- [x] `hero-slide-in` keyframe in `globals.css` — a fade with 6px of travel, not a slide-across.
+- [x] `Hero` itself is untouched; it is passed in as the first slide.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] Prerendered HTML contains the Hero and **no** campaign `<img>` — the load-order requirement, checked structurally.
+- [x] Driven in Chrome: arrows, dots, pause, and ArrowLeft/ArrowRight all work, including wrapping past either end.
+- [x] Auto-rotation observed advancing at 7s; pause held the slide across two full intervals.
+- [x] Slide heights measured equal at 1440px and 538px viewports.
+
+### Not yet done
+- [ ] **Nobody has said what VBIF is.** The alt text is just `"VBIF"`, and the banner links nowhere. A campaign banner that cannot be clicked is decoration — it wants a destination and a real accessible name.
+- [ ] The artwork is an image of text, so the wordmark does not scale with a user's font size and cannot be read by a screen reader beyond the alt (WCAG 1.4.5). Unavoidable with supplied artwork; worth knowing.
+- [x] ~~The PNG is **1.1 MB**, by far the largest asset on the home page.~~ Re-encoded to WebP — see below.
+- [ ] Slides are hard-coded in `page.tsx` rather than being a CMS collection. Fine for two; if banners become a regular thing, they belong in `content/`.
+
+### Follow-up, same day — the banner was 1.1 MB
+
+Re-encoded `vbif-campaign.png` (1,096 KB) to `vbif-campaign.webp` (**34 KB, 96.9% smaller**) at 1376×768, unchanged dimensions.
+
+- **Why it mattered here specifically:** `images.unoptimized` is on, because GitHub Pages cannot run Next's optimiser. So the committed file *is* the download — there is no build step quietly fixing it. A 1.1 MB hero asset on a school site whose audience is largely on phones is a real cost.
+- **PNG was simply the wrong container.** The artwork is a photographic render — soft gradient, film grain, drop shadows — and PNG stores that with lossless per-pixel encoding. The pixels never needed to be lossless.
+- **WebP q80 over AVIF q55**, even though AVIF came in at 10 KB. `next/image` with `unoptimized` emits a plain `<img>`, not a `<picture>` with fallbacks, so the choice is one format for everyone. WebP is supported everywhere that matters; AVIF is not quite. A 24 KB saving does not justify a broken banner for anyone.
+- **Checked, not assumed:** compared 1:1 crops across the logo edge and the gradient background. WebP q80 is indistinguishable from the original and preserves the film grain; AVIF smooths it slightly. Confirmed in the browser that the WebP renders and decodes (1376×768, `image/webp`).
+- **`sharp` was already available** as a Next dependency — no new tooling. Earlier in the day I recorded that this machine had no rasteriser and skipped generating PNG icon variants; that was true of SVG rasterisers, but I had not checked for `sharp`, which handles raster-to-raster work. Worth remembering for the outstanding `apple-icon.png`.
+- The original PNG moved to `logo-redesign/vbif-campaign-source.png`, alongside the other brand sources. It is not served, but it does add 1.1 MB to the repository — consistent with the other source artwork already there, and worth dropping if repo size becomes a concern.

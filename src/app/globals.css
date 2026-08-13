@@ -70,3 +70,22 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Hero carousel slide entrance. Deliberately a fade with only a few pixels of
+   travel — a full slide-across at hero size is a lot of motion on page load.
+   The reduced-motion block above already neutralises the duration, and
+   HeroCarousel additionally stops rotating entirely in that case. */
+@keyframes hero-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-hero-slide {
+  animation: hero-slide-in 400ms ease-out;
+}

@@ -766,7 +766,7 @@ First, let's add Google Analytics to the site so I can get analytics and reports
 The second major upgrade is to deploy this to a new github page that will serve as our PRODUCTION environment. The new github repo is https://github.com/kleinoak. Outline the steps for me to take to do the intiial setup in a md file called GITHUB-PROD-SETUP.md.
 
 
-# 8
+# 8 ✅
 
 Create a web icon for the website similar to the "KO" in the logo. Also at the home page specifically the "Upcoming Events" section, mark the TOURNAMENT for Aug 13 - 16 as "CONFIRMED".
 
@@ -775,6 +775,12 @@ Also, check for a dynamic way to render upcoming events depending on actual date
 Update project log and documentation once done.
 
 
+# 9
+
+I want to add an additional hero banner. Use the file `vbif-campaign.png` as the secondary banner.
+I'll leave it to you to design the interactive UIUX for the banners but make sure that onload, the current banner is displayed.
+
+Update project log and documentation once done.
 
 ## ------------------
 ## PROD deployment next steps 20260812
