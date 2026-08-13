@@ -30,6 +30,13 @@ export type Match = {
   location?: string;
   times: MatchTimes;
   note?: string;
+  /**
+   * Overrides the status the home page would otherwise infer from `times`.
+   * Set it when a fixture is agreed but its start times are not yet published —
+   * "TBD times" and "might not happen" are different things, and only the
+   * program knows which one applies.
+   */
+  status?: "confirmed" | "tentative";
 };
 
 export const matches = matchesJson as Match[];

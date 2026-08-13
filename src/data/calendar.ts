@@ -46,8 +46,10 @@ function splitTimes(times: MatchTimes): Pick<CalendarEntry, "time" | "levelTimes
 
 function fromMatch(match: Match): CalendarEntry {
   const times = Object.values(match.times);
-  // Nothing is scheduled yet if every level still reads TBD — badge it so
-  // families do not plan around a placeholder.
+  // With no explicit status, infer one: if every level still reads TBD there is
+  // nothing to plan around yet, so badge it Tentative. An explicit `status` in
+  // the content always wins — a fixture can be agreed long before its start
+  // times are published.
   const allTbd = times.every((time) => !time || time.toUpperCase() === "TBD");
 
   return {
@@ -56,7 +58,7 @@ function fromMatch(match: Match): CalendarEntry {
     date: match.date ?? "",
     title: match.opponent,
     location: match.location,
-    status: allTbd ? "tentative" : "confirmed",
+    status: match.status ?? (allTbd ? "tentative" : "confirmed"),
     ...splitTimes(match.times),
   };
 }

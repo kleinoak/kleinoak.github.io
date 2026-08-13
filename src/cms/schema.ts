@@ -260,6 +260,17 @@ export const collections: Collection[] = [
         help: "Optional — multi-day tournaments only. Keeps the event on the home page until it has finished.",
       },
       {
+        name: "status",
+        label: "Status on the home page",
+        type: "select",
+        options: [
+          { value: "", label: "Work it out from the times" },
+          { value: "confirmed", label: "Confirmed" },
+          { value: "tentative", label: "Tentative" },
+        ],
+        help: "Left alone, a date shows as Confirmed unless every level's time is TBD. Set it explicitly when that guess is wrong — a tournament can be locked in long before its start times are published.",
+      },
+      {
         name: "section",
         label: "Part of season",
         type: "select",

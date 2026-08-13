@@ -273,6 +273,10 @@ The site is a static export deployed to GitHub Pages by `deploy.yml` on every pu
 
 `concurrency: { group: pages, cancel-in-progress: true }` ensures two publishes in quick succession never deploy over each other — the newest always wins. `touch out/.nojekyll` stops GitHub Pages from running Jekyll over the export.
 
+**A nightly rebuild keeps date-filtered content current.** The home page's "Upcoming Events" is filtered against today's date, and in a static export "today" is frozen at build time — so without a rebuild the list would stay on the date of the last publish and gradually fill with events that have already happened. `deploy.yml` therefore also runs on `schedule: "0 11 * * *"` (06:00 Central). The list is day-granular, so a daily rebuild is as accurate as the data allows, and it costs no client-side JavaScript — the filtered list stays in the prerendered HTML.
+
+Two things to know about it: GitHub **disables scheduled workflows on a public repo after 60 days of inactivity** (it emails first), so an off-season gap may need the schedule re-enabling from the Actions tab; and the hand-deployed staging copy at `codinci.com/kovb/` never runs CI, so its list is only as fresh as its last manual deploy.
+
 ---
 
 ## For Editors (the volunteer-facing summary)

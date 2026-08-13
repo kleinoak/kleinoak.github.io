@@ -6,6 +6,20 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # The home page's "Upcoming Events" list is filtered against today's date.
+  # This is a static export, so "today" is whatever it was when the site was
+  # built — without this, the list freezes on the day of the last publish and
+  # slowly fills with events that have already happened.
+  #
+  # 11:00 UTC is 06:00 Central (05:00 when the clock changes). The list is
+  # day-granular, so a rebuild each morning is as accurate as the data allows.
+  #
+  # NOTE: GitHub disables scheduled workflows on a public repository after 60
+  # days with no activity, and emails the owner first. During the season the
+  # repo is active anyway; off-season, the schedule may need re-enabling from
+  # the Actions tab.
+  schedule:
+    - cron: "0 11 * * *"
 
 permissions:
   contents: read

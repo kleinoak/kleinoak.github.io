@@ -757,7 +757,7 @@ Remove this at the sponsors page: "This is a partial sponsor list gathered from 
 Open a new window when the "Download the sponsorship form" is clicked.
 
 
-# 7 🟡
+# 7 🟡 ❌ Parked
  
 Two major updates that need to happen:
 
@@ -768,7 +768,10 @@ The second major upgrade is to deploy this to a new github page that will serve 
 
 # 8
 
-Create a web icon for the website similar to the "KO" in the logo.
+Create a web icon for the website similar to the "KO" in the logo. Also at the home page specifically the "Upcoming Events" section, mark the TOURNAMENT for Aug 13 - 16 as "CONFIRMED".
+
+Also, check for a dynamic way to render upcoming events depending on actual dates.
+
 Update project log and documentation once done.
 
 

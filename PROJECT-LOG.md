@@ -397,3 +397,38 @@ Two small follow-ups to the sponsors work. The page still closed with a paragrap
 - [ ] Carried forward from PR #9: **nothing validates the tier↔logo join**, and the home page Sponsors strip now shows Platinum logos as a side effect.
 - [ ] No signal anywhere that the sponsor roster is unconfirmed, now the caveat is gone. `verified` is the existing mechanism if that is wanted.
 - [ ] Browsers differ on `target="_blank"` to a PDF — inline viewer in Chrome and Firefox, immediate download and a self-closing tab in some configurations. Nothing in the markup controls which.
+
+---
+
+## 20260812 — Site icon, an explicit match status, and keeping dated content fresh
+
+Branch `20260812/feature/icon-and-dynamic-dates`, off `main` after PR #12. IDLC request 8 plus two follow-ups. Google Analytics is **parked pending policy review** — `GOOGLE-ANALYTICS-SETUP.md` stands, nothing was implemented.
+
+### The problem
+Three unrelated things. The browser tab showed a scaffold favicon rather than the program's mark. The Pearland tournament (Aug 13–16) was badged **Tentative** on the home page although it is confirmed — every level's time reads TBD, and the code inferred "no times" meant "not settled". And the whole "Upcoming Events" list is filtered against a date that, in a static export, stops moving the moment the site is built.
+
+### Decisions
+- **The icon is an SVG of vector paths, not `<text>`.** A favicon gets no webfont, so `font-family: Oswald` would silently fall back to whatever the OS offers and the mark's proportions would change per platform. The letterforms are drawn as paths, so it renders identically everywhere. Checked side by side against the real header mark at 128/40/32/16px — still legible as "KO" at tab size, which is the only size that really matters.
+- **Corner radius deliberately larger than the header's.** The header tile is `rounded-sm` (2px at 40px); the icon uses `rx=8` on a 64 viewBox. At favicon scale a 2px radius reads as a plain square. This is a small, intentional divergence from the header, not a mismatch.
+- **SVG only, plus the existing `favicon.ico`.** No SVG rasteriser is available on this machine (no ImageMagick, rsvg, Inkscape, PIL, or cairosvg), so no PNG variants were generated. Next emits both `<link rel="icon">` tags; modern browsers take the SVG, older ones the `.ico`. An `apple-icon.png` is still missing — it needs a rasteriser, or a designer's export.
+- **An explicit `status` on a match beats inferring one.** Added an optional `status` to `Match` that overrides the derived value. The inference stays as the default because it is right most of the time, but "times not published yet" and "might not happen" are genuinely different claims and only the program knows which applies. Guessing wrong in the confident direction is worse: a family plans around a fixture that evaporates.
+- **A nightly rebuild, not client-side filtering.** This was the real question behind "a dynamic way to render upcoming events". Two options: re-filter in the browser after mount, or rebuild on a schedule. Chose the rebuild — `deploy.yml` now also runs at `0 11 * * *` (06:00 Central). It costs no client JavaScript, keeps the filtered list inside the prerendered HTML, and avoids a visible flash when the build-time list and the client-time list disagree. **It also follows the precedent this project already set**: the schedule filter (PR #5) deliberately rejected `useSearchParams` and effect-driven state to keep the full schedule in static HTML. Doing the opposite here for the same class of problem would have been inconsistent.
+- **The accepted cost of that choice**, stated plainly: the list can be up to a day stale, GitHub disables scheduled workflows after 60 days of repo inactivity, and the hand-deployed staging copy never runs CI at all. If genuinely live behaviour is ever needed, client-side re-filtering after mount is the way in — and it can sit on top of this without conflict.
+
+### Accomplishments
+- [x] `src/app/icon.svg` — the header's KO mark as vector paths in Klein Oak black and gold.
+- [x] Optional `status` on `Match`, honoured by `calendar.ts`, editable at `/admin` as a three-way select ("work it out from the times" / Confirmed / Tentative).
+- [x] Pearland tournament (Aug 13–16) marked `confirmed`.
+- [x] `deploy.yml` gains a daily `schedule:` trigger, with the reasoning and the 60-day caveat in a comment beside it.
+- [x] Documented the nightly rebuild in `PROJECT-DOCUMENTATION.md` under Deployment.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes; content validation 12 files OK.
+- [x] Icon rendered in Chrome beside the real 40px header mark at four sizes; `out/icon.svg` emitted and both `<link rel="icon">` tags present in the built HTML.
+- [x] Built home page shows **Aug 13–16 Tournament [Confirmed]**.
+- [x] The date filter demonstrably works: `Aug 11 Cy Ranch` dropped out of the list when the date rolled to the 12th, with no code change.
+
+### Not yet done
+- [ ] No `apple-icon.png` / maskable icon — needs a rasteriser this machine does not have.
+- [ ] Google Analytics parked pending policy review, including the district question in `GOOGLE-ANALYTICS-SETUP.md` §2.
+- [ ] Carried forward: nothing validates the sponsor tier↔logo join; no `public/.nojekyll`; production and the development repo can both accept `/admin` publishes and have no agreed source of truth.
