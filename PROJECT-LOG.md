@@ -583,3 +583,24 @@ Both slides now render at **429px on desktop (−30%) and 677px on a phone (−2
 ### Not yet done
 - [ ] The production repository's history is rewritten on every deploy. Harmless for a mirror, but anyone who clones it and expects a stable history will be surprised. Documented, not prevented.
 - [ ] Carried forward: no editors have production access; the privacy work in `GOOGLE-ANALYTICS-SETUP.md` §2 is still outstanding; two repositories can both publish with no agreed source of truth.
+
+---
+
+## 20260814 — Hero centring
+
+Branch `20260814/fix/hero-centering`. Reported from the live site: the main hero looked off-centre.
+
+### The problem
+It was. The hero's `Container` is `flex flex-col … lg:flex-row` with `items-center` but **no horizontal justification**, so on desktop the row packed to the flex-start edge. The logo and text column together are narrower than the container, and the slack all collected on the right as a dead band of black — roughly 300px of it at 1638px wide. `items-center` centres the cross axis, which in a row is vertical; it does nothing horizontally, which is what made this easy to miss when the hero was taller and the imbalance less obvious.
+
+### Decisions
+- **`lg:justify-center`, not a wider text column.** The alternative was letting the text column grow to fill the row (`flex-1`), which would also have removed the gap — but at the cost of longer measure on wide screens, and the request was that it be centred, not that it fill.
+- **Measured on the correct slide.** The first measurement was taken while the carousel had auto-rotated to the VBIF banner, so it reported the campaign slide's container rather than the hero's. Re-checked with the hero explicitly selected and rotation paused. Worth remembering when measuring anything inside this carousel: assert on the slide's `aria-label` first.
+
+### Accomplishments
+- [x] `lg:justify-center` on the hero `Container`, with a comment recording why it is needed.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] Desktop (1638px): left and right gaps both **112px**, asymmetry **0px**, with the hero slide confirmed active.
+- [x] Mobile (390px, via a same-origin iframe): logo centred at 84/84, slide heights still equal at 677/677, no horizontal overflow.

@@ -880,3 +880,9 @@ When deploying to production github -- https://github.com/kleinoak/kleinoak.gith
 Adjust this hero banner to match the height of the vbif hero banner. The first hero baner seems too large. I'd leave it to you to adjust and implement the UI upgrade for this.
 
 Update project log and documentation once done.
+
+
+# 12 fine tune
+Can you make sure the main hero banner is centered. Looks off. See screenshot. 🟡
+Deploy to staging and production once done.
+Update project log and documentation once done.

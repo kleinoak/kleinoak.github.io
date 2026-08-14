@@ -7,7 +7,10 @@ import { site } from "@/data/site";
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-black text-white">
-      <Container className="relative flex flex-col items-center gap-6 py-10 sm:gap-8 sm:py-12 lg:flex-row lg:gap-12 lg:py-14">
+      {/* `lg:justify-center`: the logo and the text column together are
+          narrower than the container, and without it the row packs to the left
+          and leaves a dead band of black down the right-hand side. */}
+      <Container className="relative flex flex-col items-center justify-center gap-6 py-10 sm:gap-8 sm:py-12 lg:flex-row lg:gap-12 lg:py-14">
         <Image
           src={assetPath("/images/brand/panther-logo.png")}
           alt="Klein Oak Panthers Volleyball"
