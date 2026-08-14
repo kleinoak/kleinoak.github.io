@@ -783,7 +783,7 @@ I'll leave it to you to design the interactive UIUX for the banners but make sur
 Update project log and documentation once done.
 
 
-# 10 Google analytics proceed
+# 10 Google analytics proceed ✅
 
 I have completed step 1 of the GOOGLE-ANALYTICS-SETUP.md.
 Please proceed with steps 3, 4 and 5.
@@ -867,3 +867,16 @@ Related: name the three deployments so their roles are explicit.
 
 - Do not delete `public/images/junior-varsity-team.jpg` or its archive copy in
   `logo-redesign/`.
+
+
+## --------------------
+## 🟨 20260814
+## --------------------
+
+# 11 enhancements
+
+When deploying to production github -- https://github.com/kleinoak/kleinoak.github.io, except for the READM.md, do not include any *.md files as these are just for me and our agentic flows. Delete those *.md at the production github repo (kleinoak).
+
+Adjust this hero banner to match the height of the vbif hero banner. The first hero baner seems too large. I'd leave it to you to adjust and implement the UI upgrade for this.
+
+Update project log and documentation once done.

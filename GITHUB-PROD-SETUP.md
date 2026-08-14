@@ -29,6 +29,22 @@ Work through it in order — [step 1](#1--decide-the-repository-name) determines
 
 ---
 
+## Deploying to production
+
+**Use `sh scripts/deploy-prod.sh`. Do not use `git push prod main`.**
+
+Production is a build mirror: Actions checks it out and builds the site there, so it needs the source — but not `IDLC.md`, `PROJECT-LOG.md`, `PROJECT-DOCUMENTATION.md`, the setup guides, `IMPLEMENTATION_SUMMARY.md` or `WEBSITE_EVALUATION.md`. Those are working notes. Only `README.md` is kept.
+
+`.gitignore` cannot help — the files are already tracked — and deleting them in the production repo lasts only until the next push restores them. So the script resets a throwaway `prod-deploy` branch to `main`, drops every tracked `*.md` except `README.md` from the tree, and force-pushes it.
+
+Consequences worth understanding:
+
+- **Production's history is rewritten on each deploy.** It is a deployment artefact; `origin` is the source of truth. Do not commit directly to the production repo — the next deploy would discard it.
+- **`git push prod main` would restore the docs** and conflict with the rewritten history. The script is the only supported route.
+- The script refuses to run on a dirty working tree, or when `main` and `origin/main` disagree, so what ships is always what was reviewed and merged.
+
+---
+
 ## What is true today
 
 Checked, not assumed:

@@ -516,7 +516,70 @@ No measurement of any kind. The program wanted to know which pages families actu
 
 ### Not yet done
 - [ ] **`GA_MEASUREMENT_ID` is not set on the production repo.** I have read-only access to `kleinoak/kleinoak.github.io` (403 on the variables API), so this is a manual step. **Until it is set, production collects nothing.**
-- [ ] **Enhanced measurement's history-event tracking must be turned off** or navigations double-count.
+- [x] ~~**Enhanced measurement's history-event tracking must be turned off** or navigations double-count.~~ Moot: the program has Enhanced measurement switched **off entirely**, so there is no history listener and `PageViews` is the only source of navigation events — verified as exactly one `page_view` per navigation, no duplicates. The trade is that outbound clicks, scroll depth and **file downloads** are not measured either, so sponsorship-form opens are currently invisible. Turning Enhanced measurement back on and disabling only its "page changes based on browser history events" sub-toggle would recover those without reintroducing the double count.
 - [ ] **Step 2 of the setup guide — the privacy work — was never done.** GA was parked for policy review and then un-parked without it. Google Signals and ad personalisation should be confirmed off, retention set deliberately, and the district asked whether it has a position on analytics for program-affiliated sites. The audience here is minors.
 - [ ] No consent banner and no privacy notice on the site. See the guide's §2; this is a decision, not an oversight.
 - [ ] `npm audit` reports 4 high-severity advisories in Next's own transitive `postcss` and `sharp`. Pre-existing, not introduced here; the fix bumps Next 16.2.12 → 16.3.0, which is a framework upgrade and its own piece of work.
+
+---
+
+# 🚀 20260813 — LIVE. Website officially deployed.
+
+**https://kleinoak.github.io/** — the Klein Oak Panther Volleyball site is in production and serving. A successful deployment: green on the first CI run, and every check since.
+
+Eleven days from a local prototype (20260802) to a live site the program owns.
+
+### What is live
+- **Production:** `kleinoak/kleinoak.github.io`, built and deployed by GitHub Actions on every push to `main`, plus a nightly 06:00 Central rebuild so date-filtered content does not freeze.
+- **The site:** home with a rotating hero, teams and four per-team pages, the full 39-date schedule with per-level filtering, coaches, resources, sponsors with real artwork, contact — 15 routes.
+- **The CMS at `/admin`**, publishing straight to the production repo with no backend, no database, and no hosting bill.
+- **Analytics**, verified firing against the live site.
+- **Staging** at `codinci.com/kovb/`, deliberately built without an analytics ID.
+
+### Verified at launch
+- [x] Homepage 200 with stylesheet loading; `/sponsors/`, `/schedule/`, `/teams/varsity/`, `/admin/` all 200.
+- [x] Production serves the Actions artifact, not repository source — `/package.json`, `/README.md`, `/src/app/layout.tsx` all 404.
+- [x] No base-path prefixes on a root-served site; no unprefixed `/_next/` references.
+- [x] GA4 hit confirmed reaching `google-analytics.com/g/collect` from the live domain, with `page_view` firing correctly across client-side navigations.
+- [x] No "(Prototype)" anywhere in the shipped pages.
+
+### What launch does not mean
+The site is live; it is not finished, and two of these are about real people rather than code.
+
+- [ ] **No editors have access yet.** Collaborators must be added to the production repo, and every editor needs a *new* fine-grained token scoped to it — tokens are per-repository, so existing ones do not carry over. **Until this is done the program cannot update its own site**; only the developer can.
+- [ ] **The privacy work was never completed** (setup guide §2). Analytics is now collecting from a site about minors without Google Signals and ad-personalisation having been confirmed off, without a deliberate retention setting, and without asking the district whether it has a position. This is the most pressing open item.
+- [ ] **Two repositories can both publish**, and no source of truth has been agreed. The first `/admin` publish from the wrong one starts a divergence that has to be merged by hand.
+- [ ] **The `kleinoak` account is a personal User account.** Whoever holds that password owns production. It needs a program-owned email address and recovery codes the board can reach.
+- [ ] Content the program still has to confirm: the sponsor roster now carries real logos with nothing marking it unconfirmed; `spirit-wear` is still flagged unverified; coach biographies and photos are unpublished; and the tagline is prototype copy now marked official.
+- [ ] Engineering: nothing validates the sponsor tier↔logo join; no `public/.nojekyll`; no `apple-icon.png`; the VBIF banner links nowhere and its alt text is just "VBIF"; `npm audit` shows 4 high-severity advisories in Next's transitive dependencies.
+
+---
+
+## 20260814 — Shorter hero, and production stops carrying our notes
+
+Branch `20260814/feature/compact-hero-and-prod-strip`. Two unrelated requests: the first hero banner read as too large, and the internal `.md` files should not exist in the production repository.
+
+### The hero was 611px, and that was too much
+Both slides now render at **429px on desktop (−30%) and 677px on a phone (−20% from 841px)**, measured, with a 0px delta between slides at both widths.
+
+- **Reduced the hero rather than padding the banner.** The two ways to make slides match are to grow the short one or shrink the tall one; the request was that the hero felt too large, so everything came down: logo `26rem → 19rem`, heading `text-5xl/6xl → 4xl/5xl`, body `text-lg → text-base`, padding `py-20/24/28 → py-10/12/14`, and the internal gaps with them. The campaign banner's width cap was then retuned (`43rem → 35.5rem`) so its natural height lands exactly on the hero's, leaving the carousel's height floor with nothing to do in the common case.
+- **The real win is on the phone.** At 390px the controls were previously below the fold — the dots sat at the bottom of an 841px slide, so a visitor had to scroll to discover the banner rotates at all. At 677px they are within the first screen. Verified with `dotsWithinFold`.
+- **Measuring mobile needed a workaround worth recording.** The Chrome window was in macOS fullscreen (`outerWidth: 0`), so `resize_window` silently did nothing while still reporting success — `innerWidth` stayed at 1440 and an early "49% reduction" reading was nonsense, comparing a desktop height against a mobile one. Loading the site in a **same-origin iframe** at `width=390` gives the inner document a genuine 390px viewport, media queries and all, and it can be measured from the parent. Simpler than fighting the window manager.
+
+### Production no longer carries the working notes
+`IDLC.md`, `PROJECT-LOG.md`, `PROJECT-DOCUMENTATION.md`, the two setup guides, `IMPLEMENTATION_SUMMARY.md` and `WEBSITE_EVALUATION.md` are for us; only `README.md` belongs in the production mirror.
+
+- **Neither obvious approach works.** `.gitignore` does nothing for files that are already tracked, and deleting them in the production repo lasts exactly until the next `git push prod main` puts them back.
+- **So `scripts/deploy-prod.sh` rewrites a throwaway branch and force-pushes it.** It resets `prod-deploy` to `main`, `git rm --cached`s every tracked `*.md` except `README.md`, commits, and force-pushes to `prod/main`. Production's history becomes a deployment artefact rather than a source of truth — which it already was in substance; `origin` is the source of truth. The script refuses to run on a dirty tree, or when `main` and `origin/main` disagree, so what ships is always what was reviewed.
+- **`git push prod main` must not be used again.** It would restore the docs and conflict with the rewritten history. The script is now the only supported route, and that is stated in the setup guide.
+- **Nothing in the site depends on a `.md` file** — checked across `src/`, `scripts/`, `next.config.ts`, `package.json` and the workflows before removing anything.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] Slide heights equal at 1440px (429/429) and at 390px (677/677).
+- [x] Carousel behaviour unchanged: arrows visible at both widths, dots within the fold on mobile, pause still holds.
+- [x] No `.md` reference anywhere in application code or CI config.
+
+### Not yet done
+- [ ] The production repository's history is rewritten on every deploy. Harmless for a mirror, but anyone who clones it and expects a stable history will be surprised. Documented, not prevented.
+- [ ] Carried forward: no editors have production access; the privacy work in `GOOGLE-ANALYTICS-SETUP.md` §2 is still outstanding; two repositories can both publish with no agreed source of truth.

@@ -17,7 +17,7 @@ import { Container } from "@/components/ui/Container";
 export function CampaignBanner() {
   return (
     <section className="relative overflow-hidden bg-black text-white">
-      <Container className="flex h-full items-center justify-center py-20 sm:py-24 lg:py-28">
+      <Container className="flex h-full items-center justify-center py-10 sm:py-12 lg:py-14">
         <Image
           // WebP, not the supplied PNG: the artwork is a photographic render,
           // which PNG stores terribly (1,096 KB → 34 KB at visually identical
@@ -28,8 +28,8 @@ export function CampaignBanner() {
           alt="VBIF"
           width={1376}
           height={768}
-          sizes="(min-width: 1024px) 43rem, (min-width: 640px) 42rem, 100vw"
-          className="h-auto w-full max-w-full sm:max-w-2xl lg:max-w-[43rem]"
+          sizes="(min-width: 1024px) 35.5rem, (min-width: 640px) 34rem, 100vw"
+          className="h-auto w-full max-w-full sm:max-w-[34rem] lg:max-w-[35.5rem]"
         />
       </Container>
     </section>
