@@ -227,7 +227,7 @@ export const collections: Collection[] = [
         label: "Roster",
         type: "stringList",
         itemNoun: "player",
-        help: "One player per line, in the order the program lists them. These are student names — only publish a roster the program has already made public, and remove it when the season ends.",
+        help: "One player per line. Order does not matter — the site sorts the roster alphabetically by first name — so a new player can just be added at the end. These are student names: only publish a roster the program has already made public, and remove it when the season ends.",
       },
     ],
   },

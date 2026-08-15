@@ -873,7 +873,7 @@ Related: name the three deployments so their roles are explicit.
 ## 🟨 20260814
 ## --------------------
 
-# 11 enhancements
+# 11 enhancements ✅
 
 When deploying to production github -- https://github.com/kleinoak/kleinoak.github.io, except for the READM.md, do not include any *.md files as these are just for me and our agentic flows. Delete those *.md at the production github repo (kleinoak).
 
@@ -882,7 +882,13 @@ Adjust this hero banner to match the height of the vbif hero banner. The first h
 Update project log and documentation once done.
 
 
-# 12 fine tune
+# 12 fine tune ✅
 Can you make sure the main hero banner is centered. Looks off. See screenshot. 🟡
+Deploy to staging and production once done.
+Update project log and documentation once done.
+
+# 13 sort player names
+
+Sort the player names alphabetically by their firstnames.
 Deploy to staging and production once done.
 Update project log and documentation once done.

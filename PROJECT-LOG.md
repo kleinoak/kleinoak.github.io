@@ -604,3 +604,24 @@ It was. The hero's `Container` is `flex flex-col … lg:flex-row` with `items-ce
 - [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
 - [x] Desktop (1638px): left and right gaps both **112px**, asymmetry **0px**, with the hero slide confirmed active.
 - [x] Mobile (390px, via a same-origin iframe): logo centred at 84/84, slide heights still equal at 677/677, no horizontal overflow.
+
+---
+
+## 20260814 — Rosters sorted by first name
+
+Branch `20260814/feature/sort-rosters`. All four rosters (61 players) now read alphabetically by first name.
+
+### Decisions
+- **Sorted at the data layer, not just in the file.** Sorting `content/teams.json` once would have looked identical today and quietly decayed: the next player added through `/admin` lands at the end of a `stringList` and would have sat out of order until someone noticed. `src/data/teams.ts` sorts on load, so the page is right regardless of how the JSON is ordered.
+- **The stored file is sorted too, with the same comparator.** Not required by the code, but `/admin` shows the raw list — leaving the file unsorted while the site reordered it would make the editor and the page disagree, which is exactly the sort of thing that gets "fixed" by someone reordering the file by hand.
+- **`localeCompare`, not `<`.** One player is "Ra’Leigh Hayes", with a typographic apostrophe (U+2019). Comparing by code point puts punctuation and any accented character in places a reader would not expect; `sensitivity: "base"` also keeps case out of it. Ties fall back to the full name so the order is stable.
+- **First name, not surname** — as asked, and it is the right call for this audience: a parent scans a roster for a first name.
+- **Updated the CMS help text**, which told editors to enter players "in the order the program lists them". That is now misleading; it says order does not matter and new players can be appended.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `validate:content` → 12 files OK; `next build` → 15 routes.
+- [x] Parsed the four built roster pages and confirmed each renders in first-name order.
+- [x] **Compared the roster sets against `HEAD` before the change**: 17/15/14/15 players, identical sets — nothing added, lost, or altered in the reorder.
+
+### Not yet done
+- [ ] Sorting is applied to rosters only. Coaches are still in program-published order, which is deliberate — that list is ranked by seniority, not alphabetised.
