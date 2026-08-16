@@ -887,7 +887,7 @@ Can you make sure the main hero banner is centered. Looks off. See screenshot. ð
 Deploy to staging and production once done.
 Update project log and documentation once done.
 
-# 13 sort player names
+# 13 sort player names âœ…
 
 Sort the player names alphabetically by their firstnames.
 Deploy to staging and production once done.

@@ -102,6 +102,31 @@ export function Footer() {
       <div className="border-t border-white/10 py-6">
         <Container className="flex flex-col items-center justify-between gap-2 text-xs text-white/50 sm:flex-row">
           <p>© {new Date().getFullYear()} Klein Oak Volleyball Booster Club. All rights reserved.</p>
+          {/*
+            Build credit. Deliberately the quietest thing on the page: dimmer
+            than the copyright beside it, no underline until hover, and last in
+            the reading order. It stays a real link rather than plain text so
+            the credit is actually traceable.
+
+            No target="_blank": a link that opens a new window ought to say so
+            (WCAG 3.2.5), and "(opens in a new tab)" next to a credit this small
+            would shout louder than the credit itself. Same tab keeps it quiet
+            and keeps the back button working.
+
+            Hardcoded rather than added to content/site.json — this is a
+            developer credit, not something the Booster Club maintains.
+
+            white/45 is as quiet as this can go and stay legible: on the
+            #0d0d0d footer that is 4.52:1, just over the 4.5:1 WCAG AA floor.
+            white/35 looked better and measured 3.17:1, which fails. Subtlety
+            here comes from size, placement and reading order instead.
+          */}
+          <a
+            href="https://codinci.com/about"
+            className="text-white/45 underline-offset-4 transition-colors hover:text-accent hover:underline"
+          >
+            Built by codinci
+          </a>
         </Container>
       </div>
     </footer>

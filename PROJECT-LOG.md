@@ -625,3 +625,26 @@ Branch `20260814/feature/sort-rosters`. All four rosters (61 players) now read a
 
 ### Not yet done
 - [ ] Sorting is applied to rosters only. Coaches are still in program-published order, which is deliberate — that list is ranked by seniority, not alphabetised.
+
+---
+
+## 20260815 — Build credit in the footer
+
+Branch `20260815/feature/footer-credit`. A subtle link to `codinci.com/about`, with the treatment left open.
+
+### Decisions
+- **Placed opposite the copyright in the existing bottom bar.** That row was already `flex … justify-between` with a single child, so it was shaped for a second item; the credit takes the right-hand side on desktop and stacks underneath on a phone. No new structure, and it reads last.
+- **"Subtle" has a floor, and the first attempt was under it.** `text-white/35` looked right but measures **3.17:1** against the `#0d0d0d` footer — below the 4.5:1 WCAG AA minimum for body text. `white/45` is the quietest step that passes, at **4.52:1**, so that is what shipped. Subtlety comes from size, placement and reading order instead of from washing the text out.
+- **No `target="_blank"`.** A link that opens a new window ought to say so (WCAG 3.2.5), and "(opens in a new tab)" beside a credit this small would shout louder than the credit. Same tab keeps it quiet and keeps the back button working.
+- **A real link, not styled text.** Underline only on hover, colour shift to the brand gold — discoverable when looked for, invisible when not.
+- **Hardcoded rather than added to `content/site.json`.** This is a developer credit, not something the Booster Club maintains; a CMS field for it would be noise in the editor.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] Present on all 10 built pages — it is in the shared footer.
+- [x] Contrast computed rather than eyeballed: 3.17:1 at `white/35` (fails), 4.52:1 at `white/45` (passes).
+- [x] Keyboard reachable; not `target="_blank"`.
+- [x] Mobile (390px): stacks below the copyright, centred within its container, no horizontal overflow.
+
+### Not yet done
+- [ ] Tap target is 16px tall — under the 24px of WCAG 2.5.8. Acceptable for a footer credit that nobody needs to hit, and enlarging it would work against the brief, but worth knowing it is a deliberate exception.
