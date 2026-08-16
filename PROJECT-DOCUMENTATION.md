@@ -114,6 +114,8 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 
 **Collection metadata** that drives the editor UI: `group` (sidebar grouping), `description` and `usedOn` (so an editor knows where a change will show up), `labelField` (row titles), `identifierField` (uniqueness, and how items are matched when diffing), `itemNoun` ("Add announcement"), and `preview` (which real site card to render live beside the form).
 
+**Some content is ordered by code, not by the file.** A team's `roster` is sorted alphabetically by first name in `src/data/teams.ts`, not by however the names sit in `content/teams.json` — so a player appended at the bottom of the list in `/admin` still lands in the right place on the page. The stored file is kept in the same order anyway, so the editor shows what the page will show. Sorting uses `localeCompare`, because at least one name carries a typographic apostrophe and code-point order would put it somewhere no reader expects. **Coaches are deliberately *not* sorted** — that list is ordered by seniority, and alphabetising it would destroy information.
+
 **The `verified` flag.** Several collections carry a `verified` boolean. Off means the Booster Club has not confirmed the item; the site renders it with a visible caution note. This is deliberate — the prototype was built without authoritative source data, and unverified content is marked rather than quietly presented as fact.
 
 ---
@@ -187,15 +189,18 @@ Copy `.env.example` to `.env.local` to point `/admin` at a different repository 
 
 ```
 ko-volleyball-web/
-├── content/                        # THE CONTENT STORE (11 JSON files)
+├── content/                        # THE CONTENT STORE (12 JSON files)
 │   ├── site.json  announcements.json  events.json  teams.json
 │   ├── coaches.json  administration.json  matches.json  resources.json
-│   └── booster-board.json  sponsor-tiers.json  sponsor-steps.json
+│   ├── booster-board.json  sponsor-tiers.json  sponsor-steps.json
+│   └── sponsor-logos.json          # artwork, joined to a tier by exact name
 ├── scripts/
-│   └── validate-content.mts        # prebuild + CI content gate
+│   ├── validate-content.mts        # prebuild + CI content gate
+│   └── deploy-prod.sh              # publish to prod WITHOUT the internal docs
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx              # html/body, fonts — no header/footer
+│   │   ├── layout.tsx              # html/body, fonts, GA tag — no header/footer
+│   │   ├── icon.svg                # the KO mark, as paths (favicons get no webfont)
 │   │   ├── (site)/                 # PUBLIC SITE — header + footer live here
 │   │   │   ├── layout.tsx
 │   │   │   ├── page.tsx            # Home
@@ -221,24 +226,40 @@ ko-volleyball-web/
 │   │       ├── PreviewCard.tsx     # real site cards, rendered live
 │   │       ├── PublishPanel.tsx    # change review, publish or propose
 │   │       └── ui.tsx              # Panel, Banner, AdminButton primitives
-│   ├── components/                 # site header, footer, cards, home sections
+│   ├── components/                 # header, footer, cards, home sections
+│   │   ├── home/HeroCarousel.tsx   # rotating hero; mounts one slide at a time
+│   │   ├── home/CampaignBanner.tsx # the VBIF slide
+│   │   └── analytics/PageViews.tsx # GA page_view on client-side route change
 │   └── data/                       # thin typed loaders over content/*.json
+│       └── calendar.ts             # merges events + matches into one dated feed
 ├── logo-redesign/                  # brand exploration — logo options + source renders
 ├── public/
-│   ├── images/brand/               # prepared logo art (hero lockup)
+│   ├── images/brand/               # prepared logo art (hero lockup, VBIF banner)
+│   ├── images/sponsors/            # sponsor artwork
 │   ├── images/uploads/             # photos committed by the editor
+│   ├── documents/                  # the sponsorship form PDF
 │   └── robots.txt                  # disallows /admin
 ├── .github/workflows/
 │   ├── deploy.yml                  # push to main → validate, build, Pages
 │   └── pull-request.yml            # PR → validate, lint, typecheck, build
 ├── next.config.ts                  # output: "export", basePath, unoptimized images
 ├── .env.example
+├── README.md                       # the only .md that ships to production
 ├── IDLC.md                         # the originating brief and constraints
+├── PROJECT-LOG.md                  # dated record of decisions and trade-offs
+├── PROJECT-DOCUMENTATION.md        # this file
+├── GITHUB-PROD-SETUP.md            # standing up and deploying to production
+├── GOOGLE-ANALYTICS-SETUP.md       # GA4 setup, and the privacy decisions
 ├── WEBSITE_EVALUATION.md           # evaluation of the original public site
 └── IMPLEMENTATION_SUMMARY.md       # the 2026-08-02 prototype build report
+
+(Every .md except README.md is stripped from the production mirror by
+scripts/deploy-prod.sh — they are working notes, not part of the site.)
 ```
 
-**The public site ships two client components, and both earn it.** `Header` (menus) and `ScheduleBrowser` (the schedule's team filter). Everything else is a server component rendered to static HTML at build time.
+**The public site ships four client components, and each earns it.** `Header` (menus), `ScheduleBrowser` (the schedule's team filter), `HeroCarousel` (the rotating hero), and `PageViews` (a GA `page_view` on route change, since gtag reports only the document that loaded). Everything else is a server component rendered to static HTML at build time.
+
+`HeroCarousel` mounts **one slide at a time** rather than hiding the inactive ones with CSS: a hidden slide still contains focusable links, and tabbing into content nobody can see is the standard carousel accessibility bug. The first slide is server-rendered, so the program hero is the first paint and the only slide that appears with JavaScript disabled.
 
 `ScheduleBrowser` filters in the browser rather than giving each team its own route. That is a deliberate trade: switching teams is instant, and — more importantly — the **complete schedule stays inside the prerendered HTML**, so search engines and a reader with JavaScript disabled still get every date. A `/schedule/varsity/` route would have meant either five near-duplicate pages, or reading the team from a query string with `useSearchParams`, which on a statically exported page requires a `<Suspense>` boundary whose fallback is what lands in the HTML. The cost of the choice is that a filtered view cannot be linked or bookmarked.
 
@@ -297,6 +318,7 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 ## Known Limitations
 
 - **The editor has never been exercised against live GitHub.** Sign-in, edit, and publish have not yet been run end-to-end in a browser against a real repository (see PROJECT-LOG). Everything below the browser — schema, validation, diffing, build, static export — is verified.
+- **The footer carries a build credit** linking to `codinci.com/about`. It is hardcoded in `Footer.tsx` rather than living in `content/`, since it is a developer credit the Booster Club does not maintain. Two deliberate choices are recorded there in comments: it is `text-white/45` because the quieter `white/35` measures 3.17:1 against the footer and fails the 4.5:1 WCAG AA floor, and it has no `target="_blank"` because a link that opens a new window ought to say so and the warning would be louder than the credit. Its 16px tap target is under WCAG 2.5.8's 24px — a knowing exception for a footer credit, not an oversight.
 - **Rosters and the season schedule mirror what the program publishes** at kleinoakvolleyball.com. They are student names and a spreadsheet transcribed by hand — re-check them against the program's own page when the season turns over, and clear `roster` when it ends. No jersey numbers, player photos, or statistics are modeled, because the program does not publish any.
 - **Rank One remains the live source of truth** for schedule changes; the schedule page links to it prominently rather than claiming to be authoritative.
 - **Changing a team's `slug`** breaks shared links and requires a developer to update the header menu; the field's help text says so, but nothing enforces it.
