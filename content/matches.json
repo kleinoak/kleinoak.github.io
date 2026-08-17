@@ -58,7 +58,8 @@
       "jv": "TBD",
       "flex": "TBD",
       "freshmen": "TBD"
-    }
+    },
+    "result": "W 3–2"
   },
   {
     "id": "aug-10-west-fork",
@@ -73,7 +74,8 @@
       "jv": "TBD",
       "flex": "TBD",
       "freshmen": "TBD"
-    }
+    },
+    "result": "W 3–0"
   },
   {
     "id": "aug-11-cy-ranch",
@@ -88,7 +90,8 @@
       "jv": "4:30",
       "flex": "4:30",
       "freshmen": "5:30"
-    }
+    },
+    "result": "W 3–1"
   },
   {
     "id": "aug-12-daily-practice",
@@ -108,10 +111,10 @@
   {
     "id": "aug-13-16-pearland-tournament",
     "startDate": "2026-08-13",
-    "endDate": "2026-08-16",
+    "endDate": "2026-08-15",
     "section": "preseason",
-    "day": "Thursday – Sunday",
-    "date": "Aug 13–16",
+    "day": "Thursday – Saturday",
+    "date": "Aug 13–15",
     "opponent": "Tournament",
     "location": "Pearland",
     "times": {
@@ -120,8 +123,9 @@
       "flex": "",
       "freshmen": ""
     },
-    "note": "Varsity leaves Wednesday after 7th period.",
-    "status": "confirmed"
+    "status": "confirmed",
+    "result": "5–1",
+    "note": "Varsity leaves Wednesday after 7th period. Varsity went 5–1 across the six matches Rank One has results for; the three Saturday pool matches have no posted result."
   },
   {
     "id": "aug-18-klein",
@@ -179,7 +183,7 @@
     "opponent": "Legends Invitational",
     "location": "Bryan",
     "times": {
-      "varsity": "TBD",
+      "varsity": "5:30",
       "jv": "",
       "flex": "",
       "freshmen": ""

@@ -37,6 +37,15 @@ export type Match = {
    * program knows which one applies.
    */
   status?: "confirmed" | "tentative";
+  /**
+   * Varsity result, from the program's Rank One page — "W 3–0", "L 0–2", or a
+   * record like "5–1" for a tournament played across several matches.
+   *
+   * Varsity only: Rank One publishes results per team, and the schedule links
+   * to the varsity calendar. A blank here means no result has been posted, not
+   * that the match was lost or cancelled, so nothing is inferred from absence.
+   */
+  result?: string;
 };
 
 export const matches = matchesJson as Match[];

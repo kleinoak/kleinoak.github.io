@@ -42,6 +42,43 @@ function TimeValue({ value }: { value: string }) {
   return <span>{trimmed}</span>;
 }
 
+/**
+ * Varsity result. Absence means "no result posted" — never a loss, never a
+ * cancellation — so an empty cell is rendered as a dash with that said out
+ * loud for screen readers rather than left silent.
+ */
+function ResultValue({ value }: { value?: string }) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return (
+      <>
+        <span aria-hidden="true" className="text-text-muted/50">
+          —
+        </span>
+        <span className="sr-only">No result posted</span>
+      </>
+    );
+  }
+
+  // "W 3–0" / "L 0–2" / a tournament record like "5–1".
+  const outcome = /^w\b/i.test(trimmed) ? "win" : /^l\b/i.test(trimmed) ? "loss" : "record";
+
+  return (
+    <span
+      className={`inline-flex items-center whitespace-nowrap rounded-sm px-2 py-0.5 text-xs font-semibold tabular-nums ${
+        outcome === "win"
+          ? "bg-accent/15 text-accent-strong"
+          : outcome === "loss"
+            ? "bg-black/5 text-text-muted"
+            : "bg-primary/5 text-primary"
+      }`}
+    >
+      {trimmed}
+    </span>
+  );
+}
+
 function HomeAway({ location }: { location?: string }) {
   if (!location) return null;
   const normalized = location.toLowerCase();
@@ -75,6 +112,13 @@ export function MatchSchedule({
 
   const columns = level ? levelColumns.filter((column) => column.key === level) : levelColumns;
 
+  // Results are published per team and only varsity is sourced, so the column
+  // appears only where varsity is on screen. Showing an always-empty column to
+  // a JV parent would imply their results are missing rather than not tracked.
+  const showResults =
+    (!level || level === "varsity") && matches.some((match) => match.result?.trim());
+  const resultHeading = level === "varsity" ? "Result" : "Varsity result";
+
   return (
     <>
       {/* Wide screens: one row per match. */}
@@ -101,6 +145,11 @@ export function MatchSchedule({
                   {column.label}
                 </th>
               ))}
+              {showResults && (
+                <th scope="col" className="py-3 pr-4 text-right font-semibold text-primary">
+                  {resultHeading}
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -126,6 +175,11 @@ export function MatchSchedule({
                     <TimeValue value={match.times[column.key]} />
                   </td>
                 ))}
+                {showResults && (
+                  <td className="py-3 pr-4 text-right whitespace-nowrap">
+                    <ResultValue value={match.result} />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -160,6 +214,13 @@ export function MatchSchedule({
                 </div>
               ))}
             </dl>
+
+            {showResults && match.result?.trim() && (
+              <p className="mt-3 flex items-center gap-2 text-xs text-text-muted">
+                <span className="font-semibold uppercase tracking-wide">{resultHeading}</span>
+                <ResultValue value={match.result} />
+              </p>
+            )}
 
             {match.note && <p className="mt-3 text-xs text-text-muted">{match.note}</p>}
           </li>

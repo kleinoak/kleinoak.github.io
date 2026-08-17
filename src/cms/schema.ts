@@ -260,6 +260,13 @@ export const collections: Collection[] = [
         help: "Optional — multi-day tournaments only. Keeps the event on the home page until it has finished.",
       },
       {
+        name: "result",
+        label: "Varsity result",
+        type: "text",
+        placeholder: "W 3–0",
+        help: "Varsity only, copied from the program's Rank One page — \"W 3–0\", \"L 0–2\", or a record like \"5–1\" for a tournament. Leave blank when no result has been posted; blank shows as a dash and is never read as a loss.",
+      },
+      {
         name: "status",
         label: "Status on the home page",
         type: "select",

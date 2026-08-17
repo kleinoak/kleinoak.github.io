@@ -678,3 +678,35 @@ Not the filter, and not the cron. **The nightly rebuild has been firing every da
 ### Not yet done
 - [ ] **Every program milestone in `content/events.json` has now passed** — tryouts, rosters, first practice, Meet the Panthers, team pictures were all early August. "Upcoming Events" is now purely match play, running to 2026-11-21. If the program has further dates — senior night, a banquet, playoff watch parties — they need supplying; they cannot be invented.
 - [ ] The Schedule page's "Program Dates" section now lists only past dates, for the same reason. Reads as a season-start record rather than a forward calendar.
+
+---
+
+## 20260817 — Varsity schedule reconciled against Rank One, and a results column
+
+Branch `20260817/feature/varsity-results`. Source: the program's Rank One varsity calendar (`app.rankone.com/Schedules/View_Schedule_Web.aspx?…&Tm=18086`), which turned out to be plain server-rendered HTML — 39 rows, parseable without a browser.
+
+### What the source actually said
+Reconciling every date from Aug 13 onwards against Rank One, **the schedule was already right in all but two places**. Every district fixture — opponent, home/away, and start time — matched what had been transcribed from the program's published schedule on the 8th. Two corrections:
+
+- **The Pearland tournament ends on the 15th, not the 16th.** Rank One lists nine varsity matches across Thursday–Saturday and nothing on Sunday. The row read `Aug 13–16 / Thursday – Sunday`.
+- **The Legends Invitational has a time now.** All three days are 5:30 PM; the row said `TBD`.
+
+Two apparent conflicts were checked and are not conflicts: the Houston Prime tournament (Aug 29) and the TAV Sub Varsity tournaments (Sep 3, Sep 5) are absent from the varsity feed because varsity is not playing them — already recorded as `x` in those rows.
+
+### Decisions
+- **The column is varsity-only, and says so.** Rank One publishes results per team and only the varsity calendar was given. Header reads "Varsity result" in the All view and "Result" when filtered to Varsity; the column is **hidden entirely** for JV, Flex and Freshman. An always-empty column would read as *their results are missing*, which is a different and untrue claim from *their results are not tracked here*.
+- **Hidden in sections with no results at all.** District and Playoffs get no column until a result lands there, rather than 23 rows of dashes.
+- **A blank is "no result posted" — explicitly.** It renders as a dash carrying `sr-only` text saying so. Silence would let a reader infer a loss or a cancellation from an empty cell.
+- **The tournament is a record, not six cells.** Rank One lists the Pearland tournament as nine individual matches; the schedule keeps it as one dated block. `5–1` is the honest summary, and the qualification — that the three Saturday pool matches have no posted result — is in the note rather than hidden behind a tidy number.
+- **Results were added for Aug 10 and 11 even though the date instruction said "from Aug 13 onwards".** That constraint was about not churning settled schedule rows; the results column instruction was not date-scoped. Leaving them blank would have shown three matches the team *won* (W 3–0, W 3–2, W 3–1) as having no result, which misrepresents the record. Their **times** were left alone, as those are schedule data and inside the excluded range.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `validate:content` → 12 files OK; `next build` → 15 routes.
+- [x] Column behaviour driven in the browser across all five filter states: All → "Varsity result"; Varsity → "Result"; JV / Flex / Freshman → **no column**.
+- [x] Four results render — `W 3–2`, `W 3–0`, `W 3–1`, `5–1` — and the badges were measured at 20px tall after a wrapping fix; they had been breaking across two lines in the narrow column.
+- [x] `Aug 13–16` gone from the built page; `Aug 13–15 / Thursday – Saturday` in its place.
+
+### Not yet done
+- [ ] Results are transcribed by hand from Rank One, so they are a point-in-time copy. Nothing re-checks them, and nothing warns when a played fixture still has no result. Rank One remains the live source of truth.
+- [ ] Aug 10 and Aug 11 varsity **times** are still `TBD` in the schedule although Rank One lists 4:30, 6:00 and 5:30 — deliberately untouched, being before the Aug 13 cutoff. A one-line change if wanted.
+- [ ] Only varsity has results. JV, Flex and Freshman have their own Rank One team IDs; the same treatment would need those URLs and a per-level result model rather than one field.
