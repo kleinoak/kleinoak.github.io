@@ -6,7 +6,7 @@
 //
 // Keeping them separate means each date is asserted in exactly one place; this
 // module is the only thing that has to know about both.
-import { ProgramEvent, programEvents, programToday } from "@/data/events";
+import { ProgramEvent, programEvents } from "@/data/events";
 import { Match, MatchTimes, levelColumns, matches } from "@/data/matches";
 
 export type LevelTime = { label: string; value: string };
@@ -19,6 +19,8 @@ export type CalendarEntry = {
   time?: string;
   title: string;
   location?: string;
+  /** Final day of a multi-day tournament; absent for single-day entries. */
+  endDate?: string;
   status: "confirmed" | "tentative";
   /** Per-level start times, set only when the levels differ from each other. */
   levelTimes?: LevelTime[];
@@ -55,6 +57,7 @@ function fromMatch(match: Match): CalendarEntry {
   return {
     id: match.id,
     startDate: match.startDate as string,
+    endDate: match.endDate,
     date: match.date ?? "",
     title: match.opponent,
     location: match.location,
@@ -82,20 +85,41 @@ export const calendar: CalendarEntry[] = [
 ].sort((a, b) => a.startDate.localeCompare(b.startDate));
 
 /**
- * Entries that have not happened yet, soonest first.
+ * Today's date in the program's timezone, as YYYY-MM-DD.
+ *
+ * Takes `now` so the same function serves the build (where it is the build
+ * clock) and the browser (where it is the visitor's clock). Either way the date
+ * is computed in America/Chicago, so a visitor in another timezone still sees
+ * the schedule relative to the program's day, not their own.
+ */
+export function programDate(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(now);
+}
+
+/**
+ * Entries that have not happened yet, soonest first. Pure: give it a date and
+ * it gives you the list, which is what lets the browser re-run it.
  *
  * A multi-day tournament stays listed until its final day, so it does not drop
  * off the home page halfway through.
+ */
+export function upcomingFrom(
+  entries: CalendarEntry[],
+  today: string,
+  limit?: number,
+): CalendarEntry[] {
+  const upcoming = entries.filter((entry) => (entry.endDate ?? entry.startDate) >= today);
+  return limit === undefined ? upcoming : upcoming.slice(0, limit);
+}
+
+/**
+ * The build-time view. This is what lands in the prerendered HTML, so it is
+ * what a crawler and a visitor with JavaScript disabled see.
  *
- * NOTE: the site is a static export, so "today" is fixed at BUILD time — the
- * list advances on each rebuild/deploy, not on its own overnight.
+ * It is only as fresh as the last build — hence the nightly rebuild in
+ * deploy.yml, and hence `UpcomingEventsList` re-running the filter in the
+ * browser against the real current date.
  */
 export function upcomingCalendar(limit?: number): CalendarEntry[] {
-  const today = programToday();
-  const lastDay = new Map(
-    matches.filter((match) => match.startDate).map((m) => [m.id, m.endDate ?? m.startDate!]),
-  );
-
-  const upcoming = calendar.filter((entry) => (lastDay.get(entry.id) ?? entry.startDate) >= today);
-  return limit === undefined ? upcoming : upcoming.slice(0, limit);
+  return upcomingFrom(calendar, programDate(), limit);
 }

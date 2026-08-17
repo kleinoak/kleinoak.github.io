@@ -892,3 +892,10 @@ Update project log and documentation once done.
 Sort the player names alphabetically by their firstnames.
 Deploy to staging and production once done.
 Update project log and documentation once done.
+
+
+# 14
+Update our upcoming events at the landing page.
+Also, check for a dynamic way to render upcoming events depending on actual dates.
+
+Update project log and documentation once done.

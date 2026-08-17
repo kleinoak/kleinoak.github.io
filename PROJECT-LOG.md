@@ -648,3 +648,33 @@ Branch `20260815/feature/footer-credit`. A subtle link to `codinci.com/about`, w
 
 ### Not yet done
 - [ ] Tap target is 16px tall — under the 24px of WCAG 2.5.8. Acceptable for a footer credit that nobody needs to hit, and enlarging it would work against the brief, but worth knowing it is a deliberate exception.
+
+---
+
+## 20260817 — Upcoming Events, actually live
+
+Branch `20260817/feature/live-upcoming-events`. The landing page was advertising a tournament that had already finished, and "a dynamic way to render upcoming events" was asked for a second time — which is a fair signal that the first answer had not solved it.
+
+### What was actually wrong
+Not the filter, and not the cron. **The nightly rebuild has been firing every day and succeeding** — four scheduled runs on the 13th, 14th, 15th and 16th, all green. Production was showing "Aug 13–16 Tournament" on the morning of the 17th because it was last built at 11:40 UTC on the 16th, when that tournament was still current. Exactly the up-to-24-hours staleness recorded as an accepted cost on the 12th. Accepted costs stop being acceptable when someone notices them twice.
+
+### Decisions
+- **Filter twice: once at build, once in the browser.** The prerendered list stays — it is what crawlers and no-JS readers get, and it is never empty. On top of it, `UpcomingEventsList` re-runs the *same pure function* against the real date. `upcomingFrom(entries, today, limit)` takes the date as an argument precisely so both callers can share it; nothing is reimplemented client-side to drift out of step.
+- **Initial state is the server's list.** That is what makes this safe: the first client render is identical to the prerendered HTML, so hydration matches and there is no flash in the common case where the build is current. The correction only happens when the build has actually gone stale.
+- **`usePathname`-style caution paid off again.** No `useSearchParams`, no Suspense boundary, nothing that would put a fallback into the static HTML.
+- **Re-checks on `visibilitychange`.** A phone left on a bedside table overnight would otherwise still show yesterday's list when picked up. Cheap to add, and it is the case a parent actually hits.
+- **The date is computed in America/Chicago on both sides**, so a reader in another state sees the schedule relative to Klein Oak's day, not their own.
+- **`programToday()` removed from `events.ts`** in favour of `programDate(now)` in `calendar.ts` — same logic, but parameterised so the browser can pass its own clock.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `next build` → 15 routes.
+- [x] Prerendered list now opens on **Aug 18 Klein**, with the finished tournament gone.
+- [x] **The client-side correction was proved, not assumed**: with the browser clock moved to 2026-09-10 and the tab foregrounded, the list re-rendered to Klein Cain / Tomball / Magnolia West / Klein Collins — all correctly future from that date.
+- [x] No hydration warnings in the console on a clean reload.
+- [x] 30 upcoming entries are handed to the client; the payload is the dates already in the page.
+
+*A false negative worth recording: the first attempt at that test reported no change, and the code looked broken. The tab was being driven in the background, so `document.visibilityState` was `"hidden"` and the guard correctly refused to refresh. The test was wrong, not the component — worth checking `visibilityState` before believing any visibility-driven behaviour has failed under automation.*
+
+### Not yet done
+- [ ] **Every program milestone in `content/events.json` has now passed** — tryouts, rosters, first practice, Meet the Panthers, team pictures were all early August. "Upcoming Events" is now purely match play, running to 2026-11-21. If the program has further dates — senior night, a banquet, playoff watch parties — they need supplying; they cannot be invented.
+- [ ] The Schedule page's "Program Dates" section now lists only past dates, for the same reason. Reads as a season-start record rather than a forward calendar.

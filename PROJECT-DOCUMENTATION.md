@@ -257,7 +257,7 @@ ko-volleyball-web/
 scripts/deploy-prod.sh — they are working notes, not part of the site.)
 ```
 
-**The public site ships four client components, and each earns it.** `Header` (menus), `ScheduleBrowser` (the schedule's team filter), `HeroCarousel` (the rotating hero), and `PageViews` (a GA `page_view` on route change, since gtag reports only the document that loaded). Everything else is a server component rendered to static HTML at build time.
+**The public site ships five client components, and each earns it.** `Header` (menus), `ScheduleBrowser` (the schedule's team filter), `HeroCarousel` (the rotating hero), `PageViews` (a GA `page_view` on route change, since gtag reports only the document that loaded), and `UpcomingEventsList` (re-checks the dated list against the real current date). Everything else is a server component rendered to static HTML at build time.
 
 `HeroCarousel` mounts **one slide at a time** rather than hiding the inactive ones with CSS: a hidden slide still contains focusable links, and tabbing into content nobody can see is the standard carousel accessibility bug. The first slide is server-rendered, so the program hero is the first paint and the only slide that appears with JavaScript disabled.
 
@@ -295,6 +295,13 @@ The site is a static export deployed to GitHub Pages by `deploy.yml` on every pu
 `concurrency: { group: pages, cancel-in-progress: true }` ensures two publishes in quick succession never deploy over each other — the newest always wins. `touch out/.nojekyll` stops GitHub Pages from running Jekyll over the export.
 
 **Production is published by `scripts/deploy-prod.sh`, not by `git push`.** The production repository is a mirror that Actions builds from, and it deliberately does not carry the internal markdown (`IDLC.md`, `PROJECT-LOG.md`, the setup guides, and so on) — only `README.md`. Since those files are already tracked, `.gitignore` cannot exclude them and deleting them in the mirror would not survive the next push; the script instead rewrites a throwaway branch with them removed and force-pushes it. Production history is therefore an artefact, `origin` is the source of truth, and nothing should be committed directly to the mirror.
+
+**Dated content is filtered twice: once at build, once in the browser.** The home page's "Upcoming Events" is filtered against today's date, and in a static export "today" is frozen at build time. Two mechanisms together keep it honest, and both are needed:
+
+1. **The nightly rebuild** below refreshes the prerendered HTML, which is what a crawler and a reader with JavaScript disabled get.
+2. **`UpcomingEventsList` re-runs the same pure filter in the browser** (`upcomingFrom` in `src/data/calendar.ts`), against the real current date and again whenever the tab returns to the foreground. Its initial state is the server's list, so hydration matches and nothing flickers when the build is current.
+
+The rebuild alone was not enough: between midnight and the 06:00 rebuild the page still advertised fixtures that had already been played — on 2026-08-17 a tournament that finished on the 16th sat at the top of the list. The date is computed in the program's timezone either way, so a reader in another state sees the schedule relative to Klein Oak's day rather than their own.
 
 **A nightly rebuild keeps date-filtered content current.** The home page's "Upcoming Events" is filtered against today's date, and in a static export "today" is frozen at build time — so without a rebuild the list would stay on the date of the last publish and gradually fill with events that have already happened. `deploy.yml` therefore also runs on `schedule: "0 11 * * *"` (06:00 Central). The list is day-granular, so a daily rebuild is as accurate as the data allows, and it costs no client-side JavaScript — the filtered list stays in the prerendered HTML.
 
