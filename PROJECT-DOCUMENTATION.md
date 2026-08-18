@@ -285,27 +285,140 @@ Because the background is genuinely transparent, the logo sits correctly on any 
 
 ---
 
+## 🟡⚫️ Deployment path — engineering to prod
+
+Three repositories, three roles. Only one of them is where work happens; the other two are build targets that must never be edited directly.
+
+| | Repository | What it is | Serves |
+|---|---|---|---|
+| **Source** | [alfredsilvertonai/ko-volleyball-web](https://github.com/alfredsilvertonai/ko-volleyball-web) | Where all work happens. Full history, all branches, all internal docs. **No GitHub Pages site** — it is not an environment. | nothing |
+| **Staging** | [thecodinci/thecodinci.github.io](https://github.com/thecodinci/thecodinci.github.io/tree/main/kovb) — the `kovb/` folder | Hand-deployed **built output only**. No source, no CI. A folder inside a larger personal site. | <https://codinci.com/kovb/> |
+| **Production** | [kleinoak/kleinoak.github.io](https://github.com/kleinoak/kleinoak.github.io) | A mirror of `main` with the internal docs stripped. GitHub Actions builds and deploys it. | <https://kleinoakvolleyball.com> |
+
+Production is on the program's real domain with HTTPS enforced. `kleinoak.github.io` and `www.kleinoakvolleyball.com` both **301 to the apex**, so there is one canonical address. The custom domain lives in the repository's Pages settings.
+
+---
+
+### The path a change takes
+
+```
+  work on a branch off main
+        │
+        ▼
+  PR into alfredsilvertonai/ko-volleyball-web   ← pull-request.yml: validate, lint, typecheck, build
+        │
+        ▼
+  squash merge to main                          ← the only thing that lands on main
+        │
+        ├─────────────────────────────►  sh scripts/deploy-prod.sh
+        │                                 force-pushes main-minus-docs to prod/main
+        │                                 → deploy.yml builds and deploys
+        │                                 → https://kleinoakvolleyball.com
+        │
+        └─────────────────────────────►  build with NEXT_PUBLIC_BASE_PATH=/kovb
+                                          rsync into thecodinci.github.io/kovb/
+                                          commit + push there
+                                          → https://codinci.com/kovb/
+```
+
+**Branches.** `YYYYMMDD/<kind>/<slug>` — for example `20260817/feature/varsity-results`, `20260814/fix/hero-centering`, `20260815/docs/refresh-documentation`. One PR each, **squash merged**, branch deleted after. `main` is never committed to directly.
+
+---
+
+### Deploying to production
+
+```bash
+sh scripts/deploy-prod.sh
+```
+
+That is the whole command, and it is the **only** supported route. It refuses to run on a dirty working tree or when `main` and `origin/main` disagree, so what ships is always what was reviewed and merged.
+
+What it does: builds a tree from `main` with every tracked `*.md` except `README.md` removed, and force-pushes it to `prod/main`. `deploy.yml` then validates content, builds, writes `.nojekyll`, and deploys to Pages.
+
+**Consequences to understand:**
+
+- **Production history is rewritten on every deploy.** It is a deployment artefact; `origin` is the source of truth. `prod/main` will not match `origin/main` — that is expected, not drift.
+- **Never `git push prod main`.** It would restore the internal docs and conflict with the rewritten history.
+- **Never commit in the production repo.** The next deploy discards it.
+- The `prod` remote is `git@github.com-kleinoak:kleinoak/kleinoak.github.io.git`, which needs the `github.com-kleinoak` SSH alias (see `~/Workspace/INSTRUCTIONS.md`).
+
+---
+
+### Deploying to staging
+
+Staging carries **built output only** — no source ever goes there. It is a sub-path deploy, which is the part that goes wrong if rushed:
+
+```bash
+rm -rf out .next
+NEXT_PUBLIC_BASE_PATH=/kovb npm run build     # required: served from /kovb, not the root
+touch out/.nojekyll                            # required: see below
+rsync -a --delete --dry-run out/ ~/Workspace/volunteer/thecodinci.github.io/kovb/
+rsync -a --delete        out/ ~/Workspace/volunteer/thecodinci.github.io/kovb/
+cd ~/Workspace/volunteer/thecodinci.github.io && git add kovb && git commit && git push
+```
+
+- **`NEXT_PUBLIC_BASE_PATH=/kovb` is not optional.** Without it every asset resolves against the domain root and the page loads unstyled.
+- **`.nojekyll` must be recreated before each sync.** It exists in `kovb/` but *not* in the source repo's `public/`, so `rsync --delete` removes it — and without it Pages runs Jekyll, which ignores `_next/` and 404s every script and stylesheet.
+- **Always dry-run first.** `--delete` removes anything in `kovb/` not in `out/`. Stale build-hash folders under `_next/static/` are expected; anything else is not.
+- Set **no** analytics ID here — see below.
+
+---
+
+### What differs between the environments
+
+| | Production | Staging |
+|---|---|---|
+| `SITE_BASE_PATH` / `NEXT_PUBLIC_BASE_PATH` | **unset** — served from the domain root | `/kovb` |
+| `GA_MEASUREMENT_ID` | set as a repository variable | **unset**, deliberately |
+| Analytics | active | none emitted at all |
+| Built by | GitHub Actions | by hand, locally |
+| Rebuilt nightly | yes, 06:00 Central | no — only when someone deploys |
+| Internal `.md` | stripped, `README.md` only | n/a, no source present |
+
+The analytics split is by construction rather than by filter: with no ID the tag is not rendered, so staging cannot pollute production's reports even by accident.
+
+---
+
+### After deploying
+
+Production takes a minute or two; check the Actions tab, then the live site. Worth verifying on a change that touches assets or paths:
+
+```bash
+grep -c '"/_next/' out/index.html        # 0 — every asset must carry the base path
+grep -c 'googletagmanager' out/index.html # 0 on staging, 1 on production
+```
+
+**`gh` cannot see either mirror by default.** It authenticates over HTTPS with its own token and ignores the SSH aliases entirely, so `gh` commands against `kleinoak/…` fail with "Could not resolve to a Repository" even though `git` works fine. `gh auth status` first. Production repository settings — variables, Pages, collaborators — have to be changed in the browser signed in as `kleinoak`.
+
+---
+
+### Known fragility
+
+- **The custom domain is configured in Pages settings, not by a `CNAME` file in the tree.** `deploy-prod.sh` force-pushes a tree built from `main`, which has no `CNAME`; if one is ever added to the production repo by the GitHub UI, the next deploy would remove it. It has survived every deploy so far because the setting is what Pages honours for an Actions-built site — but a sudden loss of the custom domain after a deploy would have this as its first suspect.
+- **Staging drifts silently.** Nothing rebuilds it, so it is only as current as the last manual deploy. It is not a preview of `main`; it is a snapshot of whenever someone last ran the commands.
+- **Two repositories can accept `/admin` publishes.** An editor publishing from a production build writes to the production repo, and content there would then be overwritten by the next `deploy-prod.sh` run, which builds from `main`. This is the single most likely way to lose content, and it has not been resolved.
+
+---
+
 ## Deployment
 
 The site is a static export deployed to GitHub Pages by `deploy.yml` on every push to `main` (which includes every direct publish from `/admin`).
 
 **One-time setup on a fresh repository:**
 1. **Settings → Pages → Source: GitHub Actions.**
-2. If serving from a project sub-path (`https://<user>.github.io/ko-volleyball-web`), add a repository **variable** `SITE_BASE_PATH` = `/ko-volleyball-web`. Leave it unset for a custom domain such as `kleinoakvolleyball.com`.
+2. If serving from a project sub-path (`https://<user>.github.io/ko-volleyball-web`), add a repository **variable** `SITE_BASE_PATH` = `/ko-volleyball-web`. **Production leaves it unset** — it is served from the root of `kleinoakvolleyball.com`, and setting it would break every asset path.
 3. Invite editors as collaborators with **Write** access.
 
 `concurrency: { group: pages, cancel-in-progress: true }` ensures two publishes in quick succession never deploy over each other — the newest always wins. `touch out/.nojekyll` stops GitHub Pages from running Jekyll over the export.
 
-**Production is published by `scripts/deploy-prod.sh`, not by `git push`.** The production repository is a mirror that Actions builds from, and it deliberately does not carry the internal markdown (`IDLC.md`, `PROJECT-LOG.md`, the setup guides, and so on) — only `README.md`. Since those files are already tracked, `.gitignore` cannot exclude them and deleting them in the mirror would not survive the next push; the script instead rewrites a throwaway branch with them removed and force-pushes it. Production history is therefore an artefact, `origin` is the source of truth, and nothing should be committed directly to the mirror.
+**Production is published by `scripts/deploy-prod.sh`, not by `git push`** — see [Deployment path — engineering to prod](#-deployment-path--engineering-to-prod) above for the repositories, the commands, and what must not be done to the mirrors.
 
-**Dated content is filtered twice: once at build, once in the browser.** The home page's "Upcoming Events" is filtered against today's date, and in a static export "today" is frozen at build time. Two mechanisms together keep it honest, and both are needed:
+**Dated content is filtered twice: once at build, once in the browser.** The home page's "Upcoming Events" is filtered against today's date, and in a static export "today" is frozen at build time. Two mechanisms are needed, not one:
 
-1. **The nightly rebuild** below refreshes the prerendered HTML, which is what a crawler and a reader with JavaScript disabled get.
-2. **`UpcomingEventsList` re-runs the same pure filter in the browser** (`upcomingFrom` in `src/data/calendar.ts`), against the real current date and again whenever the tab returns to the foreground. Its initial state is the server's list, so hydration matches and nothing flickers when the build is current.
+1. **A nightly rebuild.** `deploy.yml` runs on `schedule: "0 11 * * *"` (06:00 Central) as well as on push, refreshing the prerendered HTML — which is what a crawler and a reader with JavaScript disabled get.
+2. **`UpcomingEventsList` re-runs the same pure filter in the browser** (`upcomingFrom` in `src/data/calendar.ts`), against the real current date and again when the tab returns to the foreground. Its initial state is the server's list, so hydration matches and nothing flickers when the build is current.
 
-The rebuild alone was not enough: between midnight and the 06:00 rebuild the page still advertised fixtures that had already been played — on 2026-08-17 a tournament that finished on the 16th sat at the top of the list. The date is computed in the program's timezone either way, so a reader in another state sees the schedule relative to Klein Oak's day rather than their own.
-
-**A nightly rebuild keeps date-filtered content current.** The home page's "Upcoming Events" is filtered against today's date, and in a static export "today" is frozen at build time — so without a rebuild the list would stay on the date of the last publish and gradually fill with events that have already happened. `deploy.yml` therefore also runs on `schedule: "0 11 * * *"` (06:00 Central). The list is day-granular, so a daily rebuild is as accurate as the data allows, and it costs no client-side JavaScript — the filtered list stays in the prerendered HTML.
+The rebuild alone was not enough: between midnight and 06:00 the page still advertised fixtures already played — on 2026-08-17 a tournament that finished on the 16th sat at the top of the list. The date is computed in the program's timezone either way, so a reader in another state sees the schedule relative to Klein Oak's day rather than their own.
 
 Two things to know about it: GitHub **disables scheduled workflows on a public repo after 60 days of inactivity** (it emails first), so an off-season gap may need the schedule re-enabling from the Actions tab; and the hand-deployed staging copy at `codinci.com/kovb/` never runs CI, so its list is only as fresh as its last manual deploy.
 
