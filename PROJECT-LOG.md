@@ -710,3 +710,19 @@ Two apparent conflicts were checked and are not conflicts: the Houston Prime tou
 - [ ] Results are transcribed by hand from Rank One, so they are a point-in-time copy. Nothing re-checks them, and nothing warns when a played fixture still has no result. Rank One remains the live source of truth.
 - [ ] Aug 10 and Aug 11 varsity **times** are still `TBD` in the schedule although Rank One lists 4:30, 6:00 and 5:30 — deliberately untouched, being before the Aug 13 cutoff. A one-line change if wanted.
 - [ ] Only varsity has results. JV, Flex and Freshman have their own Rank One team IDs; the same treatment would need those URLs and a per-level result model rather than one field.
+
+---
+
+## 20260818 — Ava Lockhardt added to Flex
+
+Branch `20260818/content/flex-roster-addition`. Flex goes from 14 players to 15.
+
+No code change was needed, which is the point: rosters are sorted by first name in `src/data/teams.ts`, so the name only had to exist. It renders second, between Addison Buescher and Bella Grant, and the player count on the page follows from `roster.length`. The stored JSON was re-sorted with the same comparator so `/admin` shows the page's order.
+
+### Verified
+- [x] `validate:content` → 12 files OK; `tsc` and `eslint` clean; `next build` → 15 routes.
+- [x] Flex renders 15 names, still in first-name order, with the count badge reading 15.
+- [x] Varsity 17, JV 15, Freshman 15 — unchanged, and the new name appears on no other roster.
+
+### Not yet done
+- [ ] This is a student's name on a public site. The schema's own guidance is to publish only a roster the program has already made public; the addition was requested rather than sourced, so it is worth confirming against the program's published Flex roster.
