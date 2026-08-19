@@ -1,8 +1,10 @@
 // Content source: content/matches.json (edited at /admin).
 //
-// Transcribed from the program's published 2026 schedule at
-// kleinoakvolleyball.com (2026-08-08). Rank One remains the live source of
-// truth for changes — the schedule page links to it prominently.
+// Transcribed from the program's published 2026 schedule (2026-08-08), then
+// reconciled against Rank One on 2026-08-17, which also supplies the varsity
+// results. Rank One remains the live source of truth for changes — the schedule
+// page links to it prominently. Note that kleinoakvolleyball.com, the original
+// reference, is now this site.
 import matchesJson from "@content/matches.json";
 
 export type MatchSection = "preseason" | "district" | "playoffs";

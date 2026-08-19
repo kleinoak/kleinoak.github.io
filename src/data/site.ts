@@ -1,6 +1,7 @@
 // Site-wide settings. The values live in `content/site.json` and are edited
 // through the in-repo CMS at /admin — see PROJECT-DOCUMENTATION.md.
-// Reference data was gathered from https://www.kleinoakvolleyball.com/ (2026-08-02).
+// Reference data was gathered from the program's previous website (2026-08-02),
+// which lived at kleinoakvolleyball.com until this site took that domain over.
 import siteJson from "@content/site.json";
 
 export type Site = {

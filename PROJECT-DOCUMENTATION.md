@@ -231,7 +231,11 @@ ko-volleyball-web/
 │   ├── components/                 # header, footer, cards, home sections
 │   │   ├── home/HeroCarousel.tsx   # rotating hero; mounts one slide at a time
 │   │   ├── home/CampaignBanner.tsx # the VBIF slide
+│   │   ├── home/UpcomingEventsList.tsx  # re-filters the dated list in the browser
+│   │   ├── schedule/MatchSchedule.tsx   # table + phone cards; varsity results column
 │   │   └── analytics/PageViews.tsx # GA page_view on client-side route change
+│   ├── lib/
+│   │   └── asset.ts                # assetPath() — every image src must go through it
 │   └── data/                       # thin typed loaders over content/*.json
 │       └── calendar.ts             # merges events + matches into one dated feed
 ├── logo-redesign/                  # brand exploration — logo options + source renders
@@ -441,7 +445,7 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 
 - **The editor has never been exercised against live GitHub.** Sign-in, edit, and publish have not yet been run end-to-end in a browser against a real repository (see PROJECT-LOG). Everything below the browser — schema, validation, diffing, build, static export — is verified.
 - **The footer carries a build credit** linking to `codinci.com/about`. It is hardcoded in `Footer.tsx` rather than living in `content/`, since it is a developer credit the Booster Club does not maintain. Two deliberate choices are recorded there in comments: it is `text-white/45` because the quieter `white/35` measures 3.17:1 against the footer and fails the 4.5:1 WCAG AA floor, and it has no `target="_blank"` because a link that opens a new window ought to say so and the warning would be louder than the credit. Its 16px tap target is under WCAG 2.5.8's 24px — a knowing exception for a footer credit, not an oversight.
-- **Rosters and the season schedule mirror what the program publishes** at kleinoakvolleyball.com. They are student names and a spreadsheet transcribed by hand — re-check them against the program's own page when the season turns over, and clear `roster` when it ends. No jersey numbers, player photos, or statistics are modeled, because the program does not publish any.
+- **Rosters and the season schedule were transcribed by hand from the program's previous website**, which lived at `kleinoakvolleyball.com` until this site took that domain over. **That reference no longer exists** — the domain now serves this site, so "check it against kleinoakvolleyball.com" is now circular and cannot verify anything. The remaining external source of truth is **Rank One** (schedule, times, varsity results); rosters have no external source at all and can only be confirmed by the program. Re-check them when the season turns over and clear `roster` when it ends. No jersey numbers, player photos, or statistics are modeled, because none were published.
 - **Rank One remains the live source of truth** for schedule changes; the schedule page links to it prominently rather than claiming to be authoritative.
 - **Changing a team's `slug`** breaks shared links and requires a developer to update the header menu; the field's help text says so, but nothing enforces it.
 - **Staged images are capped by browser storage** (~5 MB for `localStorage`). Beyond that the editor keeps them in memory for the tab only and says so.

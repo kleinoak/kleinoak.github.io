@@ -726,3 +726,27 @@ No code change was needed, which is the point: rosters are sorted by first name 
 
 ### Not yet done
 - [ ] This is a student's name on a public site. The schema's own guidance is to publish only a roster the program has already made public; the addition was requested rather than sourced, so it is worth confirming against the program's published Flex roster.
+
+---
+
+## 20260818 — Documentation: a reference that had eaten itself
+
+Branch `20260818/docs/post-cutover-sources`. Routine documentation pass after the roster addition; the interesting find was not routine.
+
+### The circular reference
+`PROJECT-DOCUMENTATION.md` told a future maintainer to *"re-check rosters against the program's own page at kleinoakvolleyball.com"*. That instruction was written when the domain served the program's Wix site. **The domain now serves this site.** Following the instruction would have meant checking our data against our own output and concluding it was correct — the worst kind of verification, the sort that always passes.
+
+The same framing had been copied into three data modules: `teams.ts` (twice), `matches.ts`, and `site.ts`. All four now say plainly that the original reference is gone, that **Rank One is the only remaining external source** — schedule, times, varsity results — and that **rosters have no external source at all** and can only be confirmed with the program.
+
+That last point sharpens yesterday's roster addition: "Ava Lockhardt" cannot be checked against anything. There is no page to compare it to.
+
+### Also
+- Added `UpcomingEventsList.tsx`, `MatchSchedule.tsx` and `lib/asset.ts` to the Project Layout. The first is a client component the documentation already enumerates by name, and the third is referenced throughout the prose while being absent from the tree.
+- The project log needed nothing — every merged PR through #25 already had an entry.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `validate:content` → 12 files OK; `next build` → 15 routes.
+- [x] Every remaining mention of `kleinoakvolleyball.com` in the documentation now refers to it as *this site's address*, not as a source to check against.
+
+### Not yet done
+- [ ] Rosters are now unverifiable from outside. If the program publishes its rosters anywhere else — a team app, a printed programme, district pages — that source is worth recording, because right now the only check is asking a coach.

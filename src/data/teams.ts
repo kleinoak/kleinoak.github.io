@@ -1,8 +1,10 @@
 // Content sources: content/teams.json, content/coaches.json (edited at /admin).
 //
-// Rosters mirror the 2026 rosters the program publishes at
-// kleinoakvolleyball.com. No statistics, jersey numbers, or player photos are
-// published there, so none are modeled here.
+// Rosters were transcribed from the program's previous website, which lived at
+// kleinoakvolleyball.com until this site took that domain over — so that address
+// is no longer an independent source to check against. Rosters have no external
+// source now; only the program can confirm them. No statistics, jersey numbers,
+// or player photos are modeled, because none were published.
 import teamsJson from "@content/teams.json";
 import coachesJson from "@content/coaches.json";
 
@@ -20,8 +22,9 @@ export type Team = {
   description: string;
   photo?: TeamPhoto;
   /**
-   * Published by the program at kleinoakvolleyball.com. Student names, so this
-   * mirrors what the program has already made public — nothing more.
+   * Student names. Only publish a roster the program has already made public,
+   * and note that the old public source is gone (see the file header), so an
+   * addition can no longer be verified against a page — only with the program.
    */
   roster?: string[];
 };
