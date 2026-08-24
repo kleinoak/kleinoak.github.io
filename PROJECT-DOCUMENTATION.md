@@ -6,7 +6,7 @@
 
 ## Overview
 
-`ko-volleyball-web` is the modernized website for the Klein Oak High School Panther Volleyball program: teams, key dates, match schedule, coaches, sponsors, parent resources, and contact information. It is a Next.js App Router site exported as fully static HTML and served by GitHub Pages.
+`ko-volleyball-web` is the modernized website for the Klein Oak High School Panther Volleyball program: teams, key dates, match schedule, coaches, a season photo gallery, sponsors, parent resources, and contact information. It is a Next.js App Router site exported as fully static HTML and served by GitHub Pages.
 
 Bolted onto that static site is a content management system with **no server and no database**. The editor lives at `/admin`, runs entirely in the browser, and uses the GitHub repository itself as its data store. Content is JSON in `content/`; publishing is a commit; deploying is a GitHub Actions run.
 
@@ -108,6 +108,8 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 | How to sponsor | singleton | `content/sponsor-steps.json` | Sponsors |
 | Site settings | singleton | `content/site.json` | Every page |
 
+**The photo gallery is deliberately *not* a collection.** `content/gallery.json` sits beside the twelve files above but is **generated** — `scripts/build-gallery.mjs` writes it — and is not in the schema, so `/admin` never shows it and `validate-content.mts` ignores it. Two reasons it is built rather than edited: 139 photos added one at a time through the editor would be miserable, and every field in the manifest (derivative paths, pixel dimensions) is a value an editor has no way to supply correctly. To add photos, drop a folder under `content/images/` and re-run the script. See [The photo gallery](#the-photo-gallery) below.
+
 **Why sponsor logos are a separate collection.** A tier's `sponsors` is a `stringList`, which cannot hold objects, so the artwork cannot live inside the tier. `sponsor-logos.json` is joined to a tier entry by exact business name. A sponsor with no matching entry renders as its name instead — so a business can be listed the moment it signs up, without waiting on artwork. The join is by name, which means **renaming a sponsor in one file and not the other silently drops the logo**; nothing validates the pairing.
 
 **Field types**: `text`, `textarea`, `slug`, `url`, `email`, `link`, `select`, `boolean`, `number`, `stringList`, `image`. Fields carry `required`, `maxLength`, `help`, `placeholder`, `options`, and `deriveFrom` (a slug generated from another field when left blank). Dotted names address nested keys (`socials.facebook`).
@@ -164,6 +166,8 @@ The same rule set in `src/cms/validation.ts` is enforced in three places, so a b
 
 The validator is imported directly by Node via type-stripping, which is why `schema.ts` and `validation.ts` must stay dependency-free and free of TypeScript-only runtime features.
 
+**Gallery photos sit outside all three checks.** `content/gallery.json` is generated rather than edited, so it is in no collection and the "every referenced photo exists" pass does not look at it. What stands in for that is the generator: paths in the manifest are written from the files it has just encoded, so the manifest and `public/images/gallery/` can only disagree if one of them is edited or deleted by hand — and a missing derivative shows up as a broken image on the page, not as a failed build.
+
 ---
 
 ## Development Setup
@@ -191,13 +195,16 @@ Copy `.env.example` to `.env.local` to point `/admin` at a different repository 
 
 ```
 ko-volleyball-web/
-├── content/                        # THE CONTENT STORE (12 JSON files)
+├── content/                        # THE CONTENT STORE (12 editable JSON files)
 │   ├── site.json  announcements.json  events.json  teams.json
 │   ├── coaches.json  administration.json  matches.json  resources.json
 │   ├── booster-board.json  sponsor-tiers.json  sponsor-steps.json
-│   └── sponsor-logos.json          # artwork, joined to a tier by exact name
+│   ├── sponsor-logos.json          # artwork, joined to a tier by exact name
+│   ├── gallery.json                # GENERATED — not a collection, not in /admin
+│   └── images/                     # gallery photo drops — GITIGNORED, see below
 ├── scripts/
 │   ├── validate-content.mts        # prebuild + CI content gate
+│   ├── build-gallery.mjs           # content/images/ → WebP derivatives + manifest
 │   └── deploy-prod.sh              # publish to prod WITHOUT the internal docs
 ├── src/
 │   ├── app/
@@ -206,7 +213,7 @@ ko-volleyball-web/
 │   │   ├── (site)/                 # PUBLIC SITE — header + footer live here
 │   │   │   ├── layout.tsx
 │   │   │   ├── page.tsx            # Home
-│   │   │   ├── teams/  teams/[slug]/  coaches/  schedule/
+│   │   │   ├── teams/  teams/[slug]/  coaches/  schedule/  gallery/
 │   │   │   └── resources/  sponsors/  contact/
 │   │   └── admin/                  # THE EDITOR — full-screen, outside (site)
 │   │       ├── layout.tsx          # noindex metadata
@@ -231,7 +238,9 @@ ko-volleyball-web/
 │   ├── components/                 # header, footer, cards, home sections
 │   │   ├── home/HeroCarousel.tsx   # rotating hero; mounts one slide at a time
 │   │   ├── home/CampaignBanner.tsx # the VBIF slide
+│   │   ├── home/ChampionBanner.tsx # the Waller ISD slide; links to the gallery
 │   │   ├── home/UpcomingEventsList.tsx  # re-filters the dated list in the browser
+│   │   ├── gallery/GalleryBrowser.tsx   # album filter + grid + lightbox dialog
 │   │   ├── schedule/MatchSchedule.tsx   # table + phone cards; varsity results column
 │   │   └── analytics/PageViews.tsx # GA page_view on client-side route change
 │   ├── lib/
@@ -240,7 +249,8 @@ ko-volleyball-web/
 │       └── calendar.ts             # merges events + matches into one dated feed
 ├── logo-redesign/                  # brand exploration — logo options + source renders
 ├── public/
-│   ├── images/brand/               # prepared logo art (hero lockup, VBIF banner)
+│   ├── images/brand/               # prepared logo art (hero lockup, banners)
+│   ├── images/gallery/             # GENERATED WebP derivatives, 2 per photo
 │   ├── images/sponsors/            # sponsor artwork
 │   ├── images/uploads/             # photos committed by the editor
 │   ├── documents/                  # the sponsorship form PDF
@@ -263,7 +273,7 @@ ko-volleyball-web/
 scripts/deploy-prod.sh — they are working notes, not part of the site.)
 ```
 
-**The public site ships five client components, and each earns it.** `Header` (menus), `ScheduleBrowser` (the schedule's team filter), `HeroCarousel` (the rotating hero), `PageViews` (a GA `page_view` on route change, since gtag reports only the document that loaded), and `UpcomingEventsList` (re-checks the dated list against the real current date). Everything else is a server component rendered to static HTML at build time.
+**The public site ships six client components, and each earns it.** `Header` (menus), `ScheduleBrowser` (the schedule's team filter), `HeroCarousel` (the rotating hero), `PageViews` (a GA `page_view` on route change, since gtag reports only the document that loaded), `UpcomingEventsList` (re-checks the dated list against the real current date), and `GalleryBrowser` (album filter and lightbox). Everything else is a server component rendered to static HTML at build time.
 
 `HeroCarousel` mounts **one slide at a time** rather than hiding the inactive ones with CSS: a hidden slide still contains focusable links, and tabbing into content nobody can see is the standard carousel accessibility bug. The first slide is server-rendered, so the program hero is the first paint and the only slide that appears with JavaScript disabled.
 
@@ -274,6 +284,34 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
 
 **Every image `src` must go through `assetPath()` (`src/lib/asset.ts`).** `next/image` does not rewrite `src` when the image is `unoptimized` — which it always is here, because Pages cannot run Next's optimizer. A bare `/images/…` src therefore resolves against the *domain* root and 404s whenever the site is served from a sub-path: a GitHub Pages project site, or a folder inside another Pages repo. `assetPath()` prefixes `NEXT_PUBLIC_BASE_PATH`. This applies equally to literal paths in components and to paths coming out of `content/*.json`. Nothing in the build catches a missed call, so the check is `grep` the export for `src="/` paths that lack the base path.
+
+### The photo gallery
+
+139 photos in five albums — Waller ISD Tournament, Varsity, Junior Varsity, Flex, Freshman — at `/gallery`, reached from the main menu and from the champion banner on the home page.
+
+**Adding photos is a script, not an edit.**
+
+```bash
+# drop a folder of JPEGs into content/images/<album-name>/, then:
+node scripts/build-gallery.mjs
+git add content/gallery.json public/images/gallery
+```
+
+The script walks `content/images/`, treats **any folder holding images as an album** (folders holding only folders are containers — the photographer's collection wrapper is one), and writes two WebPs per photo into `public/images/gallery/<album>/`: a ~600px `-thumb` for the grid and a ~1400px full for the lightbox. It rewrites `content/gallery.json` with paths and real pixel dimensions, so the page reserves the right space and nothing reflows as thumbnails arrive.
+
+Things worth knowing before re-running it:
+
+- **Re-running is cheap.** A derivative is only re-encoded when it is missing or older than its source, so adding one album does not re-process the other 139 photos.
+- **A new folder needs no code change.** `ALBUM_TITLES` maps a folder name to how it should read (`jv` → "Junior Varsity"); a folder with no entry gets a title derived from its name. `ALBUM_ORDER` fixes the display order and anything unlisted sorts to the end.
+- **Loose files at the top of `content/images/` are skipped and reported**, not swept into a nameless album — the champion banner source sits there.
+- **Files sort naturally** (`…9` before `…10`), so album order is stable across machines.
+- **The originals are gitignored.** `content/images/` is 36 MB of full-resolution JPEG that only this script reads; the 18 MB of derivatives is what ships. That also means **git is not a backup of the originals** — they exist only where they were dropped.
+
+**The page degrades instead of breaking.** Every thumbnail is a real `<a>` to the full-size WebP, so with JavaScript off the grid is still a browsable gallery — the browser's own image view replaces the lightbox. The album filter is a `<fieldset>` of radio inputs, the same pattern as `ScheduleBrowser`, and with JavaScript off every album shows rather than none. Thumbnails are lazy-loaded and a full-size image is fetched only when a lightbox opens, so a phone on school Wi-Fi downloads what is on screen and not 18 MB.
+
+**The lightbox is a dialog and follows the dialog rules**: focus moves in and is trapped, Escape closes, arrow keys step through the *filtered* set (so "next" means what the eye expects), the page behind does not scroll, and focus returns to the thumbnail that opened it.
+
+**Alt text says what is actually known.** Nobody has described these frames, so each photo announces its album and position — "Varsity — photo 12 of 38". It is honest rather than good: see Known Limitations.
 
 **The hero logo is a prepared raster, and the preparation matters.** The mark is `public/images/brand/panther-logo.png`, derived from `logo-redesign/panther-black-high-res-with-words-01.png`. It cannot be an SVG: the artwork carries a soft gold glow that vector shapes will not reproduce.
 
@@ -452,7 +490,10 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **Bios and photos** are gated behind flags (`bioAvailable`, optional `photo`) because no authoritative content or publication permissions were available at build time.
 - **`content/` is the only editable surface.** Page structure, navigation, and copy outside the schema still require a developer.
 - **Analytics are opt-in per environment.** GA4 is rendered only when `NEXT_PUBLIC_GA_ID` is set at build time, which is how development and the hand-deployed staging copy report nothing — there is no filter to maintain. Production reads it from the `GA_MEASUREMENT_ID` repository variable via `deploy.yml`. Two things are easy to get wrong: the env var must appear as the literal `process.env.NEXT_PUBLIC_GA_ID` (Next inlines it by textual substitution), and `<GoogleAnalytics>` does **not** track client-side navigation — `src/components/analytics/PageViews.tsx` sends `page_view` on route change, so GA4's Enhanced measurement "page changes based on browser history events" must stay **off** or every internal navigation is counted twice. See `GOOGLE-ANALYTICS-SETUP.md`.
-- **Hero banners are code, not content.** The home page rotates between the program hero and the VBIF campaign banner (`HeroCarousel`, `CampaignBanner`); the slide list lives in `src/app/(site)/page.tsx`, so adding or removing a banner needs a developer. Two design constraints are load-bearing and should survive any change: only the **active slide is mounted** — hiding inactive slides with CSS leaves their links focusable, which is the standard carousel accessibility bug — and the **first slide is server-rendered**, so it is what appears on load and the only one that renders without JavaScript. The carousel also holds the tallest slide's height via a `ResizeObserver`, because the slides differ by 81px at desktop and 407px on a phone and the page would otherwise jump on every rotation.
-- **The VBIF banner has no destination and no real accessible name.** Its alt text is just `"VBIF"`, and the artwork is an image of text, so the wordmark neither scales with the reader's font size nor is available to a screen reader (WCAG 1.4.5).
+- **Hero banners are code, not content.** The home page rotates between the program hero, the VBIF campaign banner and the Waller ISD champion banner (`HeroCarousel`, `CampaignBanner`, `ChampionBanner`); the slide list lives in `src/app/(site)/page.tsx`, so adding or removing a banner needs a developer. Two design constraints are load-bearing and should survive any change: only the **active slide is mounted** — hiding inactive slides with CSS leaves their links focusable, which is the standard carousel accessibility bug — and the **first slide is server-rendered**, so it is what appears on load and the only one that renders without JavaScript. The carousel also holds the tallest slide's height via a `ResizeObserver`, because the slides differ by 81px at desktop and 407px on a phone and the page would otherwise jump on every rotation.
+- **The VBIF banner has no destination and no real accessible name.** Its alt text is just `"VBIF"`, and the artwork is an image of text, so the wordmark neither scales with the reader's font size nor is available to a screen reader (WCAG 1.4.5). The champion banner is the same kind of artwork handled the other way — its alt text carries the banner's own words and the whole banner links to `/gallery` — which is the pattern to copy if VBIF is ever revisited. Both remain images of text and would be better as real markup over a background.
+- **Gallery alt text is honest, not descriptive.** Each photo announces its album and position ("Junior Varsity — photo 7 of 33") because nobody has described the frames. That is better than `IMG_2604` and better than inventing what is happening, but a screen-reader user still cannot tell a huddle from a serve. Real alt text needs someone who was at the matches; it is `photoAlt()` in `src/data/gallery.ts` and touching one function fixes every caller.
+- **The gallery is not editable, and removing a photo is a developer job.** It is generated, so `/admin` cannot show it: taking a photo down means deleting its source and both derivatives and re-running `scripts/build-gallery.mjs`. Worth knowing in advance, because *"please take that one of my daughter down"* is a request that arrives on a weekend. These are photographs of minors on a public site — whether each one may be published is the program's call, not the code's, and nothing here records who consented.
+- **The photo originals live in exactly one place.** `content/images/` is gitignored (36 MB that only the generator reads), so the repository is not a backup of them. If the folder is lost, the ~1400px derivatives are all that remain.
 - **Bitmap assets must be compressed before they are committed.** `images.unoptimized` is on (GitHub Pages cannot run Next's optimiser), so **whatever is in `public/` is byte-for-byte what visitors download** — there is no build step that will save you. The VBIF banner arrived as a 1,096 KB PNG and ships as a 34 KB WebP, visually identical. Photographic artwork belongs in WebP; PNG only for flat-colour graphics that need transparency. `sharp` is already available via Next, so `sharp(src).webp({ quality: 80 })` is enough. Keep the source file in `logo-redesign/`, which is not served.
 - **No scheduled publishing, no drafts shared between editors, no rollback UI.** Rollback is `git revert` by a developer. These were judged unnecessary for the program's actual workflow.

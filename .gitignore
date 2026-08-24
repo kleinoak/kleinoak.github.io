@@ -39,6 +39,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Photo drops for the gallery: ~36 MB of full-resolution originals that only
+# scripts/build-gallery.mjs ever reads. What the site serves is the WebP
+# derivatives under public/images/gallery/, and those *are* committed — so
+# neither a build nor a deploy touches this folder, and carrying it would add
+# 36 MB to this repo and to the production mirror forever.
+# This means git is NOT a backup of the originals. Keep them somewhere else.
+/content/images/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

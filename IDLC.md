@@ -894,8 +894,29 @@ Deploy to staging and production once done.
 Update project log and documentation once done.
 
 
-# 14
+# 14 ✅
 Update our upcoming events at the landing page.
 Also, check for a dynamic way to render upcoming events depending on actual dates.
 
 Update project log and documentation once done.
+
+
+## --------------------
+## 🟨 20260823
+## --------------------
+
+
+# 15 Image gallery and hero banner
+
+I have created an `images` folder at the content folder. I uploaded images there.
+
+Create and design a new UIUX that will serve as the image gallery of the website.
+I would leave it to you to design the interactive UIUX image gallery. The image gallery should be part of the main menu of the website.
+
+Add a hero banner using the file `banner-waller-isd-champion.png` found at the folder content\images\.
+Add a link to the new banner that will ultimately lead to the new interactive image gallery page.
+
+Deploy to staging site once done. I will review before we push to production.
+
+Update project log and documentation once done.
+

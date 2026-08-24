@@ -42,6 +42,7 @@ export const nav = [
   },
   { label: "Coaches", href: "/coaches" },
   { label: "Schedule", href: "/schedule" },
+  { label: "Gallery", href: "/gallery" },
   { label: "Resources", href: "/resources" },
   { label: "Sponsors", href: "/sponsors" },
   { label: "Contact", href: "/contact" },

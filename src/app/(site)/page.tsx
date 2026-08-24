@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/home/Hero";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
+import { ChampionBanner } from "@/components/home/ChampionBanner";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { Announcements } from "@/components/home/Announcements";
@@ -29,6 +30,7 @@ export default function Home() {
         slides={[
           { id: "panthers", label: "Panther Volleyball", node: <Hero /> },
           { id: "vbif", label: "VBIF", node: <CampaignBanner /> },
+          { id: "champions", label: "Waller ISD Champions", node: <ChampionBanner /> },
         ]}
       />
       <QuickAccess />

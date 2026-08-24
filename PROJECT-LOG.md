@@ -750,3 +750,36 @@ That last point sharpens yesterday's roster addition: "Ava Lockhardt" cannot be 
 
 ### Not yet done
 - [ ] Rosters are now unverifiable from outside. If the program publishes its rosters anywhere else — a team app, a printed programme, district pages — that source is worth recording, because right now the only check is asking a coach.
+
+---
+
+## 20260823 — A photo gallery, and a champion banner that leads to it
+
+Branch `feat/photo-gallery`. 139 photos in five albums — Waller ISD Tournament (7), Varsity (38), Junior Varsity (33), Flex (26), Freshman (35) — at a new `/gallery` route, plus a third hero slide for the tournament win. Deployed to staging for review; **not** pushed to production.
+
+### Decisions
+- **Generated, not a CMS collection.** `content/gallery.json` is written by `scripts/build-gallery.mjs` and is deliberately absent from the schema, so `/admin` never shows it. Adding 139 photos one at a time through the editor would be miserable, and every field in the manifest — derivative paths, pixel dimensions — is a value an editor has no way to supply correctly. The trade is real and is recorded in Known Limitations: taking a photo down is now a developer job.
+- **Two WebP derivatives per photo, because `public/` is what ships.** `images.unoptimized` is on for Pages, so whatever sits in `public/` is byte-for-byte what a visitor downloads. The drops were 36 MB of full-resolution JPEG; a ~600px grid thumbnail and a ~1400px lightbox copy come to 18 MB, and the grid then loads 600px files rather than 1024×1536 originals scaled down by the browser. Dimensions go into the manifest so the page reserves space and nothing reflows.
+- **The originals are gitignored.** Only the generator reads `content/images/`, and neither a build nor a deploy touches it — committing it would have added 36 MB to this repo *and* to the production mirror permanently. The cost is that git is not a backup of the originals, which is now stated in `.gitignore`, in the documentation, and here.
+- **The grid works with JavaScript off.** Every thumbnail is a real anchor to the full-size image, so scripting off degrades to the browser's own image view instead of an empty page. The album filter is radio inputs in a `<fieldset>`, the same pattern as `ScheduleBrowser`, and shows *every* album when nothing can change the selection — the useful fallback rather than the empty one.
+- **The lightbox steps through the filtered set, not the library.** With Flex selected, "next" means the next Flex photo. It behaves as a dialog otherwise: focus trapped, Escape closes, arrows navigate, the page behind does not scroll, focus returns to the thumbnail that opened it.
+- **Alt text says album and position, and stops there.** "Varsity — photo 12 of 38". Nobody has described these frames; inventing what is happening in them would be worse than admitting what is known, and `IMG_2604` is worse still. It is one function (`photoAlt`) so a person who was actually at the matches can fix every caller at once.
+- **The whole champion banner is the link.** Someone reacting to "CHAMPIONS!" should not have to hunt for a small target, and a visible "See the photos" call to action keeps it reading as clickable rather than decorative. Its alt text carries the banner's own words — the artwork is an image of text (WCAG 1.4.5), so without that a screen-reader user gets nothing at all. That is the same flaw the VBIF banner still has, handled the other way.
+- **The banner PNG became a 104 KB WebP.** 2.1 MB of source art would otherwise have been downloaded as-is on the home page.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `validate:content` → 12 files OK (the generated manifest is correctly invisible to it); `next build` → **16 routes**, up from 15.
+- [x] Staging export built with `NEXT_PUBLIC_BASE_PATH=/kovb`: every gallery and banner `src` carries `/kovb`, and **zero** root-relative `/images…` sources remain in `out/index.html` or `out/gallery/index.html` — the failure mode `assetPath()` exists to prevent.
+- [x] 278 derivatives (2 × 139) reached `out/images/gallery/`, and the same 278 landed in `kovb/`.
+- [x] No analytics on staging: `grep -c googletagmanager out/index.html` → 0.
+- [x] `.nojekyll` recreated after the sync, and the `--delete` dry run removed only a stale `_next` build-hash folder and two `.DS_Store` files.
+- [x] Driven in a browser on `codinci.com/kovb/`, not just built: photos render, the filter reports "Showing 33 photos from Junior Varsity", the lightbox opens with "Waller ISD Tournament · 1 of 7", `→` advances to 2 of 7, Escape closes, and the champion banner's "See the photos" lands on `/gallery`.
+- [x] 139 real `<a>` elements wrap the thumbnails — the JavaScript-off fallback is present in the served HTML, with hrefs like `/kovb/images/gallery/waller-isd-tournament/img-2604.webp` and alt text reading "Waller ISD Tournament — photo 1 of 7".
+- [x] No broken images on the page.
+
+### Not yet done
+- [ ] **Production.** Staging only, pending review.
+- [ ] **Consent is not modeled.** These are photographs of minors on a public site. Whether any given photo may be published is the program's call; nothing in the repository records who agreed, and the removal path is a developer running a script.
+- [ ] Alt text is positional rather than descriptive, and only a person who was there can improve it.
+- [ ] The originals exist in exactly one folder on one machine.
+- [ ] Album titles and order live in two constants in the generator (`ALBUM_TITLES`, `ALBUM_ORDER`). A new folder works without touching them; renaming an album for display does not.
