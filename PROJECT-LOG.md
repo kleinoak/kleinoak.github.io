@@ -783,3 +783,27 @@ Branch `feat/photo-gallery`. 139 photos in five albums — Waller ISD Tournament
 - [ ] Alt text is positional rather than descriptive, and only a person who was there can improve it.
 - [ ] The originals exist in exactly one folder on one machine.
 - [ ] Album titles and order live in two constants in the generator (`ALBUM_TITLES`, `ALBUM_ORDER`). A new folder works without touching them; renaming an album for display does not.
+
+---
+
+## 20260824 — The gallery reached production, and lost a photo the same day
+
+Two things, in that order. PR #27 was squash-merged as `560f9e9` and `scripts/deploy-prod.sh` published it to `kleinoak/kleinoak.github.io` as `b684024`; the Actions build went green and <https://kleinoakvolleyball.com/gallery> has been live since. That closes the "Production — staging only, pending review" item on the entry above. Verified on the live domain rather than assumed: all five albums render with their counts, "Gallery" is in the main menu, the champion banner is the third hero slide and its "See the photos" reaches `/gallery`, the production mirror carries exactly one `.md` (`README.md`) and all 278 derivatives, and the GA tag **is** present — the one thing production has that staging deliberately does not.
+
+Then a Junior Varsity photo came down. Branch `fix/remove-jv-photo`: `A28A2553` deleted, Junior Varsity 33 → 32 and the gallery 139 → 138.
+
+### Decisions
+- **The original was moved, not deleted.** `content/images/` is gitignored, so the photographer's drop is the only copy of that file in existence. A takedown is a request about the *website*; destroying the family's photograph is a different decision and nobody made it. It now sits outside the repo at `~/Workspace/play/ko-volleyball-photos-removed/jv/`, where it cannot dirty a deploy — `deploy-prod.sh` refuses to publish a tree that is not clean.
+- **Both derivatives were deleted, not just the manifest entry.** Dropping the entry alone would leave `a28a2553.webp` sitting in `public/` — invisible on the page but still downloadable at a guessable URL, which is not what "taken down" means to whoever asked.
+- **No count was edited by hand.** Album totals, "Showing N photos" and the page description all read from the manifest, so regenerating it was the whole change. The one place a number is written out in prose — the documentation's opening line for the gallery — now says so explicitly, to stop the next person hand-syncing it.
+- **The procedure went into the documentation**, in the order it has to happen. The gallery section had told a maintainer how to add photos and warned that removal was a developer job without saying how.
+
+### Verified
+- [x] No reference to `a28a2553` remains in `content/gallery.json`; both derivative files are gone; Junior Varsity holds 64 files, which is 32 photos × 2.
+- [x] `build-gallery.mjs` re-encoded **0** photos — removing one does not churn the other 137.
+- [x] `tsc --noEmit` clean; `eslint` clean; `validate:content` → 12 files OK; `next build` → 16 routes.
+
+### Not yet done
+- [ ] **This is a manual takedown path with no record of who asked or why.** The repository still models no consent for any photo of a student; see the entry above. Removals are traceable only through git history and this log.
+- [ ] Nothing prunes `~/Workspace/play/ko-volleyball-photos-removed/`. It grows, on one machine, and is not backed up either.
+- [ ] Production still serves the photo until this branch is merged and deployed — a takedown is not finished at the commit.

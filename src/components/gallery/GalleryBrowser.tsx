@@ -19,7 +19,7 @@ import { photoAlt } from "@/data/gallery";
  *    `ScheduleBrowser`; with JS off every album is shown, which is the useful
  *    fallback rather than an empty page.
  *
- * 2. **139 photos cannot all load at once.** Thumbnails are ~600px WebP and
+ * 2. **A gallery this size cannot all load at once.** Thumbnails are ~600px WebP and
  *    lazy-loaded, so the browser fetches what is on screen. The full-size image
  *    is only ever requested when a lightbox opens.
  *

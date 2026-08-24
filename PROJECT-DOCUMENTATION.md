@@ -108,7 +108,7 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 | How to sponsor | singleton | `content/sponsor-steps.json` | Sponsors |
 | Site settings | singleton | `content/site.json` | Every page |
 
-**The photo gallery is deliberately *not* a collection.** `content/gallery.json` sits beside the twelve files above but is **generated** — `scripts/build-gallery.mjs` writes it — and is not in the schema, so `/admin` never shows it and `validate-content.mts` ignores it. Two reasons it is built rather than edited: 139 photos added one at a time through the editor would be miserable, and every field in the manifest (derivative paths, pixel dimensions) is a value an editor has no way to supply correctly. To add photos, drop a folder under `content/images/` and re-run the script. See [The photo gallery](#the-photo-gallery) below.
+**The photo gallery is deliberately *not* a collection.** `content/gallery.json` sits beside the twelve files above but is **generated** — `scripts/build-gallery.mjs` writes it — and is not in the schema, so `/admin` never shows it and `validate-content.mts` ignores it. Two reasons it is built rather than edited: a hundred-odd photos added one at a time through the editor would be miserable, and every field in the manifest (derivative paths, pixel dimensions) is a value an editor has no way to supply correctly. To add photos, drop a folder under `content/images/` and re-run the script. See [The photo gallery](#the-photo-gallery) below.
 
 **Why sponsor logos are a separate collection.** A tier's `sponsors` is a `stringList`, which cannot hold objects, so the artwork cannot live inside the tier. `sponsor-logos.json` is joined to a tier entry by exact business name. A sponsor with no matching entry renders as its name instead — so a business can be listed the moment it signs up, without waiting on artwork. The join is by name, which means **renaming a sponsor in one file and not the other silently drops the logo**; nothing validates the pairing.
 
@@ -287,7 +287,7 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 
 ### The photo gallery
 
-139 photos in five albums — Waller ISD Tournament, Varsity, Junior Varsity, Flex, Freshman — at `/gallery`, reached from the main menu and from the champion banner on the home page.
+138 photos in five albums — Waller ISD Tournament, Varsity, Junior Varsity, Flex, Freshman — at `/gallery`, reached from the main menu and from the champion banner on the home page. (The count moves whenever a photo is added or taken down; the page reads it from the manifest, so only this sentence goes stale.)
 
 **Adding photos is a script, not an edit.**
 
@@ -301,11 +301,28 @@ The script walks `content/images/`, treats **any folder holding images as an alb
 
 Things worth knowing before re-running it:
 
-- **Re-running is cheap.** A derivative is only re-encoded when it is missing or older than its source, so adding one album does not re-process the other 139 photos.
+- **Re-running is cheap.** A derivative is only re-encoded when it is missing or older than its source, so adding one album does not re-process the rest of the library.
 - **A new folder needs no code change.** `ALBUM_TITLES` maps a folder name to how it should read (`jv` → "Junior Varsity"); a folder with no entry gets a title derived from its name. `ALBUM_ORDER` fixes the display order and anything unlisted sorts to the end.
 - **Loose files at the top of `content/images/` are skipped and reported**, not swept into a nameless album — the champion banner source sits there.
 - **Files sort naturally** (`…9` before `…10`), so album order is stable across machines.
 - **The originals are gitignored.** `content/images/` is 36 MB of full-resolution JPEG that only this script reads; the 18 MB of derivatives is what ships. That also means **git is not a backup of the originals** — they exist only where they were dropped.
+
+**Taking a photo down is the reverse, and the order matters.**
+
+```bash
+# 1. move the original OUT of the gallery source tree — do not delete it
+mv content/images/<album>/<PHOTO>.jpg ~/Workspace/play/ko-volleyball-photos-removed/<album>/
+# 2. delete both derivatives
+rm public/images/gallery/<album>/<photo>.webp public/images/gallery/<album>/<photo>-thumb.webp
+# 3. regenerate the manifest, then commit all three changes
+node scripts/build-gallery.mjs
+```
+
+The generator rewrites `content/gallery.json` from what it finds on disk, so the photo disappears from the album and every count on the page — album totals, "Showing N photos", the page description — follows from the manifest and needs no editing.
+
+**Move the original, do not `rm` it.** `content/images/` is gitignored, so the drop is the only copy that exists anywhere; a takedown request is about the *website*, and destroying the family's photograph is a separate decision nobody asked for. `~/Workspace/play/ko-volleyball-photos-removed/` holds the ones taken down so far, outside the repo so it cannot dirty a deploy.
+
+Skipping step 2 leaves an orphaned derivative in `public/` — invisible on the page, but still downloadable at a guessable URL, which is not what "taken down" means to the person who asked.
 
 **The page degrades instead of breaking.** Every thumbnail is a real `<a>` to the full-size WebP, so with JavaScript off the grid is still a browsable gallery — the browser's own image view replaces the lightbox. The album filter is a `<fieldset>` of radio inputs, the same pattern as `ScheduleBrowser`, and with JavaScript off every album shows rather than none. Thumbnails are lazy-loaded and a full-size image is fetched only when a lightbox opens, so a phone on school Wi-Fi downloads what is on screen and not 18 MB.
 
