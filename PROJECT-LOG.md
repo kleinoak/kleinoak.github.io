@@ -807,3 +807,42 @@ Then a Junior Varsity photo came down. Branch `fix/remove-jv-photo`: `A28A2553` 
 - [ ] **This is a manual takedown path with no record of who asked or why.** The repository still models no consent for any photo of a student; see the entry above. Removals are traceable only through git history and this log.
 - [ ] Nothing prunes `~/Workspace/play/ko-volleyball-photos-removed/`. It grows, on one machine, and is not backed up either.
 - [ ] Production still serves the photo until this branch is merged and deployed — a takedown is not finished at the commit.
+
+---
+
+## 20260825 — The schedule reconciled against all four Rank One calendars
+
+Branch `feat/schedule-rankone`. The August 17 pass used the varsity calendar alone; this one used all four (varsity `Tm=18086`, JV `18087`, flex `195078`, freshman `22683`), which is what turned "varsity results" into "results".
+
+### What the four feeds actually said
+Fetched as plain server-rendered HTML — 44 varsity rows, 23 JV, 22 flex, 25 freshman. **No fixture was wrong.** Every date, opponent and home/away already matched. What was wrong was times on eight rows, and what was missing was most of the results.
+
+- **The Aug 7 and Aug 8 scrimmages are four different appointments, not one.** The site showed a single time for all levels (8:30, then 9:00). Rank One has varsity at 5:00 against Woodlands and JV at 1:30 against Concordia Lutheran on the 7th, and 9:00 / 9:30 / 4:30 on the 8th. The freshman calendar carries midnight placeholders on both dates, which is Rank One for "no time set", so those read TBD rather than 12:00.
+- **Aug 10 is a double-header split across two venues**, and each level plays one of the two. Varsity took Lake Creek at 6:00 and West Fork at 4:30; JV the reverse order at 3:00 and 4:00; flex only Lake Creek; freshman only West Fork. The site had every cell as TBD, deliberately, back when the instruction was not to churn dates before Aug 13.
+- **Flex is absent from its own calendar on both Klein Forest dates** (Sep 8, Oct 9) and **present at Magnolia West away** (Sep 18) where the site had it not playing. Absence in a level's own feed is a statement — that level is not playing — so those became `"x"` and `"4:30"` respectively.
+- **Freshman moved to 4:30** for both Klein Forest fixtures, from 5:30.
+- **JV is not at the TAV tournaments** (Sep 3, Sep 5). Only flex and freshman appear.
+- **The Pearland tournament record is 7–2, not 5–1.** All nine matches are now posted; the earlier record was five of six with the Saturday pool unscored.
+- **Waller was 9–0** — nine matches, nine wins, which is exactly the claim the champion banner has been making on the home page since Sunday.
+
+### Decisions
+- **`result` became `results`, keyed by level.** A single string could not survive Aug 10: varsity won 3–2 and JV lost 0–2 in the same row. Old values migrated to `results.varsity`.
+- **Results attach to the level, not the row.** In the all-levels table each result sits under that team's start time; only a filtered view spends a column on it. Four extra columns would not fit, and pairing a result with its own time is what makes a mixed row legible.
+- **A level with no posted results gets no column.** Flex and freshman calendars publish no scores at all, so their filtered views look exactly as they did — an always-empty column would say "their results are missing", which is a different and untrue claim.
+- **Under a start time, "no result" renders as nothing.** In a column it stays a dash with "No result posted" for screen readers, but four dashes stacked under four times is noise, not a statement.
+- **"Last checked" is a date in `site.json`, not a build timestamp.** A build stamp would advance every night on the scheduled rebuild while the data got staler — it would measure the wrong thing, and confidently. `scheduleUpdated` moves only when a person reconciles, and the schema tells the editor to update it even when nothing changed, because "checked and unchanged" is the useful signal.
+- **It is parsed by hand, not `new Date("2026-08-25")`.** That string parses as UTC midnight and prints "Aug 24" in Central time — a "last checked" line that is silently a day early is worse than none.
+
+### Verified
+- [x] `tsc --noEmit` clean; `eslint` clean; `validate:content` → 12 files OK; `next build` → 16 routes.
+- [x] Column behaviour driven in a browser across all five filters: All → four level columns and no result column; Varsity and JV → a "Result" column, present in preseason and district and absent from playoffs where nothing is posted; Flex and Freshman → no result column at all.
+- [x] The Aug 10 Lake Creek row reads varsity 6:00 with `W 3–2` and JV 3:00 with `L 0–2` in the same row, in both the table and the phone card.
+- [x] Phone cards show the badge inside each level's tile; screen-reader text reads "Varsity 6:00 Result: W 3–2 … Freshman — Not playing".
+- [x] The JV filter reports "4 dates where Junior Varsity is not playing are hidden" — Waller, Houston Prime and the two TAV dates.
+- [x] "Times and results on this page last checked against Rank One on Aug 25, 2026" renders in the Rank One callout.
+
+### Not yet done
+- [ ] **This is still a hand-made copy of four live feeds.** Nothing re-checks it, nothing warns when a played fixture has no posted result, and nothing notices a Rank One time change. The parser used here lives in the job's scratch directory, not the repo — worth committing as a script if this becomes routine.
+- [ ] **Set scores were parsed but discarded.** Rank One publishes them (`25-18 25-19 27-25`) but they arrive tangled with inline JavaScript in the summary cell, and no design here uses them.
+- [ ] The two TAV tournament rows carry flex at 8:30 PM in Rank One and freshman at 8:30 AM. The site's time format drops AM/PM entirely, so both render "8:30" and the discrepancy is invisible rather than resolved. A 8:30 PM tournament start looks like a Rank One data-entry slip; only the program can say.
+- [ ] The Fort Bend ISD tournament is still dateless — it appears in no Rank One calendar, so the program's published schedule remains its only source.

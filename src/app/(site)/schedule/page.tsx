@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/layout/PageHero";
 import { EventCard } from "@/components/cards/EventCard";
@@ -14,6 +14,25 @@ export const metadata: Metadata = { title: "Schedule" };
 const scheduleSections = matchSections
   .map((section) => ({ ...section, matches: matchesInSection(section.key) }))
   .filter((section) => section.matches.length > 0);
+
+/**
+ * "Aug 25, 2026" from a YYYY-MM-DD string, without letting the runtime read it
+ * as UTC midnight and print the day before in Central time. Parsed by hand for
+ * that reason rather than through `new Date(string)`.
+ */
+function formatCheckedDate(iso: string): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!match) return null;
+
+  const [, year, month, day] = match;
+  return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+const lastChecked = site.scheduleUpdated ? formatCheckedDate(site.scheduleUpdated) : null;
 
 export default function SchedulePage() {
   return (
@@ -35,6 +54,15 @@ export default function SchedulePage() {
                 Rank One is Klein ISD&apos;s official scheduling system and the most accurate
                 source for changes — with the ability to sync games to your personal calendar.
               </p>
+              {lastChecked && (
+                <p className="mt-3 flex items-center gap-2 text-xs text-text-muted">
+                  <RefreshCw aria-hidden="true" className="h-3.5 w-3.5 text-accent-strong" />
+                  <span>
+                    Times and results on this page last checked against Rank One on{" "}
+                    <time dateTime={site.scheduleUpdated}>{lastChecked}</time>
+                  </span>
+                </p>
+              )}
             </div>
             <Button href={site.rankOneScheduleUrl} variant="secondary" external>
               Open Rank One

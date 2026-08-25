@@ -260,11 +260,30 @@ export const collections: Collection[] = [
         help: "Optional — multi-day tournaments only. Keeps the event on the home page until it has finished.",
       },
       {
-        name: "result",
+        name: "results.varsity",
         label: "Varsity result",
         type: "text",
         placeholder: "W 3–0",
-        help: "Varsity only, copied from the program's Rank One page — \"W 3–0\", \"L 0–2\", or a record like \"5–1\" for a tournament. Leave blank when no result has been posted; blank shows as a dash and is never read as a loss.",
+        help: "Copied from that team's own Rank One calendar — \"W 3–0\", \"L 0–2\", or a record like \"9–0\" for a tournament played across several matches. Leave blank when no result has been posted; blank shows as a dash and is never read as a loss.",
+      },
+      {
+        name: "results.jv",
+        label: "Junior Varsity result",
+        type: "text",
+        placeholder: "L 0–2",
+        help: "Same as the varsity result, from the JV calendar.",
+      },
+      {
+        name: "results.flex",
+        label: "Flex result",
+        type: "text",
+        help: "The flex calendar has not published scores so far; fill this in if it starts to.",
+      },
+      {
+        name: "results.freshmen",
+        label: "Freshman result",
+        type: "text",
+        help: "The freshman calendar has not published scores so far; fill this in if it starts to.",
       },
       {
         name: "status",
@@ -510,6 +529,13 @@ export const collections: Collection[] = [
         type: "url",
         required: true,
         help: "The program's live Rank One schedule — the source of truth for last-minute changes.",
+      },
+      {
+        name: "scheduleUpdated",
+        label: "Schedule last checked",
+        type: "text",
+        placeholder: "2026-08-25",
+        help: "YYYY-MM-DD — the day someone last reconciled the schedule and results against Rank One. Shown on the Schedule page so a parent can see how fresh the times are. Update it whenever you check, even if nothing changed: the point is the check, not the change.",
       },
       {
         name: "sponsorFormUrl",

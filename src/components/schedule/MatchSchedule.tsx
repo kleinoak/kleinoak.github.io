@@ -11,6 +11,11 @@ import { levelColumns } from "@/data/matches";
  *
  * `level` narrows both layouts to one team's start times. Everything below
  * works off the resulting column list, so the two layouts cannot drift.
+ *
+ * Results are per level and attach to the level, never to the row: on a phone
+ * and in the all-levels table they sit under that team's start time, and only
+ * a filtered view spends a whole column on them. A row where JV lost and
+ * varsity won has to be able to say both things at once.
  */
 
 /** A blank cell means "no entry for this level"; "x" means "not playing". */
@@ -43,14 +48,19 @@ function TimeValue({ value }: { value: string }) {
 }
 
 /**
- * Varsity result. Absence means "no result posted" — never a loss, never a
+ * One level's result. Absence means "no result posted" — never a loss, never a
  * cancellation — so an empty cell is rendered as a dash with that said out
  * loud for screen readers rather than left silent.
+ *
+ * `bare` drops the dash: inside a level's own cell, where the time is already
+ * showing, four dashes stacked under four times would be noise rather than
+ * information. There the absence of a badge is the whole message.
  */
-function ResultValue({ value }: { value?: string }) {
+function ResultValue({ value, bare = false }: { value?: string; bare?: boolean }) {
   const trimmed = value?.trim();
 
   if (!trimmed) {
+    if (bare) return null;
     return (
       <>
         <span aria-hidden="true" className="text-text-muted/50">
@@ -112,12 +122,17 @@ export function MatchSchedule({
 
   const columns = level ? levelColumns.filter((column) => column.key === level) : levelColumns;
 
-  // Results are published per team and only varsity is sourced, so the column
-  // appears only where varsity is on screen. Showing an always-empty column to
-  // a JV parent would imply their results are missing rather than not tracked.
-  const showResults =
-    (!level || level === "varsity") && matches.some((match) => match.result?.trim());
-  const resultHeading = level === "varsity" ? "Result" : "Varsity result";
+  const hasResults = (key: keyof MatchTimes) =>
+    matches.some((match) => match.results?.[key]?.trim());
+
+  // Rank One publishes results per team, so a level shows results only when its
+  // own calendar has posted some. Two layouts, because four extra columns would
+  // not fit: filtered to one level the result gets its own column, and in the
+  // all-levels view each result sits under that level's start time. Either way
+  // a level with nothing posted is simply not shown one — an always-empty
+  // column would imply that level's results are missing rather than untracked.
+  const showResultColumn = Boolean(level) && hasResults(level as keyof MatchTimes);
+  const showInlineResults = !level && levelColumns.some((column) => hasResults(column.key));
 
   return (
     <>
@@ -145,9 +160,9 @@ export function MatchSchedule({
                   {column.label}
                 </th>
               ))}
-              {showResults && (
+              {showResultColumn && (
                 <th scope="col" className="py-3 pr-4 text-right font-semibold text-primary">
-                  {resultHeading}
+                  Result
                 </th>
               )}
             </tr>
@@ -173,11 +188,17 @@ export function MatchSchedule({
                 {columns.map((column) => (
                   <td key={column.key} className="py-3 pr-4 text-right tabular-nums">
                     <TimeValue value={match.times[column.key]} />
+                    {showInlineResults && match.results?.[column.key]?.trim() && (
+                      <span className="mt-1 block">
+                        <span className="sr-only">Result: </span>
+                        <ResultValue value={match.results[column.key]} bare />
+                      </span>
+                    )}
                   </td>
                 ))}
-                {showResults && (
+                {showResultColumn && (
                   <td className="py-3 pr-4 text-right whitespace-nowrap">
-                    <ResultValue value={match.result} />
+                    <ResultValue value={match.results?.[level as keyof MatchTimes]} />
                   </td>
                 )}
               </tr>
@@ -211,16 +232,15 @@ export function MatchSchedule({
                   <dd className="mt-0.5 text-sm font-semibold tabular-nums text-primary">
                     <TimeValue value={match.times[column.key]} />
                   </dd>
+                  {match.results?.[column.key]?.trim() && (
+                    <dd className="mt-1.5">
+                      <span className="sr-only">Result: </span>
+                      <ResultValue value={match.results[column.key]} bare />
+                    </dd>
+                  )}
                 </div>
               ))}
             </dl>
-
-            {showResults && match.result?.trim() && (
-              <p className="mt-3 flex items-center gap-2 text-xs text-text-muted">
-                <span className="font-semibold uppercase tracking-wide">{resultHeading}</span>
-                <ResultValue value={match.result} />
-              </p>
-            )}
 
             {match.note && <p className="mt-3 text-xs text-text-muted">{match.note}</p>}
           </li>

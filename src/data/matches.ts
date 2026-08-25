@@ -1,10 +1,16 @@
 // Content source: content/matches.json (edited at /admin).
 //
 // Transcribed from the program's published 2026 schedule (2026-08-08), then
-// reconciled against Rank One on 2026-08-17, which also supplies the varsity
-// results. Rank One remains the live source of truth for changes — the schedule
-// page links to it prominently. Note that kleinoakvolleyball.com, the original
-// reference, is now this site.
+// reconciled against Rank One on 2026-08-17 and again on 2026-08-25 — the
+// second pass against all four team calendars rather than varsity alone, which
+// is where the per-level results and start times come from. Rank One remains
+// the live source of truth for changes; the schedule page links to it and
+// shows when it was last checked (`site.scheduleUpdated`). Note that
+// kleinoakvolleyball.com, the original reference, is now this site.
+//
+// Each level has its own Rank One calendar, and a level missing from its own
+// feed on a date is not playing that date — which is why some entries carry
+// "x" rather than a time.
 import matchesJson from "@content/matches.json";
 
 export type MatchSection = "preseason" | "district" | "playoffs";
@@ -40,14 +46,17 @@ export type Match = {
    */
   status?: "confirmed" | "tentative";
   /**
-   * Varsity result, from the program's Rank One page — "W 3–0", "L 0–2", or a
-   * record like "5–1" for a tournament played across several matches.
+   * Results, per level — "W 3–0", "L 0–2", or a record like "9–0" for a
+   * tournament the site keeps as one row but Rank One lists as several
+   * matches.
    *
-   * Varsity only: Rank One publishes results per team, and the schedule links
-   * to the varsity calendar. A blank here means no result has been posted, not
-   * that the match was lost or cancelled, so nothing is inferred from absence.
+   * Rank One publishes results per team, so a level appears here only when its
+   * own calendar posts one: as of 2026-08-25 that is varsity and JV, while
+   * flex and freshman calendars carry no scores at all. A missing level means
+   * **no result has been posted** — never a loss, never a cancellation — so
+   * nothing is inferred from absence.
    */
-  result?: string;
+  results?: Partial<Record<keyof MatchTimes, string>>;
 };
 
 export const matches = matchesJson as Match[];
