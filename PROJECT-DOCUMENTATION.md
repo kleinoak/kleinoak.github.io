@@ -125,7 +125,9 @@ The display follows from that, in two shapes, because four extra columns will no
 
 **A missing result means no result has been posted — never a loss and never a cancellation.** In the column it renders as a dash with "No result posted" for screen readers; under a start time it renders as nothing at all, since four dashes stacked beneath four times would be noise rather than a statement.
 
-**"x" and blank are different, and Rank One decides which.** A level absent from its own calendar on a date is not playing, which is `"x"`; a blank is "no entry published". The level filter hides `"x"` rows, so the JV view says "4 dates where Junior Varsity is not playing are hidden" rather than listing dates that are not theirs.
+**"x" and blank are different, and Rank One decides which.** A level absent from its own calendar on a date is not playing, which is `"x"`; a blank is "no entry published at all". Only `"x"` is load-bearing: **the level filter hides `"x"` rows and keeps blank ones**, showing a dash. So a varsity-only tournament must carry `"x"` on the other three levels, or a JV parent filtering to JV still sees it sitting in their schedule.
+
+That is not hypothetical — the Pearland and Legends Invitational rows shipped with blanks on 2026-08-25 and put a Legends Invitational into the JV view, where JV has no entry within a week of those dates. The only signal a reader gets is a dash they have to interpret; `"x"` removes the date instead, and the filter reports how many it removed.
 
 **`site.scheduleUpdated` is the date of the last reconciliation**, shown on the Schedule page inside the Rank One callout as "Times and results on this page last checked against Rank One on …". It is the freshness of the *check*, not of the data — update it whenever someone verifies against Rank One, even when nothing changed, because "checked and unchanged" is the useful signal. Left blank, the line disappears rather than printing "unknown".
 

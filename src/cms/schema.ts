@@ -327,7 +327,7 @@ export const collections: Collection[] = [
         name: "times.varsity",
         label: "Varsity time",
         type: "text",
-        help: "Leave blank if this level has no entry. Use 'x' when the level does not play, or 'TBD'.",
+        help: "A time, or 'TBD' when the date is set but the time is not. Use 'x' when this level is not playing — that is what hides the date from this level's filter, so a varsity-only tournament needs 'x' on the other three levels or a JV parent still sees it. Leave blank only when nothing at all has been published for this level yet; blank keeps the row visible with a dash.",
       },
       { name: "times.jv", label: "Junior Varsity time", type: "text" },
       { name: "times.flex", label: "Flex time", type: "text" },

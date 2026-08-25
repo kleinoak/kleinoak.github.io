@@ -846,3 +846,28 @@ Fetched as plain server-rendered HTML — 44 varsity rows, 23 JV, 22 flex, 25 fr
 - [ ] **Set scores were parsed but discarded.** Rank One publishes them (`25-18 25-19 27-25`) but they arrive tangled with inline JavaScript in the summary cell, and no design here uses them.
 - [ ] The two TAV tournament rows carry flex at 8:30 PM in Rank One and freshman at 8:30 AM. The site's time format drops AM/PM entirely, so both render "8:30" and the discrepancy is invisible rather than resolved. A 8:30 PM tournament start looks like a Rank One data-entry slip; only the program can say.
 - [ ] The Fort Bend ISD tournament is still dateless — it appears in no Rank One calendar, so the program's published schedule remains its only source.
+
+---
+
+## 20260825 — A Legends Invitational that JV was never playing
+
+Branch `fix/jv-tournament-rows`. Caught by the user, on the JV view, hours after the previous entry shipped to production.
+
+### What was wrong
+The Pearland and Legends Invitational rows are varsity-only. They carried **blank** times for JV, flex and freshman rather than `"x"` — and only `"x"` is load-bearing. `ScheduleBrowser.isPlaying` hides `"x"` and keeps blanks, so filtering to Junior Varsity produced a schedule containing a three-day invitational that the JV calendar has no entry for, marked with nothing louder than a dash the reader has to interpret.
+
+Re-fetched `Tm=18087` to be sure: 23 rows, **nothing at all between Aug 25 and Sep 1**, and no row anywhere mentioning Legends. Same for flex and freshman across Aug 13–15 and Aug 27–29.
+
+The Waller Tournament row — same shape, varsity-only — already used `"x"`, having come from the program's own published schedule that way. So the site was inconsistent with itself: two of three varsity-only tournaments said "not listed" where the third said "not playing".
+
+### Decisions
+- **Blank is now reserved for "nothing published at all".** Fort Bend ISD keeps its blanks: it has no date, appears in no Rank One calendar, and genuinely has nothing published. Everything sourced from a feed says either a time or `"x"`.
+- **The schema help text now names the consequence**, not just the convention: `"x"` is what hides the date from that level's filter, so a varsity-only tournament needs it on the other three levels or a JV parent still sees the row.
+- **Recorded in the documentation as a worked example rather than a rule.** "x and blank are different" was already written down on the 25th and still produced this bug; what was missing was the sentence saying which of the two the filter acts on.
+
+### Verified
+- [x] `validate:content` → 12 files OK; `tsc` and `eslint` clean; `next build` → 16 routes.
+- [x] Every filter driven in a browser: **JV 33 dates, 6 hidden** (was 35 and 4) with no Legends and no Pearland; flex 32 and 7; freshman 35 and 4; **varsity still shows both**, 36 and 3; the all-levels view still lists all 39.
+
+### Not yet done
+- [ ] Nothing checks this class of error. A row whose level is absent from that level's feed should be `"x"`, and only a person comparing the two notices when it is not — the same gap as everything else in this hand-made copy.

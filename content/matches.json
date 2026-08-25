@@ -129,9 +129,9 @@
     "location": "Pearland",
     "times": {
       "varsity": "TBD",
-      "jv": "",
-      "flex": "",
-      "freshmen": ""
+      "jv": "x",
+      "flex": "x",
+      "freshmen": "x"
     },
     "status": "confirmed",
     "note": "Varsity leaves Wednesday afternoon. Nine matches across three days, all now posted.",
@@ -204,9 +204,9 @@
     "location": "Bryan",
     "times": {
       "varsity": "5:30",
-      "jv": "",
-      "flex": "",
-      "freshmen": ""
+      "jv": "x",
+      "flex": "x",
+      "freshmen": "x"
     }
   },
   {
