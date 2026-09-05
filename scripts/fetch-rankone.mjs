@@ -26,7 +26,7 @@
  *    the bits the site never had: the venue, a Google Maps link carrying the
  *    street address, and a per-game note.
  */
-import { readFile, writeFile } from "node:fs/promises";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
@@ -202,28 +202,41 @@ async function main() {
   // either returned at least its minimum or threw above.
   const previous = existsSync(OUT) ? JSON.parse(await readFile(OUT, "utf8")) : null;
 
-  // `fetchedAt` changes on every run, so compare everything else. Otherwise the
-  // job commits a new timestamp twice a day forever and every one of those commits
-  // triggers a rebuild that changes nothing a reader can see.
-  const sameAsBefore =
-    previous && JSON.stringify(previous.levels) === JSON.stringify(levels);
+  // Two timestamps, because they answer two different questions and a reader
+  // needs both.
+  //
+  //   checkedAt — every run, changed or not. "Was anyone looking this morning?"
+  //   changedAt — only when the games actually differ. "Is this data stale?"
+  //
+  // An earlier version wrote one date and skipped the commit when nothing had
+  // changed, to keep the history clean. That was the wrong trade: it meant the
+  // page could not say when it last checked, only when it last changed, and
+  // "checked at 6am and nothing had moved" is exactly the reassurance a parent
+  // wants the night before a match. The cost is three commits a day, each a
+  // one-line diff. `content/matches.json` already makes this call the other way
+  // round for the same reason — see `site.scheduleUpdated`.
+  const dataChanged = !previous || JSON.stringify(previous.levels) !== JSON.stringify(levels);
 
   const payload = {
     source: "Rank One",
-    fetchedAt: sameAsBefore ? previous.fetchedAt : new Date().toISOString().slice(0, 10),
+    checkedAt: new Date().toISOString(),
+    changedAt: dataChanged
+      ? new Date().toISOString().slice(0, 10)
+      : (previous.changedAt ?? previous.fetchedAt ?? new Date().toISOString().slice(0, 10)),
     levels,
   };
 
   console.log(`\ntotal:    ${total} games across ${LEVELS.length} levels`);
+  console.log(`data:     ${dataChanged ? "CHANGED" : "unchanged since " + payload.changedAt}`);
 
-  if (sameAsBefore) {
-    console.log(`unchanged: ${OUT} already matches the feeds — not rewriting.`);
-    process.exit(0);
+  // Let the workflow word its commit message accurately without re-deriving this.
+  if (process.env.GITHUB_OUTPUT) {
+    await appendFile(process.env.GITHUB_OUTPUT, `dataChanged=${dataChanged ? "yes" : "no"}\n`);
   }
 
   if (DRY_RUN) {
-    console.log(`dry run:  ${OUT} would change.`);
-    process.exit(0);
+    console.log(`dry run:  ${OUT} not written.`);
+    return;
   }
 
   await writeFile(OUT, `${JSON.stringify(payload, null, 2)}\n`);

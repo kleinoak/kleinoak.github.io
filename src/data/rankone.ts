@@ -28,21 +28,36 @@ export type RankOneLevel = {
 
 type RankOneFeed = {
   source: string;
-  /** YYYY-MM-DD of the last run that actually changed something. */
-  fetchedAt: string;
+  /**
+   * ISO instant of the **last run**, changed or not. This is what the schedule
+   * page shows: "checked at 6am and nothing had moved" is the reassurance a
+   * parent wants the night before a match, and a date that only advances when
+   * something changes cannot say it.
+   */
+  checkedAt: string;
+  /** YYYY-MM-DD of the last run where the games themselves differed. */
+  changedAt: string;
   levels: Record<string, RankOneLevel>;
 };
 
 export const rankone = rankoneJson as RankOneFeed;
-export const syncedOn = rankone.fetchedAt;
+
+/** ISO instant of the last sync run. */
+export const checkedAt = rankone.checkedAt;
+/** YYYY-MM-DD the schedule data last actually moved. */
+export const changedAt = rankone.changedAt;
+/** How many fixtures the feeds carry, across all four levels. */
+export const gameCount = levelsOfFeed(rankone).reduce((n, l) => n + l.games.length, 0);
+
+function levelsOfFeed(feed: RankOneFeed) {
+  return Object.values(feed.levels);
+}
 
 export type Venue = { venue: string; address: string; map: string };
 
-const levelsOf = (feed: RankOneFeed) => Object.values(feed.levels);
-
 /** Every game any level plays between two dates, inclusive. */
 function gamesBetween(from: string, to: string): RankOneGame[] {
-  return levelsOf(rankone).flatMap((level) =>
+  return levelsOfFeed(rankone).flatMap((level) =>
     level.games.filter((game) => game.date >= from && game.date <= to),
   );
 }

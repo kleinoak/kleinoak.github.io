@@ -1295,3 +1295,80 @@ the production build depend on a third party being up.
 - [ ] Two feed fields are parsed and discarded: `status` (Rank One's
       rescheduled/cancelled banner) and the home/away flag, which the curated rows
       already carry.
+
+---
+
+## 20260905 — Three checks a day, and a page that says so
+
+Two small requests from the program, one of which reversed a decision made a few
+hours earlier in the entry above.
+
+### The schedule
+Morning runs move to **06:00 and 10:00 Central**; the 23:00 run stays. In UTC
+that is `0 11`, `0 15` and `0 4`, and the workflow now says out loud that GitHub
+cron does not follow daylight saving, so each lands an hour earlier in local
+terms once the clock changes in November.
+
+### The reversal
+The ask was a visible "last synced" stamp on the schedule page that **updates
+after every sync**. The previous entry had deliberately done the opposite: write
+one date, and skip the commit entirely when nothing had changed, to avoid
+committing a timestamp twice a day forever.
+
+That was the wrong trade, and the codebase already knew it. `site.scheduleUpdated`
+has always been documented as something an editor updates *even when nothing
+changed*, "because 'checked and unchanged' is the useful signal". The same
+argument applies here and I had argued against it: a page that can only say when
+the data last **changed** cannot say whether anyone looked this morning, and
+"checked at 6am, nothing had moved" is exactly the reassurance a parent wants the
+night before a match.
+
+So there are two fields now:
+
+- `checkedAt` — an ISO instant, written on every run, changed or not.
+- `changedAt` — a date, written only when the fixtures actually differ.
+
+The cost is three commits a day and three CI builds. Each commit is a one-line
+diff, and the subject line says which kind it was — "Sync schedule and results
+from Rank One" versus "Rank One checked — no schedule changes" — so the history
+stays readable rather than becoming 360 identical entries by November.
+
+### Decisions
+- **The stamp is its own element above the callout**, where the program's
+  annotated screenshot put it. The callout keeps the human half only; carrying
+  both halves in one paragraph had them competing, and they answer different
+  questions — "is this page fresh?" versus "where is the live source?".
+- **Formatted from a stored instant, never from `new Date()`.** A "2 hours ago"
+  would be wrong the moment the page was cached, which for a static export is
+  immediately. It also keeps `SyncStatus` a server component.
+- **Rendered in Central**, like every other date on the site, and the date-only
+  field is still parsed by hand — `new Date("2026-09-05")` is UTC midnight and
+  prints as Sep 4 in Texas.
+- **The push now rebases first.** Three runs a day on a shared branch will
+  eventually collide with a person's commit; the file is generated, so the
+  newest fetch should simply win rather than the run failing.
+
+### Verified
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 12 files OK;
+      `next build` → 16 routes. All three workflow files parse as YAML, and the
+      new crons read back as `0 11`, `0 15`, `0 4`.
+- [x] Ran the script for real: it wrote `checkedAt` and kept `changedAt` at the
+      earlier date, and the resulting diff is **two lines** (one on the first run
+      because the key was renamed; one line every run after).
+- [x] Rendered at 1280 and 390px, no horizontal scroll, strip stacks on the
+      phone.
+- [x] Caught and fixed a rendering bug in the strip: the `<dd>` is a flex
+      container, so `{gameCount} fixtures` became "124fixtures" — adjacent text
+      nodes are separate flex items and the space between them is dropped. Now
+      one `<span>`.
+
+### Not yet done
+- [ ] **The "3× daily" in the UI and the three crons in the workflow are two
+      copies of one fact.** Changing the schedule means changing both, and
+      nothing catches the drift.
+- [ ] Three commits a day is three rebuilds a day in the engineering repository.
+      Harmless — nothing deploys from there — but it is not free CI time.
+- [ ] Production still only updates on `deploy-prod.sh`, so the stamp a visitor
+      sees is the last sync *that was deployed*, not the last sync that ran. That
+      is a sharper version of the gap the previous entry left open, because now
+      the page displays a timestamp that can lag its own commit history.

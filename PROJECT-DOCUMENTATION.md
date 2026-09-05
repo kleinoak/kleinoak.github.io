@@ -262,6 +262,7 @@ ko-volleyball-web/
 │   │   ├── cards/CoachCard.tsx          # compact monogram card — administration
 │   │   ├── gallery/GalleryBrowser.tsx   # album filter + grid + lightbox dialog
 │   │   ├── schedule/MatchSchedule.tsx   # table + phone cards; varsity results column
+│   │   ├── schedule/SyncStatus.tsx      # "last checked" strip above the callout
 │   │   └── analytics/PageViews.tsx # GA page_view on client-side route change
 │   ├── lib/
 │   │   └── asset.ts                # assetPath() — every image src must go through it
@@ -312,7 +313,15 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 
 ### Keeping the schedule in sync
 
-`scripts/fetch-rankone.mjs` reads the four Rank One calendars — varsity, JV, flex, freshman — and writes `content/rankone.json`. `.github/workflows/rankone.yml` runs it at **12:00 UTC (07:00 Central)** and **04:00 UTC (23:00 Central)**: once before anyone looks at the day's fixtures, once after the evening's matches, when scores have usually been posted.
+`scripts/fetch-rankone.mjs` reads the four Rank One calendars — varsity, JV, flex, freshman — and writes `content/rankone.json`. `.github/workflows/rankone.yml` runs it three times a day:
+
+| Cron (UTC) | Central | Why |
+|---|---|---|
+| `0 11 * * *` | 06:00 | Before the school run. |
+| `0 15 * * *` | 10:00 | Catches a morning change to the day's fixtures. |
+| `0 4 * * *` | 23:00 (previous evening) | After matches, when scores have usually been posted. |
+
+Those Central times hold during daylight saving, which covers the season. GitHub cron is UTC and does not shift with the clock, so from early November each lands an hour earlier locally.
 
 **It never touches `content/matches.json`.** That file is the curated spine and holds three things the feed does not have: which section a fixture belongs to, the short opponent names a parent recognises ("Lake Creek", not "Lake Creek High School LCHS VB V"), and the `"x"` that means *this level is not playing*, which only exists as an absence upstream. The job writes a separate generated file, so the worst a broken scrape can do is show less enrichment. It cannot corrupt the schedule.
 
@@ -334,11 +343,20 @@ So a named location must be recognisable in the feed's venue name before its add
 
 **Results: curated always wins, and the feed only fills gaps.** A level takes a score from the feed only when it played exactly one game that date, so there is no question which score belongs to which row. A tournament falls through to whatever a person reconciled — which is where records like "9–0" come from and where they have to keep coming from.
 
-**The page says which is which.** "Venues, maps and new results synced automatically … Times and tournament records last reconciled by hand …" are two sentences because they are two different claims: a parser reading four calendars twice a day, and a person deciding which fixture belongs to which row.
+**The page says which is which, in two places.** `SyncStatus` sits above the Rank One callout and carries the automated half — "Last checked Sat, Sep 5 at 5:32 PM Central" plus the date the data last actually moved. The callout below keeps the human half: "Start times and tournament records are reconciled by hand — last done on …". Two different claims, so two elements: a parser reading four calendars three times a day, and a person deciding which fixture belongs to which row.
+
+**Two timestamps, and the difference is the point.**
+
+- `checkedAt` — an ISO instant, written on **every** run whether or not anything differed. This is what the page shows.
+- `changedAt` — a date, written only when the games themselves differ. This is what answers "is it stale?".
+
+An earlier version wrote one date and **skipped the commit when nothing had changed**, to keep the git history clean. That was the wrong trade: the page could then only say when the data last *changed*, never when it was last *looked at*, and "checked at 6am and nothing had moved" is exactly the reassurance somebody wants the night before a match. `site.scheduleUpdated` already made this call the same way — the schema tells editors to update it even when nothing changed, because "checked and unchanged" is the useful signal.
+
+The cost is three commits a day, each a one-line diff on `checkedAt`, and three CI builds. The commit subject says which kind it was: *"Sync schedule and results from Rank One"* when the fixtures moved, *"Rank One checked — no schedule changes"* when only the clock did.
 
 #### Safety
 
-The job cannot commit a broken scrape. Each level must parse at least a minimum number of games (20/12/10/12) or the fetch retries and then fails the run without writing. `npm run build` then has to pass on the new file before the commit step runs. And the run only commits when the *content* changed — `fetchedAt` is deliberately excluded from the comparison, or the job would commit a new timestamp twice a day forever and every one of those commits would trigger a rebuild that changes nothing.
+The job cannot commit a broken scrape. Each level must parse at least a minimum number of games (20/12/10/12) or the fetch retries and then fails the run without writing. `npm run build` then has to pass on the new file before the commit step runs — so a feed change that breaks a type is caught here rather than on somebody's next unrelated push. The push does a `--rebase --autostash` pull first, because three runs a day on a shared branch will eventually collide with a human's commit and the generated file's newest fetch should simply win.
 
 #### Why this does not run in production
 
@@ -644,7 +662,7 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **The footer carries a build credit** linking to `codinci.com/about`. It is hardcoded in `Footer.tsx` rather than living in `content/`, since it is a developer credit the Booster Club does not maintain. Two deliberate choices are recorded there in comments: it is `text-white/45` because the quieter `white/35` measures 3.17:1 against the footer and fails the 4.5:1 WCAG AA floor, and it has no `target="_blank"` because a link that opens a new window ought to say so and the warning would be louder than the credit. Its 16px tap target is under WCAG 2.5.8's 24px — a knowing exception for a footer credit, not an oversight.
 - **Rosters and the season schedule were transcribed by hand from the program's previous website**, which lived at `kleinoakvolleyball.com` until this site took that domain over. **That reference no longer exists** — the domain now serves this site, so "check it against kleinoakvolleyball.com" is now circular and cannot verify anything. The remaining external source of truth is **Rank One** (schedule, times, and results for whichever levels publish them — varsity and JV so far); rosters have no external source at all and can only be confirmed by the program. Re-check them when the season turns over and clear `roster` when it ends. No jersey numbers, player photos, or statistics are modeled, because none were published.
 - **Rank One remains the live source of truth** for schedule changes; the schedule page links to it prominently rather than claiming to be authoritative, and states the date it was last checked.
-- **The schedule is still a hand-made copy in the ways that matter.** A job now re-reads all four Rank One calendars twice a day (see [Keeping the schedule in sync](#keeping-the-schedule-in-sync)), which covers venues, maps, per-game notes and newly posted scores. It does **not** cover the parts that need judgement: start times in `matches.json` are still transcribed by hand, nothing warns when Rank One changes one, tournament records are still totted up by a person, and nothing notices a fixture that was played and never scored. The two dates on the schedule page say which half is which.
+- **The schedule is still a hand-made copy in the ways that matter.** A job now re-reads all four Rank One calendars three times a day (see [Keeping the schedule in sync](#keeping-the-schedule-in-sync)), which covers venues, maps, per-game notes and newly posted scores. It does **not** cover the parts that need judgement: start times in `matches.json` are still transcribed by hand, nothing warns when Rank One changes one, tournament records are still totted up by a person, and nothing notices a fixture that was played and never scored. The two dates on the schedule page say which half is which.
 - **The sync is a scraper, and Rank One owes it nothing.** It reads `id="rpt_Games_*"` spans out of an ASP.NET page; a redesign upstream breaks it. The failure mode is deliberately loud — each level must parse a minimum number of games or the run fails without writing — so the site keeps the last good data rather than silently emptying, but nobody is paged when that happens. Watch the workflow, not the page.
 - **Production is as fresh as the last deploy, not as the last sync.** The job commits to the source repository because a commit inside the production mirror is destroyed by the next `deploy-prod.sh` force-push. Until one of the two options in that section is done, a synced result reaches parents when somebody runs the deploy.
 - **Changing a team's `slug`** breaks shared links and requires a developer to update the header menu; the field's help text says so, but nothing enforces it.
