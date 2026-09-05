@@ -8,6 +8,7 @@ import { ScheduleBrowser } from "@/components/schedule/ScheduleBrowser";
 import { programEvents } from "@/data/events";
 import { matchSections, matchesInSection } from "@/data/matches";
 import { site } from "@/data/site";
+import { syncedOn } from "@/data/rankone";
 
 export const metadata: Metadata = { title: "Schedule" };
 
@@ -54,15 +55,26 @@ export default function SchedulePage() {
                 Rank One is Klein ISD&apos;s official scheduling system and the most accurate
                 source for changes — with the ability to sync games to your personal calendar.
               </p>
-              {lastChecked && (
-                <p className="mt-3 flex items-center gap-2 text-xs text-text-muted">
-                  <RefreshCw aria-hidden="true" className="h-3.5 w-3.5 text-accent-strong" />
-                  <span>
-                    Times and results on this page last checked against Rank One on{" "}
-                    <time dateTime={site.scheduleUpdated}>{lastChecked}</time>
-                  </span>
-                </p>
-              )}
+              {/* Two different facts, so two lines. The sync is a robot reading
+                  four calendars twice a day and is only ever as good as the
+                  parser; the check is a person reconciling what the robot cannot
+                  — which fixture belongs to which row, and what a tournament's
+                  record adds up to. Collapsing them into one "updated" date
+                  would claim the automatic one had done the careful work. */}
+              <p className="mt-3 flex items-start gap-2 text-xs text-text-muted">
+                <RefreshCw aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-strong" />
+                <span>
+                  Venues, maps and new results synced automatically from Rank One on{" "}
+                  <time dateTime={syncedOn}>{formatCheckedDate(syncedOn)}</time>.
+                  {lastChecked && (
+                    <>
+                      {" "}
+                      Times and tournament records last reconciled by hand on{" "}
+                      <time dateTime={site.scheduleUpdated}>{lastChecked}</time>.
+                    </>
+                  )}
+                </span>
+              </p>
             </div>
             <Button href={site.rankOneScheduleUrl} variant="secondary" external>
               Open Rank One

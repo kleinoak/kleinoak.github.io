@@ -108,6 +108,8 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 | How to sponsor | singleton | `content/sponsor-steps.json` | Sponsors |
 | Site settings | singleton | `content/site.json` | Every page |
 
+**Two content files are generated, not edited: `gallery.json` and `rankone.json`.** Neither is in the schema, so `/admin` never shows them and `validate-content.mts` ignores both. The gallery's reasons are below; the Rank One feed's are in [Keeping the schedule in sync](#keeping-the-schedule-in-sync).
+
 **The photo gallery is deliberately *not* a collection.** `content/gallery.json` sits beside the twelve files above but is **generated** — `scripts/build-gallery.mjs` writes it — and is not in the schema, so `/admin` never shows it and `validate-content.mts` ignores it. Two reasons it is built rather than edited: a hundred-odd photos added one at a time through the editor would be miserable, and every field in the manifest (derivative paths, pixel dimensions) is a value an editor has no way to supply correctly. To add photos, drop a folder under `content/images/` and re-run the script. See [The photo gallery](#the-photo-gallery) below.
 
 **Why sponsor logos are a separate collection.** A tier's `sponsors` is a `stringList`, which cannot hold objects, so the artwork cannot live inside the tier. `sponsor-logos.json` is joined to a tier entry by exact business name. A sponsor with no matching entry renders as its name instead — so a business can be listed the moment it signs up, without waiting on artwork. The join is by name, which means **renaming a sponsor in one file and not the other silently drops the logo**; nothing validates the pairing.
@@ -218,6 +220,7 @@ ko-volleyball-web/
 ├── scripts/
 │   ├── validate-content.mts        # prebuild + CI content gate
 │   ├── build-gallery.mjs           # content/images/ → WebP derivatives + manifest
+│   ├── fetch-rankone.mjs           # scrapes the four Rank One calendars
 │   └── deploy-prod.sh              # publish to prod WITHOUT the internal docs
 ├── src/
 │   ├── app/
@@ -264,7 +267,8 @@ ko-volleyball-web/
 │   │   └── asset.ts                # assetPath() — every image src must go through it
 │   └── data/                       # thin typed loaders over content/*.json
 │       ├── calendar.ts             # merges events + matches into one dated feed
-│       └── announcements.ts        # the feed, plus the current/archived split
+│       ├── announcements.ts        # the feed, plus the current/archived split
+│       └── rankone.ts              # venue/result lookups over the scraped feed
 ├── logo-redesign/                  # brand exploration — logo options + source renders
 ├── public/
 │   ├── images/announcements/       # flyer posters, 2 WebPs each (card + dialog)
@@ -277,6 +281,7 @@ ko-volleyball-web/
 │   └── robots.txt                  # disallows /admin
 ├── .github/workflows/
 │   ├── deploy.yml                  # push to main → validate, build, Pages
+│   ├── rankone.yml                 # twice daily → scrape Rank One, commit if changed
 │   └── pull-request.yml            # PR → validate, lint, typecheck, build
 ├── next.config.ts                  # output: "export", basePath, unoptimized images
 ├── .env.example
@@ -304,6 +309,51 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
 
 **Every image `src` must go through `assetPath()` (`src/lib/asset.ts`).** `next/image` does not rewrite `src` when the image is `unoptimized` — which it always is here, because Pages cannot run Next's optimizer. A bare `/images/…` src therefore resolves against the *domain* root and 404s whenever the site is served from a sub-path: a GitHub Pages project site, or a folder inside another Pages repo. `assetPath()` prefixes `NEXT_PUBLIC_BASE_PATH`. This applies equally to literal paths in components and to paths coming out of `content/*.json`. Nothing in the build catches a missed call, so the check is `grep` the export for `src="/` paths that lack the base path.
+
+### Keeping the schedule in sync
+
+`scripts/fetch-rankone.mjs` reads the four Rank One calendars — varsity, JV, flex, freshman — and writes `content/rankone.json`. `.github/workflows/rankone.yml` runs it at **12:00 UTC (07:00 Central)** and **04:00 UTC (23:00 Central)**: once before anyone looks at the day's fixtures, once after the evening's matches, when scores have usually been posted.
+
+**It never touches `content/matches.json`.** That file is the curated spine and holds three things the feed does not have: which section a fixture belongs to, the short opponent names a parent recognises ("Lake Creek", not "Lake Creek High School LCHS VB V"), and the `"x"` that means *this level is not playing*, which only exists as an absence upstream. The job writes a separate generated file, so the worst a broken scrape can do is show less enrichment. It cannot corrupt the schedule.
+
+**What the feed adds that the site never had:** the venue, its street address, a Google Maps link, a per-game note, and scores as they are posted.
+
+#### Three things about Rank One, all learned the hard way
+
+- **It 302s a request with no browser `User-Agent`.** The redirect body is 130 bytes, which parses as zero games — so without a status check it fails as "no fixtures" rather than as an error.
+- **It rate-limits.** Four requests back to back get 302s even with a good `User-Agent`. Hence a delay between levels and a retry with backoff.
+- **Everything useful is in `id="rpt_Games_<field>_<n>"` spans.** The date comes from the hidden `hf_StartDate` field, because the visible label is "Aug 7" with no year.
+
+#### How a feed row is matched to a curated row
+
+Not by opponent — the names do not correspond and a tournament is one curated row against a dozen feed rows. **Venue is matched on date, then checked against the curated location**, and that check is the load-bearing part:
+
+> On 2026-08-08 the site carries both an Oak Ridge scrimmage and team bonding at Bowlero. Rank One lists only the scrimmage. Matching on date alone put **"Oak Ridge HS" under Bowlero** — a wrong address on the page parents use to decide where to drive.
+
+So a named location must be recognisable in the feed's venue name before its address is shown (every significant word must appear — "Klein Oak" and "Klein Forest" share one and are twenty minutes apart). A generic `Home`/`Away` has nothing to check against, so the date must resolve to exactly one **address** — grouped by address rather than name, because a home date lists "Klein Oak Competition Gym" for varsity and "Klein Oak Auxiliary Gym" for freshmen: two rooms, one building. Anything ambiguous renders nothing, which is the right answer: the row still shows Home/Away, without an address the site cannot stand behind.
+
+**Results: curated always wins, and the feed only fills gaps.** A level takes a score from the feed only when it played exactly one game that date, so there is no question which score belongs to which row. A tournament falls through to whatever a person reconciled — which is where records like "9–0" come from and where they have to keep coming from.
+
+**The page says which is which.** "Venues, maps and new results synced automatically … Times and tournament records last reconciled by hand …" are two sentences because they are two different claims: a parser reading four calendars twice a day, and a person deciding which fixture belongs to which row.
+
+#### Safety
+
+The job cannot commit a broken scrape. Each level must parse at least a minimum number of games (20/12/10/12) or the fetch retries and then fails the run without writing. `npm run build` then has to pass on the new file before the commit step runs. And the run only commits when the *content* changed — `fetchedAt` is deliberately excluded from the comparison, or the job would commit a new timestamp twice a day forever and every one of those commits would trigger a rebuild that changes nothing.
+
+#### Why this does not run in production
+
+The obvious home is `kleinoak/kleinoak.github.io`, since that is what serves the site. **It cannot live there.** `scripts/deploy-prod.sh` publishes with
+
+```bash
+git push --force prod <commit>:main
+```
+
+where the commit is built from this repository's `main`. Anything committed inside the production repository — by a person or by a job — is discarded by the next deploy. A sync job there would appear to work and then silently lose its data the first time anybody published a content change.
+
+So it runs in the source repository and reaches production the same way every other change does. **The consequence: production is as fresh as the last `deploy-prod.sh`, not as the last sync.** Two ways to close that gap, neither done:
+
+1. **Give the job a deploy key for the production repository** and have it run the strip-and-push itself. Smallest change; needs a secret, and puts an unattended force-push onto production.
+2. **Move the fetch into production's own build.** `deploy.yml` there already rebuilds nightly, so it could scrape at build time and fall back to the committed `rankone.json` when Rank One is unreachable. Always fresh, no commits, no force-push conflict — at the cost of a build that depends on a third party being up, and no git history of what the schedule said when.
 
 ### The coaches page
 
@@ -594,7 +644,9 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **The footer carries a build credit** linking to `codinci.com/about`. It is hardcoded in `Footer.tsx` rather than living in `content/`, since it is a developer credit the Booster Club does not maintain. Two deliberate choices are recorded there in comments: it is `text-white/45` because the quieter `white/35` measures 3.17:1 against the footer and fails the 4.5:1 WCAG AA floor, and it has no `target="_blank"` because a link that opens a new window ought to say so and the warning would be louder than the credit. Its 16px tap target is under WCAG 2.5.8's 24px — a knowing exception for a footer credit, not an oversight.
 - **Rosters and the season schedule were transcribed by hand from the program's previous website**, which lived at `kleinoakvolleyball.com` until this site took that domain over. **That reference no longer exists** — the domain now serves this site, so "check it against kleinoakvolleyball.com" is now circular and cannot verify anything. The remaining external source of truth is **Rank One** (schedule, times, and results for whichever levels publish them — varsity and JV so far); rosters have no external source at all and can only be confirmed by the program. Re-check them when the season turns over and clear `roster` when it ends. No jersey numbers, player photos, or statistics are modeled, because none were published.
 - **Rank One remains the live source of truth** for schedule changes; the schedule page links to it prominently rather than claiming to be authoritative, and states the date it was last checked.
-- **The schedule is a hand-made copy of four live feeds.** Times and results are transcribed from each level's Rank One calendar by a person running a reconciliation; nothing re-checks them, nothing warns when a played fixture has no result, and nothing notices when Rank One changes a time. The "last checked" date is the only honest signal a reader gets, which is why it must be updated on every check rather than only when something changes.
+- **The schedule is still a hand-made copy in the ways that matter.** A job now re-reads all four Rank One calendars twice a day (see [Keeping the schedule in sync](#keeping-the-schedule-in-sync)), which covers venues, maps, per-game notes and newly posted scores. It does **not** cover the parts that need judgement: start times in `matches.json` are still transcribed by hand, nothing warns when Rank One changes one, tournament records are still totted up by a person, and nothing notices a fixture that was played and never scored. The two dates on the schedule page say which half is which.
+- **The sync is a scraper, and Rank One owes it nothing.** It reads `id="rpt_Games_*"` spans out of an ASP.NET page; a redesign upstream breaks it. The failure mode is deliberately loud — each level must parse a minimum number of games or the run fails without writing — so the site keeps the last good data rather than silently emptying, but nobody is paged when that happens. Watch the workflow, not the page.
+- **Production is as fresh as the last deploy, not as the last sync.** The job commits to the source repository because a commit inside the production mirror is destroyed by the next `deploy-prod.sh` force-push. Until one of the two options in that section is done, a synced result reaches parents when somebody runs the deploy.
 - **Changing a team's `slug`** breaks shared links and requires a developer to update the header menu; the field's help text says so, but nothing enforces it.
 - **Staged images are capped by browser storage** (~5 MB for `localStorage`). Beyond that the editor keeps them in memory for the tab only and says so.
 - **Coach bios are published; player bios and photos are still gated.** `bioAvailable` and the optional `photo` remain the switches, and for coaches both are now on — the program supplied the text and each coach's chosen portrait. Nothing equivalent exists for players, and `teams.json` still models no player photos, jersey numbers or statistics.

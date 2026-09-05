@@ -1,5 +1,7 @@
+import { MapPin } from "lucide-react";
 import type { Match, MatchTimes } from "@/data/matches";
 import { levelColumns } from "@/data/matches";
+import { resultFor, venueFor } from "@/data/rankone";
 
 /**
  * The season schedule, rendered twice: a table on wide screens where the
@@ -89,6 +91,35 @@ function ResultValue({ value, bare = false }: { value?: string; bare?: boolean }
   );
 }
 
+/**
+ * The venue and a link to it on a map, both from the Rank One feed rather than
+ * from the curated row — the site never held an address for anything.
+ *
+ * It renders nothing when the feed has no venue for that date, which is the
+ * common case for a fixture that has not been scheduled into a building yet.
+ * `location` above it stays the curated Home/Away, because "Home" is a fact
+ * about the fixture and "Klein Oak Competition Gym" is a fact about the room.
+ */
+function VenueLink({ match }: { match: Match }) {
+  const venue = venueFor(match);
+  if (!venue) return null;
+
+  return (
+    <a
+      href={venue.map}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-1 inline-flex items-start gap-1 text-xs text-text-muted hover:text-accent-strong hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
+    >
+      <MapPin aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      <span>
+        {venue.venue}
+        <span className="sr-only">{`, ${venue.address} — opens in Google Maps`}</span>
+      </span>
+    </a>
+  );
+}
+
 function HomeAway({ location }: { location?: string }) {
   if (!location) return null;
   const normalized = location.toLowerCase();
@@ -122,8 +153,10 @@ export function MatchSchedule({
 
   const columns = level ? levelColumns.filter((column) => column.key === level) : levelColumns;
 
+  // Counts feed-filled results as well as curated ones, so a level whose scores
+  // arrive only from Rank One still gets a Result column rather than none.
   const hasResults = (key: keyof MatchTimes) =>
-    matches.some((match) => match.results?.[key]?.trim());
+    matches.some((match) => resultFor(match, key));
 
   // Rank One publishes results per team, so a level shows results only when its
   // own calendar has posted some. Two layouts, because four extra columns would
@@ -184,21 +217,24 @@ export function MatchSchedule({
                 </td>
                 <td className="py-3 pr-4">
                   <HomeAway location={match.location} />
+                  <span className="block">
+                    <VenueLink match={match} />
+                  </span>
                 </td>
                 {columns.map((column) => (
                   <td key={column.key} className="py-3 pr-4 text-right tabular-nums">
                     <TimeValue value={match.times[column.key]} />
-                    {showInlineResults && match.results?.[column.key]?.trim() && (
+                    {showInlineResults && resultFor(match, column.key) && (
                       <span className="mt-1 block">
                         <span className="sr-only">Result: </span>
-                        <ResultValue value={match.results[column.key]} bare />
+                        <ResultValue value={resultFor(match, column.key)?.value} bare />
                       </span>
                     )}
                   </td>
                 ))}
                 {showResultColumn && (
                   <td className="py-3 pr-4 text-right whitespace-nowrap">
-                    <ResultValue value={match.results?.[level as keyof MatchTimes]} />
+                    <ResultValue value={resultFor(match, level as keyof MatchTimes)?.value} />
                   </td>
                 )}
               </tr>
@@ -223,6 +259,8 @@ export function MatchSchedule({
               {match.day ? ` · ${match.day}` : ""}
             </p>
 
+            <VenueLink match={match} />
+
             <dl className={`mt-4 grid gap-2 ${columns.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
               {columns.map((column) => (
                 <div key={column.key} className="rounded-sm bg-surface px-3 py-2">
@@ -232,10 +270,10 @@ export function MatchSchedule({
                   <dd className="mt-0.5 text-sm font-semibold tabular-nums text-primary">
                     <TimeValue value={match.times[column.key]} />
                   </dd>
-                  {match.results?.[column.key]?.trim() && (
+                  {resultFor(match, column.key) && (
                     <dd className="mt-1.5">
                       <span className="sr-only">Result: </span>
-                      <ResultValue value={match.results[column.key]} bare />
+                      <ResultValue value={resultFor(match, column.key)?.value} bare />
                     </dd>
                   )}
                 </div>

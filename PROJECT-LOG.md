@@ -1187,3 +1187,111 @@ CSS to hide a corner full of slide background.
       duplicated knowingly rather than extracting a shared helper for two callers.
 - [ ] Staff email addresses are still unpublished, so the contact callout still
       points everyone at the single program address.
+
+---
+
+## 20260905 — The schedule reads itself now
+
+IDLC item 17. Two entries in this log are about the schedule drifting out of
+date between hand reconciliations, and the fix for both was "a person re-reads
+four Rank One calendars". This is that, on a timer — plus the two fields Rank One
+publishes that the site never had: **where the game is, and a link to the map**.
+
+### What Rank One actually gives you
+Everything useful is in `id="rpt_Games_<field>_<n>"` spans: date (from the hidden
+`hf_StartDate`, because the visible label is "Aug 7" with no year), time, an "@"
+or "vs" for home/away, opponent, venue, a Google Maps link carrying the **street
+address**, a per-game note, and a score. Across the four feeds: **124 games, 41
+results, 98 venues**.
+
+Three things learned the hard way, all now in the script's header:
+
+- **A request with no browser `User-Agent` gets a 302.** The redirect body is 130
+  bytes, which parses to zero games — so without a status check it fails as "no
+  fixtures scheduled" rather than as an error. That is the worst possible failure
+  mode for a schedule.
+- **It rate-limits.** Four requests back to back get 302s even with a good agent.
+  Hence a 4-second gap between levels and a retry with backoff.
+- **Only varsity worked on the first attempt**, which is exactly what made this
+  look like a per-team problem rather than a pacing one.
+
+### Decisions
+- **The job never touches `content/matches.json`.** That file holds three things
+  the feed does not: the section a fixture belongs to, the short opponent names a
+  parent recognises, and the `"x"` that means *this level is not playing* — which
+  upstream is an absence, not a value. The job writes a separate generated file,
+  so the worst a broken scrape can do is show less enrichment. Corrupting the
+  schedule is off the table by construction rather than by care.
+- **Venue is matched on date, then checked against the curated location.** The
+  check is not defensive programming, it is a bug that shipped to the browser and
+  was caught in it: on 2026-08-08 the site has an Oak Ridge scrimmage *and* team
+  bonding at Bowlero, Rank One lists only the scrimmage, and matching on date
+  alone printed **"Oak Ridge HS" under Bowlero**. A wrong address on the page
+  parents use to decide where to drive is worse than no address.
+- **Names must match on every significant word, not on overlap.** "Klein Oak" and
+  "Klein Forest" share one and are twenty minutes apart.
+- **Venues group by address, not by name.** The first strict version killed the
+  venue on all nine home fixtures, because a home date lists "Klein Oak
+  Competition Gym" for varsity and "Klein Oak Auxiliary Gym" for freshmen. Two
+  rooms, one building, one address. Coverage went 16 → 25 of 39 rows, and the 14
+  without one are all rows Rank One genuinely has no venue for — checked, not
+  assumed.
+- **Curated results always win; the feed only fills gaps**, and only when a level
+  played exactly one game that date. A tournament is one curated row against nine
+  feed rows, so records like "9–0" stay the work of a person.
+- **Two dates on the page, not one.** "Synced automatically" and "reconciled by
+  hand" are different claims, and collapsing them would let the robot take credit
+  for the judgement.
+- **`fetchedAt` is excluded from the change comparison.** Including it would
+  commit a new timestamp twice a day forever, and every one of those commits
+  would trigger a rebuild that changes nothing a reader can see.
+- **The parser is exported and the fetch is behind an `import.meta.url` guard**,
+  so the hostile inputs can be exercised without hitting Rank One. A 130-byte
+  redirect body, an empty string and a dateless row all parse to zero games,
+  which is what makes the minimum-rows guard meaningful.
+
+### Why it does not run in production, which was the question asked
+It can run there. It must not. `deploy-prod.sh` publishes with
+`git push --force prod <commit>:main`, building the commit from this repository's
+`main` — so **anything committed inside the production repository is discarded by
+the next deploy**. A sync job there would appear to work for days and then lose
+its data the first time somebody published a content change.
+
+It runs in the source repository instead. The cost is that production is as fresh
+as the last `deploy-prod.sh`, not as the last sync, and closing that needs either
+a production deploy key held by this repo or moving the fetch into production's
+own nightly build. Both are written up; neither was done unilaterally, because
+one hands a robot an unattended force-push to the live site and the other makes
+the production build depend on a third party being up.
+
+### Verified
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 12 files OK; `next build`
+      → 16 routes. All three workflow files parse as YAML.
+- [x] Ran against the **live feeds**: 49/25/22/28 games, written once, then a
+      second run reported "unchanged" and rewrote nothing — the idempotency guard
+      works, so the job will not commit on a quiet day.
+- [x] Parser exercised on hostile input: redirect body → 0 games, empty string →
+      0 games, dateless row → dropped, real page → 49.
+- [x] Driven in a browser: 25 rows carry a venue and map link, all `target=_blank`
+      with `rel=noreferrer`; **Bowlero correctly shows none**; home fixtures show
+      the Klein Oak gym; both sync lines render; the varsity filter still gets its
+      Result column; no horizontal scroll at 390 or 1280px.
+- [x] Every row without a venue checked against the feed — all 14 are dates Rank
+      One has no venue for, not matcher failures.
+
+### Not yet done
+- [ ] **Nobody is paged when the scrape breaks.** The failure is loud in the
+      Actions tab and safe on the site — the last good data stays — but silent to
+      a human. A failure notification is the obvious next step.
+- [ ] **Start times are still hand-transcribed.** The feed has them and the job
+      now reads them, but reconciling a time means deciding which curated row a
+      feed row belongs to, which is the judgement this deliberately does not
+      automate. A drift *report* — "Rank One says 4:30, the site says 5:30" —
+      would be the honest middle step and is not built.
+- [ ] **Nothing warns about a played fixture with no posted result.**
+- [ ] The workflow needs the repository's Actions permission set to **Read and
+      write** to push; the default here is read-only. The first scheduled run will
+      say so if it has not been changed.
+- [ ] Two feed fields are parsed and discarded: `status` (Rank One's
+      rescheduled/cancelled banner) and the home/away flag, which the curated rows
+      already carry.
