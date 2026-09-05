@@ -6,6 +6,7 @@
  * no second copy of the design to keep in sync.
  */
 import { AnnouncementCard } from "@/components/cards/AnnouncementCard";
+import type { AnnouncementFlyer } from "@/data/announcements";
 import { EventCard } from "@/components/cards/EventCard";
 import { TeamCard } from "@/components/cards/TeamCard";
 import { CoachCard } from "@/components/cards/CoachCard";
@@ -19,6 +20,35 @@ function text(item: JsonObject, key: string, fallback = ""): string {
   return typeof value === "string" && value.trim() !== "" ? value : fallback;
 }
 
+function lines(item: JsonObject, key: string): string[] | undefined {
+  const value = item[key];
+  if (!Array.isArray(value)) return undefined;
+  const kept = value.filter((entry): entry is string => typeof entry === "string" && entry.trim() !== "");
+  return kept.length > 0 ? kept : undefined;
+}
+
+/**
+ * A half-filled image field is the normal state while an editor is uploading
+ * one, so anything without both a source and real dimensions is treated as no
+ * image rather than rendered as a broken one.
+ */
+function image(item: JsonObject, key: string): AnnouncementFlyer | undefined {
+  const value = item[key];
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
+  const photo = value as JsonObject;
+  if (typeof photo.src !== "string" || photo.src.trim() === "") return undefined;
+  if (typeof photo.width !== "number" || typeof photo.height !== "number") return undefined;
+  return {
+    src: photo.src,
+    alt: typeof photo.alt === "string" ? photo.alt : "",
+    width: photo.width,
+    height: photo.height,
+    thumb: typeof photo.thumb === "string" ? photo.thumb : undefined,
+    thumbWidth: typeof photo.thumbWidth === "number" ? photo.thumbWidth : undefined,
+    thumbHeight: typeof photo.thumbHeight === "number" ? photo.thumbHeight : undefined,
+  };
+}
+
 export function PreviewCard({ collection, item }: { collection: Collection; item: JsonObject }) {
   switch (collection.preview) {
     case "announcement":
@@ -27,10 +57,17 @@ export function PreviewCard({ collection, item }: { collection: Collection; item
           announcement={{
             id: text(item, "id", "preview"),
             date: text(item, "date", "Date"),
+            startDate: text(item, "startDate") || undefined,
+            endDate: text(item, "endDate") || undefined,
             title: text(item, "title", "Untitled"),
             summary: text(item, "summary"),
+            time: text(item, "time") || undefined,
+            location: text(item, "location") || undefined,
+            details: lines(item, "details"),
+            flyer: image(item, "flyer"),
             actionLabel: text(item, "actionLabel") || undefined,
             actionHref: text(item, "actionHref") || undefined,
+            archived: item.archived === true,
             verified: item.verified === true,
           }}
         />

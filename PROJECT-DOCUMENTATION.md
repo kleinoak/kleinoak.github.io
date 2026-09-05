@@ -95,7 +95,7 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 
 | Collection | Kind | File | Appears on |
 |---|---|---|---|
-| Announcements | list | `content/announcements.json` | Home page |
+| Announcements | list | `content/announcements.json` | Home page — cards, and the archive behind them |
 | Key dates | list | `content/events.json` | Home page, Schedule |
 | Teams | list | `content/teams.json` | Home, Teams, team detail pages |
 | Match schedule | list | `content/matches.json` | Schedule |
@@ -253,15 +253,19 @@ ko-volleyball-web/
 │   │   ├── home/CampaignBanner.tsx # the VBIF slide
 │   │   ├── home/ChampionBanner.tsx # the Waller ISD slide; links to the gallery
 │   │   ├── home/UpcomingEventsList.tsx  # re-filters the dated list in the browser
+│   │   ├── home/AnnouncementsBrowser.tsx # cards + detail dialog + archive dialog
+│   │   ├── ui/Modal.tsx                 # the shared dialog: trap, Escape, scroll lock
 │   │   ├── gallery/GalleryBrowser.tsx   # album filter + grid + lightbox dialog
 │   │   ├── schedule/MatchSchedule.tsx   # table + phone cards; varsity results column
 │   │   └── analytics/PageViews.tsx # GA page_view on client-side route change
 │   ├── lib/
 │   │   └── asset.ts                # assetPath() — every image src must go through it
 │   └── data/                       # thin typed loaders over content/*.json
-│       └── calendar.ts             # merges events + matches into one dated feed
+│       ├── calendar.ts             # merges events + matches into one dated feed
+│       └── announcements.ts        # the feed, plus the current/archived split
 ├── logo-redesign/                  # brand exploration — logo options + source renders
 ├── public/
+│   ├── images/announcements/       # flyer posters, 2 WebPs each (card + dialog)
 │   ├── images/brand/               # prepared logo art (hero lockup, banners)
 │   ├── images/gallery/             # GENERATED WebP derivatives, 2 per photo
 │   ├── images/sponsors/            # sponsor artwork
@@ -297,6 +301,33 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
 
 **Every image `src` must go through `assetPath()` (`src/lib/asset.ts`).** `next/image` does not rewrite `src` when the image is `unoptimized` — which it always is here, because Pages cannot run Next's optimizer. A bare `/images/…` src therefore resolves against the *domain* root and 404s whenever the site is served from a sub-path: a GitHub Pages project site, or a folder inside another Pages repo. `assetPath()` prefixes `NEXT_PUBLIC_BASE_PATH`. This applies equally to literal paths in components and to paths coming out of `content/*.json`. Nothing in the build catches a missed call, so the check is `grep` the export for `src="/` paths that lack the base path.
+
+### The announcements section
+
+The three cards under **Announcements** on the home page, the dialog behind each one, and the archive of everything that has already happened. Content is `content/announcements.json`, which *is* an editable collection — unlike the gallery, `/admin` shows it.
+
+**An announcement archives itself.** Each one may carry a `startDate` (`YYYY-MM-DD`, the real calendar date) and optionally an `endDate`; the day after the last of those passes, it leaves the cards and joins the archive. Nobody has to remember to take down a Spirit Night on the morning after it ran, and no count anywhere is hand-maintained.
+
+That rule cannot cover everything, so there are two ways into the archive and each exists for a reason:
+
+- **Dated** — `startDate` in the past. Automatic.
+- **Undated** — no `startDate` at all, plus `archived: true` when it is time. A standing pantry drive with a drop-off location has no last day, and inventing one would put a real claim on the page that nobody made. An undated announcement therefore stays current **forever** until somebody ticks the box. That is the safe direction to fail: it is visible and can be taken down, rather than vanishing on a date nobody chose.
+
+`splitAnnouncements()` in `src/data/announcements.ts` is the whole rule, and it is pure — which is what lets it run twice.
+
+**The split is computed twice, exactly like Upcoming Events.** This is a static export, so what is baked into the HTML is only as fresh as the last build; `AnnouncementsBrowser` re-runs the same function in the browser against the real date, and again when the tab returns to the foreground. First render is the server's, so hydration matches and nothing flickers. See [Deployment](#deployment) for why the nightly rebuild is the other half of this.
+
+**Flyers are a dialog, not the page.** A flyer is a poster the program hands over, stored as two WebPs in `public/images/announcements/` — a ~500px derivative cropped to a strip on the card, and a ~1000px one shown whole when the announcement is opened. Three reasons it is not simply rendered on the card at full size: the posters are tall and would swamp the section, they are ~200 KB each and only a reader who wants one should pay for it, and the two Spirit Night posters are *the same picture* down to the headline — which is why the card crop is centred rather than top-aligned, so the restaurant is what shows.
+
+**The card carries the facts as text; the flyer repeats them.** Date, time, location and summary are real content in the JSON, not pixels in a poster. That is what makes the section searchable, translatable, and usable by a screen reader — and it is why `flyer.alt` is required to say everything the poster says rather than "Spirit Night flyer".
+
+**It degrades in three separate places**, because a modal is the one thing that cannot work without JavaScript:
+
+- The **flyer** is a real `<a>` to the full poster, and the dialog only intercepts the click — the same bargain `GalleryBrowser` makes with its lightbox. Modified clicks (new tab, save) are left alone.
+- The **archive** renders as a `<details>` disclosure holding the same list, and only becomes a button once the page has hydrated. Hydration is detected with `useSyncExternalStore`, not an effect, so there is no cascading render.
+- The **"Details" link is not rendered at all** until hydrated, and is skipped entirely when the dialog would only repeat the card back. A control that silently does nothing is worse than no control.
+
+**`Modal` (`src/components/ui/Modal.tsx`) is the shared dialog** and follows the same rules as the gallery lightbox: focus moves in and is trapped, Escape closes, the backdrop closes but the panel does not, the page behind does not scroll, and focus returns to whatever opened it. It captures the opener itself rather than being passed one, so no caller can forget. It is deliberately **not** `<dialog showModal>` — the top layer and `::backdrop` stop matching the site's own tokens. `GalleryBrowser` still has its own copy of this behaviour and has not been migrated; see Known Limitations.
 
 ### The photo gallery
 
@@ -512,6 +543,8 @@ Two things to know about it: GitHub **disables scheduled workflows on a public r
 
 Unpublished work stays in your browser, so you can close the tab and come back to it. If someone else publishes while you are editing, the editor tells you your draft is out of date rather than letting you overwrite their work.
 
+**You do not have to delete an announcement when its event is over.** Give it a **Sort date** (`2026-10-01`) and the day after that passes it moves itself into the archive on the home page, where it stays readable. The only ones that need a hand are the ones with no date at all — a donation drive, say — and those have an **Archived** switch instead.
+
 ---
 
 ## Known Limitations
@@ -528,6 +561,9 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **Analytics are opt-in per environment.** GA4 is rendered only when `NEXT_PUBLIC_GA_ID` is set at build time, which is how development and the hand-deployed staging copy report nothing — there is no filter to maintain. Production reads it from the `GA_MEASUREMENT_ID` repository variable via `deploy.yml`. Two things are easy to get wrong: the env var must appear as the literal `process.env.NEXT_PUBLIC_GA_ID` (Next inlines it by textual substitution), and `<GoogleAnalytics>` does **not** track client-side navigation — `src/components/analytics/PageViews.tsx` sends `page_view` on route change, so GA4's Enhanced measurement "page changes based on browser history events" must stay **off** or every internal navigation is counted twice. See `GOOGLE-ANALYTICS-SETUP.md`.
 - **Hero banners are code, not content.** The home page rotates between the program hero, the VBIF campaign banner and the Waller ISD champion banner (`HeroCarousel`, `CampaignBanner`, `ChampionBanner`); the slide list lives in `src/app/(site)/page.tsx`, so adding or removing a banner needs a developer. Two design constraints are load-bearing and should survive any change: only the **active slide is mounted** — hiding inactive slides with CSS leaves their links focusable, which is the standard carousel accessibility bug — and the **first slide is server-rendered**, so it is what appears on load and the only one that renders without JavaScript. The carousel also holds the tallest slide's height via a `ResizeObserver`, because the slides differ by 81px at desktop and 407px on a phone and the page would otherwise jump on every rotation.
 - **The VBIF banner has no destination and no real accessible name.** Its alt text is just `"VBIF"`, and the artwork is an image of text, so the wordmark neither scales with the reader's font size nor is available to a screen reader (WCAG 1.4.5). The champion banner is the same kind of artwork handled the other way — its alt text carries the banner's own words and the whole banner links to `/gallery` — which is the pattern to copy if VBIF is ever revisited. Both remain images of text and would be better as real markup over a background.
+- **The dialog behaviour exists twice.** `Modal` was extracted for the announcements section, but `GalleryBrowser` still carries its own focus trap, Escape handler and scroll lock, written before it. They agree today; nothing makes them stay that way. Migrating the lightbox is a contained change that was deliberately not bundled with a content update.
+- **The pantry drive has no date, because its flyer has none.** It reads "Ongoing" and never auto-archives — somebody has to tick Archived when it ends. Its Amazon wish list is a QR code in the poster and the URL behind it could not be recovered from the image, so the site cannot link it; a reader has to open the flyer and scan. Both are fixable the moment the program supplies the dates and the link.
+- **Two of the three flyers are photographs of a screen.** They were rotated, de-bezelled and re-encoded, but the moiré and the glare are in the source and no processing removes them. The pantry flyer is a 345px-wide PNG, so its "full" size in the dialog is the same file as its thumbnail and it is soft on a large display. Replacing all three with the original digital artwork is a straight swap of two files each.
 - **Gallery alt text is honest, not descriptive.** Each photo announces its album and position ("Junior Varsity — photo 7 of 32") because nobody has described the frames. That is better than `IMG_2604` and better than inventing what is happening, but a screen-reader user still cannot tell a huddle from a serve. Real alt text needs someone who was at the matches; it is `photoAlt()` in `src/data/gallery.ts` and touching one function fixes every caller.
 - **The gallery is not editable, and removing a photo is a developer job.** It is generated, so `/admin` cannot show it: taking a photo down means deleting its source and both derivatives and re-running `scripts/build-gallery.mjs`. Worth knowing in advance, because *"please take that one of my daughter down"* is a request that arrives on a weekend. These are photographs of minors on a public site — whether each one may be published is the program's call, not the code's, and nothing here records who consented.
 - **The photo originals live in exactly one place.** `content/images/` is gitignored (41 MB that only the generator reads), so the repository is not a backup of them. If the folder is lost, the ~1400px derivatives are all that remain.

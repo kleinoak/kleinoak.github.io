@@ -1,13 +1,97 @@
 [
   {
+    "id": "spirit-night-center-court-2026",
+    "startDate": "2026-10-01",
+    "date": "Thursday, October 1",
+    "time": "11:00 AM – 10:00 PM",
+    "title": "Spirit Night — Center Court Pizza & Brew",
+    "summary": "Eat at Center Court Pizza & Brew and part of the proceeds comes back to the Klein Oak volleyball program. Mention Klein Oak Volleyball when you order.",
+    "location": "24345 Gosling Rd, Spring, TX 77389",
+    "details": [
+      "Mention Klein Oak Volleyball when you order — that is what links your bill to the fundraiser.",
+      "Dine in or take out, any time between 11:00 AM and 10:00 PM.",
+      "Center Court Pizza & Brew donates part of the proceeds back to the program."
+    ],
+    "flyer": {
+      "src": "/images/announcements/spirit-night-center-court.webp",
+      "thumb": "/images/announcements/spirit-night-center-court-thumb.webp",
+      "alt": "Spirit Night flyer: support Klein Oak High School volleyball at Center Court Pizza & Brew, 24345 Gosling Rd, Spring, Texas 77389, Thursday October 1, 2026, 11 AM to 10 PM. Mention Klein Oak Volleyball when you order.",
+      "width": 1000,
+      "height": 1376,
+      "thumbWidth": 500,
+      "thumbHeight": 688
+    },
+    "verified": true
+  },
+  {
+    "id": "spirit-night-natalitas-2026",
+    "startDate": "2026-10-14",
+    "date": "Wednesday, October 14",
+    "time": "4:00 PM – 9:30 PM",
+    "title": "Spirit Night — Natalita's Mexican Restaurant",
+    "summary": "Eat at Natalita's and part of the proceeds comes back to the Klein Oak volleyball program. Mention Klein Oak Volleyball when you order.",
+    "location": "24814 Kuykendahl Rd, Tomball, TX 77375",
+    "details": [
+      "Mention Klein Oak Volleyball when you order — that is what links your bill to the fundraiser.",
+      "Dine in or take out, any time between 4:00 PM and 9:30 PM.",
+      "Natalita's donates part of the proceeds back to the program."
+    ],
+    "flyer": {
+      "src": "/images/announcements/spirit-night-natalitas.webp",
+      "thumb": "/images/announcements/spirit-night-natalitas-thumb.webp",
+      "alt": "Spirit Night flyer: support Klein Oak High School volleyball at Natalita's Mexican Restaurant, 24814 Kuykendahl Rd, Tomball, TX 77375, Wednesday October 14, 2026, 4:00 PM to 9:30 PM. Mention Klein Oak Volleyball when you order.",
+      "width": 1000,
+      "height": 1376,
+      "thumbWidth": 500,
+      "thumbHeight": 688
+    },
+    "verified": true
+  },
+  {
+    "id": "food-hygiene-drive",
+    "date": "Ongoing",
+    "title": "Food & Hygiene Drive — KO Pantry",
+    "summary": "Help stock the KO Pantry, which supports students and families across the Klein Oak feeder pattern. Donations go to the Counseling Office.",
+    "location": "Drop-off: Counseling Office",
+    "details": [
+      "Non-expired canned goods",
+      "Pasta and pasta sauce",
+      "Rice",
+      "Body wash",
+      "Lotion",
+      "The flyer also carries an Amazon wish list QR code — open the full flyer to scan it.",
+      "Benefits students and families in the Klein Oak feeder pattern."
+    ],
+    "flyer": {
+      "src": "/images/announcements/food-hygiene-drive.webp",
+      "thumb": "/images/announcements/food-hygiene-drive-thumb.webp",
+      "alt": "Food and Hygiene Drive flyer: help stock our KO Pantry. Items needed are non-expired canned goods, pasta and pasta sauce, rice, body wash and lotion. Benefits students and families in the Klein Oak feeder pattern. Drop-off location is the Counseling Office. Includes an Amazon wish list QR code. From Mrs. Shock.",
+      "width": 345,
+      "height": 578,
+      "thumbWidth": 345,
+      "thumbHeight": 578
+    },
+    "verified": true
+  },
+  {
     "id": "team-pictures-2026",
+    "startDate": "2026-08-09",
     "date": "Sunday, August 9",
     "title": "Team Pictures",
     "summary": "Picture day at the KOHS Main Gym. Freshmen 9:00 AM, Flex 9:40 AM, JV 10:20 AM, Varsity 11:00 AM.",
     "verified": true
   },
   {
+    "id": "meet-the-panthers-2026",
+    "startDate": "2026-08-06",
+    "date": "Thursday, August 6",
+    "title": "Meet the Panthers",
+    "summary": "The program introduced the 2026 players, coaches, and teams in the KO Gym.",
+    "verified": true
+  },
+  {
     "id": "rosters-posted-2026",
+    "startDate": "2026-08-03",
     "date": "Posted Monday, August 3",
     "title": "2026 Rosters Are Posted",
     "summary": "Congratulations, Panthers! Varsity, Junior Varsity, Flex, and Freshman rosters are final for the 2026 season.",
@@ -22,13 +106,7 @@
     "summary": "Preseason, district, and playoff dates are now listed with times for all four levels.",
     "actionLabel": "View schedule",
     "actionHref": "/schedule",
-    "verified": true
-  },
-  {
-    "id": "meet-the-panthers-2026",
-    "date": "Thursday, August 6",
-    "title": "Meet the Panthers",
-    "summary": "The program introduced the 2026 players, coaches, and teams in the KO Gym.",
+    "archived": true,
     "verified": true
   }
 ]

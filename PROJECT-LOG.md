@@ -1006,3 +1006,97 @@ repository that has nothing for it to deploy to.
       not settle whether the program should have a real one.
 - [ ] Node 20 deprecation warnings on `actions/checkout@v4`, `setup-node@v4` and
       `configure-pages@v5` are annotations on every run and were left alone.
+
+---
+
+## 20260905 — New announcements, and an archive that maintains itself
+
+IDLC item 18 (second half). Three flyers arrived — two Spirit Nights and a food
+and hygiene drive — to replace the four August announcements still sitting on the
+home page in September, plus a request for an archive behind a modal.
+
+### What the flyers actually said
+Two arrived as phone photographs of a screen, landscape 2856×2142 holding a
+portrait poster, so they were rotated 90° clockwise and the dark bezel trimmed
+before anything could be read off them. Both then transcribed cleanly, and both
+**check out against the calendar**: Oct 1 2026 really is a Thursday and Oct 14 a
+Wednesday. The four existing announcements were checked the same way — Aug 3
+Monday, Aug 6 Thursday, Aug 9 Sunday, all correct as written.
+
+The pantry flyer carries **no date at all**. "New Year – Same Needs" is a mood,
+not a date, and its Amazon wish list is a QR code that could not be resolved from
+a 345px image.
+
+### Decisions
+- **An announcement archives itself.** `startDate` (and optional `endDate`) is
+  the real calendar date; the day after it passes, the card moves to the archive.
+  This is the same mechanism `upcomingFrom` already uses for the calendar, for the
+  same reason — the alternative is a volunteer remembering to take down a Spirit
+  Night on the morning after it ran, which is exactly what had *not* happened to
+  the four August cards.
+- **Undated announcements never expire, and that is the safe failure.** The
+  pantry drive gets no `startDate` and an `archived` switch instead. Giving it an
+  invented end date would put a claim on the page that nobody made; leaving it
+  visible until somebody retires it fails in the direction that can be noticed
+  and corrected, rather than vanishing on a date no one chose.
+- **The card is text; the flyer is a dialog.** Date, time, location and summary
+  are real content in the JSON, not pixels. Three reasons the poster is not just
+  rendered large on the card: it is tall enough to swamp the section, it is
+  ~200 KB that only an interested reader should pay for, and — the one that
+  actually decided it — **the two Spirit Night posters are the same picture**
+  down to the headline. Cropped to the top they were indistinguishable side by
+  side, so the card crop is centred, where the restaurant is.
+- **`Modal` was extracted rather than copied.** The gallery lightbox already had
+  the focus trap, Escape handler, scroll lock and focus return; a second
+  hand-rolled copy would have been the moment they started drifting. It is not
+  `<dialog showModal>` — the top layer and `::backdrop` stop matching the site's
+  tokens. It captures its own opener so no caller can forget to pass one.
+- **Three separate no-JS fallbacks, because a modal has none.** The flyer is a
+  real `<a>` to the poster and the dialog only intercepts the click (the
+  gallery's bargain); the archive renders as a `<details>` disclosure until
+  hydrated; and the "Details" link is **not rendered at all** until hydrated,
+  because a control that silently does nothing is worse than no control. The
+  first pass shipped two dead buttons with scripting off — caught by rendering
+  the page with `Emulation.setScriptExecutionDisabled`, not by reasoning about it.
+- **Hydration is detected with `useSyncExternalStore`, not an effect.** The
+  obvious `useEffect(() => setMounted(true), [])` is what `react-hooks/set-state-in-effect`
+  exists to catch, and it was right to: the correct primitive returns the server
+  snapshot during hydration and the client one after, with no cascading render.
+  A second flagged effect — nulling the open dialog when its announcement
+  archives itself at midnight — turned out to be unnecessary once `open` was
+  derived from the current list rather than stored.
+- **The /admin preview was extended too.** `PreviewCard` builds its announcement
+  by hand, so the new fields would have been invisible in the editor — a preview
+  that quietly omits half the form is worse than no preview.
+
+### Verified
+- [x] `tsc` clean; `eslint` clean (two real errors found and fixed, none
+      suppressed); `validate:content` → 12 files OK; `next build` → 16 routes.
+- [x] Driven in a real browser over CDP, not just built: dialog opens from both
+      the flyer and the Details link, **Escape closes**, **backdrop closes**,
+      **focus returns to the opener**, body scroll is restored, `aria-modal` and
+      `aria-labelledby` present, focus lands inside on the close button.
+- [x] **Auto-archiving proved end to end**, not just read: backdating the Center
+      Court flyer to 2026-09-01 and rebuilding moved it out of the cards, took the
+      archive from 4 to 5, and left two flyer links instead of three. Restored
+      afterwards and re-verified at 4.
+- [x] With JavaScript disabled: three cards render whole, flyers are real links
+      to the posters, the archive is a working `<details>`, and no dead control
+      remains.
+- [x] 390 / 834 / 1280px — one, two and three columns, no horizontal scroll at
+      any width; the dialog is a bottom sheet on the phone and scrolls internally.
+
+### Not yet done
+- [ ] **The pantry drive has no date and no wish-list link.** It reads "Ongoing",
+      never auto-archives, and its Amazon list can only be reached by opening the
+      flyer and scanning the QR. Both need the program, not the code.
+- [ ] **`GalleryBrowser` was not migrated to `Modal`.** The behaviour now exists
+      twice; they agree today and nothing keeps them agreeing. Deliberately not
+      bundled into a content change.
+- [ ] **Two flyers are photographs of a screen** and the moiré and glare are in
+      the source. The pantry flyer is 345px wide, so its dialog image is the same
+      file as its thumbnail. All three improve the moment the original artwork
+      turns up.
+- [ ] Nothing checks that a `startDate` matches the date written in `date`, or
+      the day-of-week printed on the poster. Both were verified by hand here; a
+      third one will be verified by hand too, or not at all.
