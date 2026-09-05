@@ -185,7 +185,18 @@ jobs:
           git remote add prod git@github.com:kleinoak/kleinoak.github.io.git
 
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/prod_id -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-          sh scripts/deploy-prod.sh | tee /tmp/deploy.log
+
+          # pipefail is not on in GitHub's default `bash -e` shell, so without it
+          # the pipeline reports tee's exit status and a failed deploy goes
+          # green. That is exactly what happened on the first real run: the
+          # script died on a portability bug, printed half its output, and the
+          # job reported success while production was never touched.
+          set -o pipefail
+          sh scripts/deploy-prod.sh 2>&1 | tee /tmp/deploy.log
+
+          # deploy-prod.sh's last line on success. Belt as well as braces: if it
+          # ever exits 0 without publishing, this catches it.
+          grep -q "Pushed" /tmp/deploy.log
 
           {
             echo "### Published to production"

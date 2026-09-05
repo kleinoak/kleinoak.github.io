@@ -45,7 +45,11 @@ fi
 # a branch and ran `git rm --cached`, which untracks the files — and switching
 # back then refuses to overwrite what are now untracked files, stranding the
 # repo on the deploy branch.
-TMP_INDEX=$(mktemp -t ko-prod-index)
+# The template must carry its own XXXXXX. BSD mktemp treats `-t foo` as a
+# prefix and invents the suffix; GNU mktemp rejects it outright with "too few
+# X's in template", so `mktemp -t ko-prod-index` worked for two months of
+# deploys from a Mac and failed the first time CI ran this on Ubuntu.
+TMP_INDEX=$(mktemp "${TMPDIR:-/tmp}/ko-prod-index.XXXXXX")
 trap 'rm -f "$TMP_INDEX"' EXIT
 
 GIT_INDEX_FILE="$TMP_INDEX" git read-tree main

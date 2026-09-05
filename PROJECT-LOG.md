@@ -1441,3 +1441,60 @@ user. The environment and its branch policy were created; the secret was not.
 - [ ] The key is a single long-lived credential with force-push rights to
       production, held by a CI system. That is the trade this option is — the
       alternative was making the production build depend on Rank One being up.
+
+---
+
+## 20260905 — The first unattended deploy failed, and said it succeeded
+
+The publish job from the entry above ran for the first time on `main`. Both jobs
+reported success. **Production was never touched.**
+
+### What actually happened
+The publish step finished in 4 seconds, which is too fast for a full-depth
+checkout plus a push, and its log stopped after `deploy-prod.sh` printed the list
+of stripped files — the `✓ Pushed …` line never came. `prod/main` was still
+`ca29ed7` with a `checkedAt` of 22:40, unchanged.
+
+Two bugs, and the second is much worse than the first.
+
+- **`deploy-prod.sh` was macOS-only.** `mktemp -t ko-prod-index` is a BSD
+  spelling: BSD treats the argument as a prefix and invents the suffix, GNU
+  rejects a template containing no `XXXXXX` with "too few X's in template". Under
+  `set -eu` the script exited there, which is precisely where the output stops.
+  It had worked for every hand deploy because every hand deploy was from a Mac.
+- **`| tee` swallowed the failure.** A pipeline's exit status is the last
+  command's, and GitHub's default shell is `bash -e` with `pipefail` **off**. So
+  a dead script piped into `tee` exits 0 and the job goes green. This is the
+  dangerous one: the first bug is a one-line portability slip, the second is a
+  monitoring system reporting that a thing it did not do had been done.
+
+### Decisions
+- **`mktemp "${TMPDIR:-/tmp}/ko-prod-index.XXXXXX"`** — one spelling that is
+  correct on both. Checked the rest of the script for other BSD-isms (`sed -i`,
+  `readlink -f`, `date -r`, `grep -P`); there are none.
+- **`set -o pipefail` in the step, plus `grep -q "Pushed"` on the log.** Belt and
+  braces on purpose: pipefail catches a non-zero exit, and the grep catches the
+  other shape of this failure — a script that exits 0 without doing the work.
+- **The sync half was never in doubt and is worth separating out.** That run's
+  sync job committed `2d0acdd` correctly; only the publish failed. The two jobs
+  being independent is what made the diagnosis a two-minute job rather than a
+  bisect.
+
+### Verified
+- [x] `mktemp` with the new template works on macOS; the old one demonstrably
+      cannot work on GNU coreutils.
+- [x] `prod/main` confirmed unchanged at `ca29ed7` after the green run — the
+      failure was real, not cosmetic.
+- [x] `origin/main` confirmed at `2d0acdd` with `checkedAt` 23:06, so the sync
+      committed exactly as designed.
+- [x] Workflow still parses; two jobs.
+
+### Not yet done
+- [ ] **Still unproven end to end.** The fix is a fix for a diagnosed cause, not
+      a verified deploy. The next run on `main` is the real test, again.
+- [ ] **Nothing else in this repository runs on two operating systems.**
+      `build-gallery.mjs` and `fetch-rankone.mjs` are Node and portable by
+      construction, but `deploy-prod.sh` is shell and now runs in both places.
+      A second BSD-ism would fail the same way.
+- [ ] The green-on-failure shape existed for the whole of the previous entry's
+      lifetime and would have hidden any deploy failure, not just this one.
