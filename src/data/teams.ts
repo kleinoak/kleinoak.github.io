@@ -29,9 +29,32 @@ export type Team = {
   roster?: string[];
 };
 
+export type CoachPhoto = {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+};
+
 export type Coach = {
   name: string;
   title: string;
+  /**
+   * The coach's own words, as the program supplied them. Transcribed rather
+   * than written here — see PROJECT-LOG.
+   */
+  bio?: string;
+  /**
+   * A portrait the coach chose. Masked to a circle, so it is rendered without
+   * any further cropping; see `scripts/`-adjacent notes in PROJECT-LOG for how
+   * these were lifted out of the program's slide deck.
+   */
+  photo?: CoachPhoto;
+  /**
+   * The publish switch, kept separate from `bio` on purpose: turning it off
+   * pulls a bio off the site without deleting the text, which is what a coach
+   * asking for theirs to come down actually needs.
+   */
   bioAvailable: boolean;
 };
 

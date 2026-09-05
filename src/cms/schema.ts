@@ -64,7 +64,7 @@ export type Collection = {
   /** Wording for the "add" button, e.g. "Add announcement". */
   itemNoun?: string;
   /** Card component used for the live preview, if any. */
-  preview?: "announcement" | "event" | "team" | "coach" | "resource" | "sponsorTier";
+  preview?: "announcement" | "event" | "team" | "coach" | "coachProfile" | "resource" | "sponsorTier";
   fields: Field[];
 };
 
@@ -393,20 +393,42 @@ export const collections: Collection[] = [
     group: "Program",
     file: "content/coaches.json",
     kind: "list",
-    description: "Coaching staff shown on the Coaches page.",
+    description:
+      "Coaching staff shown on the Coaches page, in this order — the program introduces them by seniority rather than alphabetically, so the head coach goes first.",
     usedOn: ["Coaches page"],
     labelField: "name",
     identifierField: "name",
     itemNoun: "coach",
-    preview: "coach",
+    preview: "coachProfile",
     fields: [
-      { name: "name", label: "Name", type: "text", required: true, placeholder: "Coach Jenkins" },
-      { name: "title", label: "Title", type: "text", required: true, placeholder: "Head Coach" },
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "Bill Jenkins" },
+      {
+        name: "title",
+        label: "Title",
+        type: "text",
+        required: true,
+        placeholder: "Head Varsity Coach",
+        help: "The role as the program words it, e.g. 'Assistant Varsity & Junior Varsity Head Coach'.",
+      },
+      {
+        name: "bio",
+        label: "Bio",
+        type: "textarea",
+        rows: 6,
+        maxLength: 900,
+        help: "The coach's own words. Publish what the coach wrote rather than rewriting it — and check with them before changing anything that names their family.",
+      },
+      {
+        name: "photo",
+        label: "Portrait",
+        type: "image",
+        help: "Optional. A coach with no portrait gets their initials instead, which is a deliberate look rather than a gap. Only use a photo the coach has chosen for the website — and note that a photo including their family is on a public page, which is a different thing from a staff meeting.",
+      },
       {
         name: "bioAvailable",
         label: "Bio published",
         type: "boolean",
-        help: "Off shows 'Bio coming soon' on the card. Turn it on only once a bio has actually been added by a developer.",
+        help: "Off shows 'Bio coming soon' and hides the text without deleting it — which is what you want if a coach asks for theirs to come down.",
       },
     ],
   },

@@ -1100,3 +1100,90 @@ a 345px image.
 - [ ] Nothing checks that a `startDate` matches the date written in `date`, or
       the day-of-week printed on the poster. Both were verified by hand here; a
       third one will be verified by hand too, or not at all.
+
+---
+
+## 20260905 — The coaches page stops saying "bio coming soon"
+
+The program supplied a "Meet The Coaches" slide deck: four short bios and, on
+each slide, the photograph that coach chose. The page had been four monogram
+tiles and a callout promising biographies were pending — a promise it had been
+making since August.
+
+### Getting the material out of the PDF
+No poppler, no ImageMagick, no Ghostscript on this machine, and `qlmanage` and
+`sips` only ever render page one. Rather than install a toolchain onto someone's
+laptop for a one-off, the pages were rasterised with a ~40-line CoreGraphics
+program built with the `swiftc` that ships with the Command Line Tools.
+
+Lifting the photographs out was the interesting part, and the naive approach is
+wrong in a way worth writing down:
+
+- **"Make every yellow pixel transparent" destroys Coach Studdard's portrait.**
+  The gold Klein Oak wall she is photographed against is the same yellow as the
+  slide behind her, so a global colour match punches holes through the picture.
+- **Flood-filling from the page border fixes that** — it only removes yellow
+  *connected to the edge*, so colour enclosed by the photograph survives. This
+  produced three clean circles.
+- **It still failed on the fourth**, because her photo runs to the slide edge and
+  the fill leaks in around it, leaving a ragged rim. So the final masks come from
+  the circle geometry instead, measured on the three clean pages — `cx 3283,
+  cy 1313, r 1013` at 6× — which agreed to the pixel across all three, confirming
+  the deck uses one circle for everybody.
+
+The mask is baked into each WebP's alpha rather than applied with `rounded-full`,
+so the shape on the page is the shape the coach approved and nothing depends on
+CSS to hide a corner full of slide background.
+
+### Decisions
+- **Profile rows, not the four-across grid.** That grid was correct while every
+  card held a monogram and a job title. The bios run 55 to 95 words — nearly a
+  2× spread — and equal-height cards either clip the longest or strand the
+  shortest. The reading measure is capped as well: at full container width the
+  bios set ~110 characters to a line.
+- **Bios are transcribed, not rewritten.** "4y/o", "her pretty cool husband",
+  "beautiful wife Christie" — these are the coaches' own words and the page is
+  not the place to edit their voice. Only a doubled space was normalised.
+- **`bio` and `bioAvailable` stayed two fields.** They look redundant now that
+  real text exists, but the switch hides a bio *without deleting it*, which is
+  exactly what a coach asking for theirs to come down needs. The schema help now
+  says that rather than "turn it on once a developer has added a bio".
+- **Order is seniority, not alphabetical.** Head coach first, the way the deck
+  introduces the staff. Worth recording because it is the opposite of the
+  rosters, which are deliberately sorted by first name — a future "sort these
+  consistently" instinct would be wrong here.
+- **The stale callout was rewritten, not deleted.** "Coach biographies pending"
+  became false the moment this shipped, but individual staff email addresses
+  genuinely are still unpublished, so it now says only that.
+- **Two portraits include family and one includes children.** These are the
+  photographs the coaches picked and the bios name family members, so it is the
+  program's material and the coaches' choice, not an editorial call made here.
+  Implemented as supplied, with alt text that describes the group without naming
+  any child, and flagged to the user — a slide at a parents' evening and a page
+  on the open web are not the same audience.
+- **`CoachCard` was left alone.** Program Administration has names and titles and
+  nothing else, so it keeps the compact monogram card. The coaches collection
+  previews as a new `coachProfile` type in `/admin`; administration stays
+  `coach`. Two preview types beat one component trying to be both.
+
+### Verified
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 12 files OK, which is
+      what proves all four portraits actually exist under `public/`.
+- [x] Rendered in a browser at 390 and 1280px: four portraits load, none broken,
+      no horizontal scroll at either width, and the bio paragraph computes
+      `text-align: left` on the phone where the rest of the card is centred.
+- [x] Every bio checked against the slide word by word; day-to-day facts (years
+      coaching, universities, degrees) are transcribed, not summarised.
+
+### Not yet done
+- [ ] **Nothing records that these photos may be published**, same gap as the
+      gallery. The deck is strong evidence — each coach chose their own — but the
+      repository still models no consent, and the two family photographs are the
+      ones most worth revisiting if anyone asks.
+- [ ] **The extraction was one-off and lives in `/tmp`.** If the deck is reissued,
+      the CoreGraphics renderer and the circle constants have to be rebuilt from
+      the notes above. Worth committing as a script only if this becomes routine.
+- [ ] `initials()` now exists in both `CoachCard` and `CoachProfile`. Five lines,
+      duplicated knowingly rather than extracting a shared helper for two callers.
+- [ ] Staff email addresses are still unpublished, so the contact callout still
+      points everyone at the single program address.

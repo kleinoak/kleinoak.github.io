@@ -1,22 +1,50 @@
 [
   {
-    "name": "Coach Bill Jenkins",
-    "title": "Head Coach",
-    "bioAvailable": false
+    "name": "Bill Jenkins",
+    "title": "Head Varsity Coach",
+    "bio": "Coach Jenkins has been coaching and teaching for 21 years. He has coached football, baseball, girls basketball, tennis and volleyball. Jenkins has coached club volleyball for 14 years and has been a club director for 11. Coach Bill has been married to his beautiful wife Christie for 43 years and has 3 children and 5 grandchildren.",
+    "photo": {
+      "src": "/images/coaches/bill-jenkins.webp",
+      "alt": "Coach Bill Jenkins with his wife Christie, sitting together on a beach at sunset.",
+      "width": 640,
+      "height": 640
+    },
+    "bioAvailable": true
   },
   {
-    "name": "Coach Studdard",
-    "title": "Assistant Coach",
-    "bioAvailable": false
+    "name": "Logan Studdard",
+    "title": "Assistant Varsity & Junior Varsity Head Coach",
+    "bio": "Coach Studdard is no stranger to Klein Oak athletics, as she is a KO graduate and 4 year varsity letterman in volleyball. This will be her 5th year in the classroom and her 8th year coaching volleyball. She has also coached soccer and basketball. Studdard graduated from Texas A&M University with her Bachelor's in Psychology.",
+    "photo": {
+      "src": "/images/coaches/logan-studdard.webp",
+      "alt": "Coach Logan Studdard in a Klein Oak shirt, smiling in front of a gold Klein Oak Panthers backdrop.",
+      "width": 640,
+      "height": 640
+    },
+    "bioAvailable": true
   },
   {
-    "name": "Coach Patillo",
-    "title": "Assistant Coach",
-    "bioAvailable": false
+    "name": "Danielle Patillo",
+    "title": "Flex Team Coach",
+    "bio": "Coach Patillo graduated from Angelo State University with a Bachelor's in Science. She is currently finishing up her Masters in Administration at Angelo State. She has an awesome 4y/o daughter named Madison. With 10+ years of experience in athletics, her passion is to encourage athletes to ask questions, seek understanding, and lead by example, whether in their schools, communities, or future careers.",
+    "photo": {
+      "src": "/images/coaches/danielle-patillo.webp",
+      "alt": "Coach Danielle Patillo in a Klein Oak polo shirt, smiling in front of a black and gold Panthers backdrop.",
+      "width": 640,
+      "height": 640
+    },
+    "bioAvailable": true
   },
   {
-    "name": "Coach Rehr",
-    "title": "Assistant Coach",
-    "bioAvailable": false
+    "name": "Felicia Rehr",
+    "title": "Freshman Coach",
+    "bio": "Coach Rehr has been involved with the game for over 20 years including playing collegiately. She's passionate about fundamentals, discipline, and teamwork. She graduated with a Bachelor's from Texas A&M University, and a Master's in Sports Administration from Arkansas State University. She has a son, Noah who is a JR at Klein, and Rylee, who is in 6th grade. Her pretty cool husband, David, is also a volleyball coach in the Houston area.",
+    "photo": {
+      "src": "/images/coaches/felicia-rehr.webp",
+      "alt": "Coach Felicia Rehr with her family in the stands at a professional volleyball match.",
+      "width": 640,
+      "height": 640
+    },
+    "bioAvailable": true
   }
 ]

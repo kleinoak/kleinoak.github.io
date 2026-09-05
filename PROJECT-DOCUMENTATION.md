@@ -99,7 +99,7 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 | Key dates | list | `content/events.json` | Home page, Schedule |
 | Teams | list | `content/teams.json` | Home, Teams, team detail pages |
 | Match schedule | list | `content/matches.json` | Schedule |
-| Coaches | list | `content/coaches.json` | Coaches |
+| Coaches | list | `content/coaches.json` | Coaches — name, title, bio, portrait |
 | Program administration | list | `content/administration.json` | Coaches |
 | Parent resources | list | `content/resources.json` | Resources |
 | Booster Club board | list | `content/booster-board.json` | Contact |
@@ -255,6 +255,8 @@ ko-volleyball-web/
 │   │   ├── home/UpcomingEventsList.tsx  # re-filters the dated list in the browser
 │   │   ├── home/AnnouncementsBrowser.tsx # cards + detail dialog + archive dialog
 │   │   ├── ui/Modal.tsx                 # the shared dialog: trap, Escape, scroll lock
+│   │   ├── cards/CoachProfile.tsx       # coach row: circular portrait + bio
+│   │   ├── cards/CoachCard.tsx          # compact monogram card — administration
 │   │   ├── gallery/GalleryBrowser.tsx   # album filter + grid + lightbox dialog
 │   │   ├── schedule/MatchSchedule.tsx   # table + phone cards; varsity results column
 │   │   └── analytics/PageViews.tsx # GA page_view on client-side route change
@@ -266,6 +268,7 @@ ko-volleyball-web/
 ├── logo-redesign/                  # brand exploration — logo options + source renders
 ├── public/
 │   ├── images/announcements/       # flyer posters, 2 WebPs each (card + dialog)
+│   ├── images/coaches/             # coach portraits, circle-masked WebP with alpha
 │   ├── images/brand/               # prepared logo art (hero lockup, banners)
 │   ├── images/gallery/             # GENERATED WebP derivatives, 2 per photo
 │   ├── images/sponsors/            # sponsor artwork
@@ -301,6 +304,22 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
 
 **Every image `src` must go through `assetPath()` (`src/lib/asset.ts`).** `next/image` does not rewrite `src` when the image is `unoptimized` — which it always is here, because Pages cannot run Next's optimizer. A bare `/images/…` src therefore resolves against the *domain* root and 404s whenever the site is served from a sub-path: a GitHub Pages project site, or a folder inside another Pages repo. `assetPath()` prefixes `NEXT_PUBLIC_BASE_PATH`. This applies equally to literal paths in components and to paths coming out of `content/*.json`. Nothing in the build catches a missed call, so the check is `grep` the export for `src="/` paths that lack the base path.
+
+### The coaches page
+
+Four coaches as full-width profile rows — circular portrait, name, title, bio — then the contact callout, then Program Administration. Content is `content/coaches.json`, editable at `/admin`.
+
+**A row, not a card in a four-across grid.** That grid was right while there was nothing to say and every card held a monogram and a job title. The bios run 55 to 95 words and vary by nearly half; equal-height cards either clip the longest or leave the shortest floating. A row lets each bio be its own length, and the reading measure is capped (`max-w-prose`, list at `max-w-4xl`) because the full container width put ~110 characters on a line.
+
+**Order is seniority, not alphabetical** — head coach first, the way the program introduces its own staff. Nothing sorts `coaches`; the file's order is the page's order, and the schema description says so. This is the opposite of the rosters, which *are* sorted by first name.
+
+**The portraits are circles in the file, not in the CSS.** They were lifted out of the program's "Meet The Coaches" slide deck, where every photo is already circular on a yellow slide, and the mask is baked into each WebP's alpha channel. So the shape on the page is the shape the coach approved, and nothing depends on a `rounded-full` to hide corners that would otherwise carry a slide's background. A coach with no portrait falls back to the initials monogram, which is a deliberate look rather than a gap.
+
+**How they were extracted, because it will come up again.** The deck is a PDF; the pages were rasterised with a small CoreGraphics program (no poppler on this machine) and the slide background flood-filled from the border to isolate each photo. The flood fill is the part worth remembering: a plain "make every yellow pixel transparent" pass destroys Coach Studdard's portrait, because the gold Klein Oak wall behind her is the same yellow as the slide. Filling only from the border keeps colour that is *enclosed by* the photograph. Even so, her photo touches the slide edge, so the final masks come from the circle geometry — identical on every page — rather than per-page detection.
+
+**`bio` is the content and `bioAvailable` is the switch**, deliberately two fields. Turning the switch off hides a bio and shows "Bio coming soon" *without deleting the text*, which is what a coach asking for theirs to come down actually needs. `CoachProfile` renders the bio only when both are present.
+
+**`CoachCard` still exists and is unchanged.** Program Administration has names and titles and nothing else, so it keeps the compact monogram card; the coaches collection previews as `coachProfile` in `/admin` and administration as `coach`. Two preview types rather than one component trying to be both.
 
 ### The announcements section
 
@@ -393,13 +412,35 @@ Because the background is genuinely transparent, the logo sits correctly on any 
 
 Three repositories, three roles. Only one of them is where work happens; the other two are build targets that must never be edited directly.
 
-| | Repository | What it is | Serves |
-|---|---|---|---|
-| **Source** | [alfredsilvertonai/ko-volleyball-web](https://github.com/alfredsilvertonai/ko-volleyball-web) | Where all work happens. Full history, all branches, all internal docs. **No GitHub Pages site** — it is not an environment. | nothing |
-| **Staging** | [thecodinci/thecodinci.github.io](https://github.com/thecodinci/thecodinci.github.io/tree/main/kovb) — the `kovb/` folder | Hand-deployed **built output only**. No source, no CI. A folder inside a larger personal site. | <https://codinci.com/kovb/> |
-| **Production** | [kleinoak/kleinoak.github.io](https://github.com/kleinoak/kleinoak.github.io) | A mirror of `main` with the internal docs stripped. GitHub Actions builds and deploys it. | <https://kleinoakvolleyball.com> |
+| | Repository | Branch | What it is | Serves |
+|---|---|---|---|---|
+| **Source** | [alfredsilvertonai/ko-volleyball-web](https://github.com/alfredsilvertonai/ko-volleyball-web) | `main` | Where all work happens. Full history, all branches, all internal docs. **No GitHub Pages site** — it is not an environment. | nothing |
+| **Staging** | [thecodinci/thecodinci.github.io](https://github.com/thecodinci/thecodinci.github.io/tree/main/kovb) — the `kovb/` folder | `main` | Hand-deployed **built output only**. No source, no CI. A folder inside a larger personal site. | <https://codinci.com/kovb/> |
+| **Production** | [kleinoak/kleinoak.github.io](https://github.com/kleinoak/kleinoak.github.io) | `main` | A mirror of `main` with the internal docs stripped. GitHub Actions builds and deploys it. | <https://kleinoakvolleyball.com> |
 
 Production is on the program's real domain with HTTPS enforced. `kleinoak.github.io` and `www.kleinoakvolleyball.com` both **301 to the apex**, so there is one canonical address. The custom domain lives in the repository's Pages settings.
+
+**Every environment is `main`, and each `main` means something different.** Pages on production is configured `source: { branch: "main", path: "/" }` with `build_type: workflow`; staging serves `main` at `/` and the site lives in a sub-folder of it. Nothing is deployed from a `release` or `gh-pages` branch, and no branch name distinguishes the environments — the *repository* does. What writes to each:
+
+| Branch | Written by | Never do this |
+|---|---|---|
+| `origin/main` | Merged pull requests, and direct `/admin` publishes | — |
+| `prod/main` | `scripts/deploy-prod.sh` only, as a **force-push** of a freshly built docs-stripped commit | Commit to it directly; the next deploy discards the work |
+| `thecodinci/main` | A hand `rsync` of `out/` into `kovb/`, then an ordinary commit | Put source there; staging carries built output only |
+
+**There is no dev site.** The source repository has GitHub Pages *off* — `GET /repos/alfredsilvertonai/ko-volleyball-web/pages` returns 404 — which is why `deploy.yml` gates its Pages steps to the production repository (see [Deployment](#deployment)). `npm run dev` is the development environment; staging is the first place a change is visible to anyone else.
+
+⚠️ **`kleinoak/kleinoak.github.io` also carries a `production` branch. It is not production.** It was last written on 2026-08-13 (`9b0b6e0`, "Merge pull request #1 from kleinoak/main") and has since **diverged** from `main` — it is not an ancestor, nothing writes to it, and Pages does not read it. The name is the whole problem: it reads as authoritative when `main` is. Confirm before trusting either:
+
+```bash
+gh api repos/kleinoak/kleinoak.github.io/pages -q .source   # {"branch":"main","path":"/"}
+```
+
+**Staging drifts, and nothing stops it.** Production is one command and a CI run; staging is a manual `rsync` with two steps that are easy to miss, and there is no `deploy-staging.sh` — `scripts/` holds only `build-gallery.mjs`, `deploy-prod.sh` and `validate-content.mts`. On 2026-09-05, immediately after a production deploy, staging was still serving the August announcements and 138 gallery photos: roughly three weeks and two releases behind. **Check it before showing it to anyone**, because "staging" implies a freshness it does not have:
+
+```bash
+curl -s https://codinci.com/kovb/gallery/ | grep -o '[0-9]* photos' | head -1
+```
 
 ---
 
@@ -556,11 +597,13 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **The schedule is a hand-made copy of four live feeds.** Times and results are transcribed from each level's Rank One calendar by a person running a reconciliation; nothing re-checks them, nothing warns when a played fixture has no result, and nothing notices when Rank One changes a time. The "last checked" date is the only honest signal a reader gets, which is why it must be updated on every check rather than only when something changes.
 - **Changing a team's `slug`** breaks shared links and requires a developer to update the header menu; the field's help text says so, but nothing enforces it.
 - **Staged images are capped by browser storage** (~5 MB for `localStorage`). Beyond that the editor keeps them in memory for the tab only and says so.
-- **Bios and photos** are gated behind flags (`bioAvailable`, optional `photo`) because no authoritative content or publication permissions were available at build time.
+- **Coach bios are published; player bios and photos are still gated.** `bioAvailable` and the optional `photo` remain the switches, and for coaches both are now on — the program supplied the text and each coach's chosen portrait. Nothing equivalent exists for players, and `teams.json` still models no player photos, jersey numbers or statistics.
+- **Two coach portraits include family, one of them children.** They are the photographs the coaches themselves picked for the program's "Meet The Coaches" deck, and the bios name family members, so this is the program's material and the coaches' choice rather than an editorial decision made here. It is still worth knowing that a slide shown at a parents' evening and a page on the open web are not the same audience. Alt text describes the group without naming any child. Removing one is a single field: clear `photo` on that coach, or switch `bioAvailable` off to pull the text too.
 - **`content/` is the only editable surface.** Page structure, navigation, and copy outside the schema still require a developer.
 - **Analytics are opt-in per environment.** GA4 is rendered only when `NEXT_PUBLIC_GA_ID` is set at build time, which is how development and the hand-deployed staging copy report nothing — there is no filter to maintain. Production reads it from the `GA_MEASUREMENT_ID` repository variable via `deploy.yml`. Two things are easy to get wrong: the env var must appear as the literal `process.env.NEXT_PUBLIC_GA_ID` (Next inlines it by textual substitution), and `<GoogleAnalytics>` does **not** track client-side navigation — `src/components/analytics/PageViews.tsx` sends `page_view` on route change, so GA4's Enhanced measurement "page changes based on browser history events" must stay **off** or every internal navigation is counted twice. See `GOOGLE-ANALYTICS-SETUP.md`.
 - **Hero banners are code, not content.** The home page rotates between the program hero, the VBIF campaign banner and the Waller ISD champion banner (`HeroCarousel`, `CampaignBanner`, `ChampionBanner`); the slide list lives in `src/app/(site)/page.tsx`, so adding or removing a banner needs a developer. Two design constraints are load-bearing and should survive any change: only the **active slide is mounted** — hiding inactive slides with CSS leaves their links focusable, which is the standard carousel accessibility bug — and the **first slide is server-rendered**, so it is what appears on load and the only one that renders without JavaScript. The carousel also holds the tallest slide's height via a `ResizeObserver`, because the slides differ by 81px at desktop and 407px on a phone and the page would otherwise jump on every rotation.
 - **The VBIF banner has no destination and no real accessible name.** Its alt text is just `"VBIF"`, and the artwork is an image of text, so the wordmark neither scales with the reader's font size nor is available to a screen reader (WCAG 1.4.5). The champion banner is the same kind of artwork handled the other way — its alt text carries the banner's own words and the whole banner links to `/gallery` — which is the pattern to copy if VBIF is ever revisited. Both remain images of text and would be better as real markup over a background.
+- **Two deployment hazards, both documented in [Deployment path](#-deployment-path--engineering-to-prod) and neither fixed.** `kleinoak/kleinoak.github.io` carries a diverged `production` branch that is *not* what Pages serves — `main` is — and the name invites exactly the wrong assumption. And staging has no deploy script, so it drifts silently: on 2026-09-05 it was two releases behind minutes after a production deploy. A `deploy-staging.sh` and deleting that branch are both small, separate changes.
 - **The dialog behaviour exists twice.** `Modal` was extracted for the announcements section, but `GalleryBrowser` still carries its own focus trap, Escape handler and scroll lock, written before it. They agree today; nothing makes them stay that way. Migrating the lightbox is a contained change that was deliberately not bundled with a content update.
 - **The pantry drive has no date, because its flyer has none.** It reads "Ongoing" and never auto-archives — somebody has to tick Archived when it ends. Its Amazon wish list is a QR code in the poster and the URL behind it could not be recovered from the image, so the site cannot link it; a reader has to open the flyer and scan. Both are fixable the moment the program supplies the dates and the link.
 - **Two of the three flyers are photographs of a screen.** They were rotated, de-bezelled and re-encoded, but the moiré and the glare are in the source and no processing removes them. The pantry flyer is a 345px-wide PNG, so its "full" size in the dialog is the same file as its thumbnail and it is soft on a large display. Replacing all three with the original digital artwork is a straight swap of two files each.

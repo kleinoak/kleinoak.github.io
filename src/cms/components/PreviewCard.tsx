@@ -10,6 +10,7 @@ import type { AnnouncementFlyer } from "@/data/announcements";
 import { EventCard } from "@/components/cards/EventCard";
 import { TeamCard } from "@/components/cards/TeamCard";
 import { CoachCard } from "@/components/cards/CoachCard";
+import { CoachProfile } from "@/components/cards/CoachProfile";
 import { ResourceCard } from "@/components/cards/ResourceCard";
 import { SponsorLogoCard } from "@/components/cards/SponsorLogoCard";
 import type { Collection } from "../schema";
@@ -106,6 +107,19 @@ export function PreviewCard({ collection, item }: { collection: Collection; item
           coach={{
             name: text(item, "name", "Coach"),
             title: text(item, "title", "Title"),
+            bioAvailable: item.bioAvailable === true,
+          }}
+        />
+      );
+
+    case "coachProfile":
+      return (
+        <CoachProfile
+          coach={{
+            name: text(item, "name", "Coach"),
+            title: text(item, "title", "Title"),
+            bio: text(item, "bio") || undefined,
+            photo: image(item, "photo"),
             bioAvailable: item.bioAvailable === true,
           }}
         />

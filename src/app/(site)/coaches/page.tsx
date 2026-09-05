@@ -3,6 +3,7 @@ import { Mail } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/layout/PageHero";
 import { CoachCard } from "@/components/cards/CoachCard";
+import { CoachProfile } from "@/components/cards/CoachProfile";
 import { coaches } from "@/data/teams";
 import { administration } from "@/data/administration";
 import { site } from "@/data/site";
@@ -20,19 +21,24 @@ export default function CoachesPage() {
 
       <section className="py-16 sm:py-20">
         <Container>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Content order is seniority, not alphabetical — head coach first,
+              the way the program introduces the staff itself. */}
+          <div className="mx-auto flex max-w-4xl flex-col gap-6">
             {coaches.map((coach) => (
-              <CoachCard key={coach.name} coach={coach} />
+              <CoachProfile key={coach.name} coach={coach} />
             ))}
           </div>
 
-          <div className="mt-12 rounded-sm border border-border bg-surface p-8">
+          {/* The bios are published; staff contact details still are not, so
+              this says that and nothing more. It used to claim biographies were
+              pending, which stopped being true. */}
+          <div className="mx-auto mt-12 max-w-4xl rounded-sm border border-border bg-surface p-8">
             <h2 className="font-display text-lg font-semibold uppercase tracking-tight text-primary">
-              Coach biographies pending
+              Getting in touch
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-text-muted">
-              Biographies, photos, and staff contact details are not published yet. They will be
-              added once the program confirms them.
+              Individual staff email addresses are not published here. The program address reaches
+              the coaching staff and the Booster Club.
             </p>
             <div className="mt-6">
               <a
@@ -46,7 +52,7 @@ export default function CoachesPage() {
           </div>
 
           {administration.length > 0 && (
-            <div className="mt-16">
+            <div className="mx-auto mt-16 max-w-4xl">
               <h2 className="font-display text-2xl font-bold uppercase tracking-tight text-primary sm:text-3xl">
                 Program Administration
               </h2>
