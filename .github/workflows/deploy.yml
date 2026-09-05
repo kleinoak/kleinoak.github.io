@@ -18,6 +18,11 @@ on:
   # days with no activity, and emails the owner first. During the season the
   # repo is active anyway; off-season, the schedule may need re-enabling from
   # the Actions tab.
+  #
+  # In the engineering repository the nightly run deploys nothing (see the
+  # gate below) and is a canary instead: it re-validates the content and
+  # rebuilds every morning, so a content file that has rotted is caught there
+  # rather than at the next hand-deploy to production.
   schedule:
     - cron: "0 11 * * *"
 
@@ -64,14 +69,29 @@ jobs:
       - name: Disable Jekyll processing
         run: touch out/.nojekyll
 
+      # Everything above is CI and runs everywhere. Everything below only
+      # works in the repository that actually has a Pages site.
+      #
+      # This file is part of the source tree, so it travels to the engineering
+      # repository too — where Pages is off and `configure-pages` fails with
+      # "Get Pages site failed ... Not Found". That failed on every push and
+      # every nightly run and had never once been green, which meant a red X
+      # said nothing: a genuine build break would have looked identical.
+      #
+      # Gating on the repository rather than deleting the job keeps validate
+      # and build running in both places, so engineering still catches a
+      # broken content file before it is deployed by hand.
       - uses: actions/configure-pages@v5
+        if: github.repository == 'kleinoak/kleinoak.github.io'
 
       - uses: actions/upload-pages-artifact@v3
+        if: github.repository == 'kleinoak/kleinoak.github.io'
         with:
           path: out
 
   deploy:
     needs: build
+    if: github.repository == 'kleinoak/kleinoak.github.io'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

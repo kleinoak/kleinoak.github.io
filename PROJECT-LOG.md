@@ -932,3 +932,77 @@ the page followed from the manifest with nothing edited by hand.
       `~/Downloads`. Same gap as the rest of `content/images/`.
 - [ ] Not committed, not deployed. IDLC item 18 asked for the photos and the
       write-up, not a release; production still shows 138.
+
+---
+
+## 20260905 — A red X that had never been green
+
+Branch `fix/deploy-only-in-prod-repo`. Surfaced by the user against the merge of
+#32, which is where the failure became visible rather than where it came from.
+
+### What was actually wrong
+`deploy.yml` failed on the push of #32 to `main` — and on every scheduled run
+before it, back through the whole retained history. **It had never once
+succeeded in the engineering repository.** The build was not the problem:
+`npm ci`, `validate:content` and `next build` all passed, and it died on the
+next step.
+
+```
+Get Pages site failed. Please verify that the repository has
+Pages enabled and configured to build using GitHub Actions.
+HttpError: Not Found
+```
+
+Literally true. `GET /repos/alfredsilvertonai/ko-volleyball-web/pages` is a 404 —
+there is no Pages site in engineering, and there never was. Production
+(`kleinoak/kleinoak.github.io`) returns `status: built` with the custom domain
+attached, and its copy of the identical workflow had succeeded that same morning
+at 11:04 UTC. The workflow is part of the source tree, so it travels to a
+repository that has nothing for it to deploy to.
+
+### Decisions
+- **The Pages steps are gated on the repository; the workflow was not deleted or
+  split.** `configure-pages`, `upload-pages-artifact` and the `deploy` job carry
+  `if: github.repository == 'kleinoak/kleinoak.github.io'`. Everything above that
+  line — install, validate, build, `.nojekyll` — still runs in both places, which
+  is the entire point: engineering keeps real CI on every push, and a broken
+  content file is caught there rather than at the next hand-deploy.
+- **Enabling Pages in engineering was rejected, though it would also have made the
+  X go away.** It would publish a second public copy of the site at
+  `alfredsilvertonai.github.io/ko-volleyball-web/` — photographs of students
+  included — at a URL nobody asked for, and needing `SITE_BASE_PATH` set or every
+  asset 404s. Silencing a failure by publishing a website is the wrong trade.
+- **Leaving it red was rejected.** A failure that has never been green is worse
+  than no signal: a genuine build break is indistinguishable from the standing
+  one, and the daily email trains everybody to ignore both.
+- **The nightly cron in engineering is now a canary and is documented as one.** It
+  deploys nothing there, but it re-validates and rebuilds every morning, which is
+  a real if modest use. Both the workflow comment and the deployment section say
+  so, because a scheduled job that produces no artefact otherwise looks like
+  something left behind.
+
+### Verified
+- [x] Three gates present and correctly indented — two steps in `build`, one on
+      the `deploy` job.
+- [x] Production is unaffected by construction: the condition is *true* in
+      `kleinoak/kleinoak.github.io`, so every step runs exactly as before.
+
+### Also shipped this session
+- [x] **#32 reached production.** `scripts/deploy-prod.sh` pushed `56729dd` to
+      `prod/main` without the internal docs; the production workflow ran green in
+      59s. `kleinoakvolleyball.com/gallery` now reads **142 photos** and all four
+      new WebPs return 200. This closes the last open bullet of the previous
+      entry, which said production still showed 138.
+- [x] The user's uncommitted edits to `IDLC.md` and `GITHUB-PROD-SETUP.md` were
+      stashed for the deploy — the script refuses a dirty tree — and restored
+      immediately after. They remain uncommitted, as they were.
+
+### Not yet done
+- [ ] **The gate names the production repository as a string literal.** Forking or
+      renaming production silently turns deployment off, and the symptom is a
+      green build that ships nothing — quieter than the failure it replaced.
+- [ ] **Staging is still `codinci.com/kovb/`, hand-deployed and never running CI.**
+      The decision above avoids publishing a staging site *by accident*; it does
+      not settle whether the program should have a real one.
+- [ ] Node 20 deprecation warnings on `actions/checkout@v4`, `setup-node@v4` and
+      `configure-pages@v5` are annotations on every run and were left alone.

@@ -484,6 +484,10 @@ The site is a static export deployed to GitHub Pages by `deploy.yml` on every pu
 
 `concurrency: { group: pages, cancel-in-progress: true }` ensures two publishes in quick succession never deploy over each other — the newest always wins. `touch out/.nojekyll` stops GitHub Pages from running Jekyll over the export.
 
+**The Pages steps are gated to the production repository, and the rest of the workflow is not.** `deploy.yml` lives in the source tree, so it travels to the engineering repo as well — where Pages is *off*, and `actions/configure-pages` fails with `Get Pages site failed … Not Found`. That failed on every push and every nightly run and had never once been green, so a red X on engineering carried no information: a genuine build break looked exactly the same. `configure-pages`, `upload-pages-artifact` and the whole `deploy` job now carry `if: github.repository == 'kleinoak/kleinoak.github.io'`.
+
+Everything above the gate — `npm ci`, `validate:content`, `next build`, `.nojekyll` — still runs in both repositories, which is the point: **engineering keeps real CI**, and a broken content file is caught there rather than at the next hand-deploy. The nightly cron in engineering therefore deploys nothing and serves as a canary instead. Enabling Pages on the engineering repo would also have silenced the failure, but it would have published a second public copy of the site — photographs of students included — at a URL nobody asked for.
+
 **Production is published by `scripts/deploy-prod.sh`, not by `git push`** — see [Deployment path — engineering to prod](#-deployment-path--engineering-to-prod) above for the repositories, the commands, and what must not be done to the mirrors.
 
 **Dated content is filtered twice: once at build, once in the browser.** The home page's "Upcoming Events" is filtered against today's date, and in a static export "today" is frozen at build time. Two mechanisms are needed, not one:
