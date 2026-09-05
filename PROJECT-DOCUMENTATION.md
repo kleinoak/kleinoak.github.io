@@ -368,10 +368,22 @@ git push --force prod <commit>:main
 
 where the commit is built from this repository's `main`. Anything committed inside the production repository — by a person or by a job — is discarded by the next deploy. A sync job there would appear to work and then silently lose its data the first time anybody published a content change.
 
-So it runs in the source repository and reaches production the same way every other change does. **The consequence: production is as fresh as the last `deploy-prod.sh`, not as the last sync.** Two ways to close that gap, neither done:
+So it runs in the source repository, and a second job publishes from there.
 
-1. **Give the job a deploy key for the production repository** and have it run the strip-and-push itself. Smallest change; needs a secret, and puts an unattended force-push onto production.
-2. **Move the fetch into production's own build.** `deploy.yml` there already rebuilds nightly, so it could scrape at build time and fall back to the committed `rankone.json` when Rank One is unreachable. Always fresh, no commits, no force-push conflict — at the cost of a build that depends on a third party being up, and no git history of what the schedule said when.
+#### The publish job
+
+`rankone.yml` has a `publish` job that runs `scripts/deploy-prod.sh` after a successful sync, using an SSH deploy key held as an **environment** secret. It reuses the script rather than reimplementing it, so the tree that reaches production is stripped by exactly the same code a person runs locally.
+
+**It publishes after every successful sync, not only when the fixtures changed.** Gating on `changedAt` is the obvious economy and it is wrong for the same reason the stamp exists: through a quiet week the page would keep claiming Tuesday while the job had checked twenty times since. Production history is explicitly a deploy artefact rather than a source of truth, so three force-pushes a day cost nothing that matters, and a stamp nobody deploys is worse than no stamp.
+
+**`environment: production` is load-bearing security, not decoration.** The key can force-push the live site, and content editors are repository collaborators with **Write** access — so a plain repository secret would let any collaborator push a branch whose workflow simply printed it. The environment's deployment-branch policy is restricted to `main`, which is what stops that. Two consequences worth knowing:
+
+- The secret lives at `Settings → Environments → production`, **not** under repository secrets.
+- A workflow run on any other branch reads it as empty, and the publish step then skips with a note rather than failing. That is deliberate: a fork or a feature branch should degrade to "sync only", never to a broken run.
+
+**Rotating or revoking it** is one action in each place: delete the deploy key from `kleinoak/kleinoak.github.io → Settings → Deploy keys`, and delete `PROD_DEPLOY_KEY` from the environment. The sync keeps working; only the automatic publish stops.
+
+The alternative that was **not** taken: moving the fetch into production's own nightly build. Always fresh with no commits and no force-push, but the production build would then depend on Rank One being reachable, and there would be no git history of what the schedule said when.
 
 ### The coaches page
 
@@ -664,7 +676,7 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **Rank One remains the live source of truth** for schedule changes; the schedule page links to it prominently rather than claiming to be authoritative, and states the date it was last checked.
 - **The schedule is still a hand-made copy in the ways that matter.** A job now re-reads all four Rank One calendars three times a day (see [Keeping the schedule in sync](#keeping-the-schedule-in-sync)), which covers venues, maps, per-game notes and newly posted scores. It does **not** cover the parts that need judgement: start times in `matches.json` are still transcribed by hand, nothing warns when Rank One changes one, tournament records are still totted up by a person, and nothing notices a fixture that was played and never scored. The two dates on the schedule page say which half is which.
 - **The sync is a scraper, and Rank One owes it nothing.** It reads `id="rpt_Games_*"` spans out of an ASP.NET page; a redesign upstream breaks it. The failure mode is deliberately loud — each level must parse a minimum number of games or the run fails without writing — so the site keeps the last good data rather than silently emptying, but nobody is paged when that happens. Watch the workflow, not the page.
-- **Production is as fresh as the last deploy, not as the last sync.** The job commits to the source repository because a commit inside the production mirror is destroyed by the next `deploy-prod.sh` force-push. Until one of the two options in that section is done, a synced result reaches parents when somebody runs the deploy.
+- **The automatic publish depends on one SSH key that nothing monitors.** If `PROD_DEPLOY_KEY` is revoked, expires with the account that owns it, or is simply never set, the publish step skips with a note in the run summary and production quietly falls back to updating only on a manual `deploy-prod.sh`. Nothing on the site says so — the stamp would just stop advancing, which looks identical to the sync being broken. Checking the Actions tab is the only signal.
 - **Changing a team's `slug`** breaks shared links and requires a developer to update the header menu; the field's help text says so, but nothing enforces it.
 - **Staged images are capped by browser storage** (~5 MB for `localStorage`). Beyond that the editor keeps them in memory for the tab only and says so.
 - **Coach bios are published; player bios and photos are still gated.** `bioAvailable` and the optional `photo` remain the switches, and for coaches both are now on — the program supplied the text and each coach's chosen portrait. Nothing equivalent exists for players, and `teams.json` still models no player photos, jersey numbers or statistics.

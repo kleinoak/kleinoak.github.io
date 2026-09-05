@@ -1372,3 +1372,72 @@ stays readable rather than becoming 360 identical entries by November.
       sees is the last sync *that was deployed*, not the last sync that ran. That
       is a sharper version of the gap the previous entry left open, because now
       the page displays a timestamp that can lag its own commit history.
+
+---
+
+## 20260905 — The sync publishes itself
+
+Chosen from the two options the previous entry left open: give the job a deploy
+key rather than move the fetch into production's build. Without this the page
+shows the last sync that was *deployed* rather than the last one that ran, and a
+"last checked" stamp that stops advancing looks identical to a broken sync.
+
+### Decisions
+- **It publishes after every successful sync, not only when fixtures changed.**
+  Gating on `dataChanged` was the plan an hour ago and it is wrong for exactly
+  the reason the stamp exists: through a quiet week the page would keep claiming
+  Tuesday while the job had checked twenty times since. Production history is
+  already documented as a deploy artefact rather than a source of truth, so three
+  force-pushes a day cost nothing that matters.
+- **`deploy-prod.sh` is reused, not reimplemented.** The tree that reaches
+  production is stripped by the same code a person runs locally, so the two paths
+  cannot drift. The job only has to add a `prod` remote and an SSH identity.
+- **`fetch-depth: 0` on the publish checkout.** `deploy-prod.sh` builds its
+  commit with `git commit-tree -p main`, and a push whose parent is a shallow
+  boundary is rejected outright — a shallow clone would have failed at the last
+  step, after everything else looked fine.
+- **The key is an *environment* secret, not a repository secret, and this is the
+  part that matters.** Content editors are repository collaborators with **Write**
+  access — that is how `/admin` works. A plain repository secret would let any of
+  them push a branch whose workflow printed it, and that key can force-push the
+  live site. The `production` environment's deployment-branch policy is
+  restricted to `main`, so a workflow on any other branch reads the secret as
+  empty and the publish step skips with a note instead of failing.
+- **A missing key degrades, it does not break.** The step checks for an empty
+  value first and exits cleanly, so the repository still works for anyone who
+  clones it without the secret.
+
+### What could not be done from here
+`gh` is authenticated as `alfredsilvertonai`, which has `admin: false,
+push: false` on `kleinoak/kleinoak.github.io` — read-only. The local `git push`
+to production works through a separate SSH identity belonging to the other
+account. So the **public** half of the keypair has to be added to the production
+repository by whoever holds that account.
+
+Storing the private half was also refused by the sandbox, which is the correct
+outcome for "write a credential into a repository" and left the decision with the
+user. The environment and its branch policy were created; the secret was not.
+
+### Verified
+- [x] Workflow parses; two jobs, `publish` needs `sync` and declares
+      `environment: production`; the three crons read back as `0 11`, `0 15`,
+      `0 4`.
+- [x] The `production` environment exists on the source repository with
+      `custom_branch_policies: true` and exactly one allowed branch, `main`.
+- [x] No key material is committed — the private half never left `/tmp`, and the
+      workflow references only `secrets.PROD_DEPLOY_KEY`.
+
+### Not yet done
+- [ ] **Untested end to end**, and it cannot be tested until the deploy key is
+      installed. Until then the publish step takes its skip branch. The first
+      real run is the test, and it is a force-push to the live site — worth
+      watching rather than assuming.
+- [ ] **Nothing monitors the key.** Revoked, expired or never set, the publish
+      skips with a note in the run summary and the stamp quietly stops advancing.
+      That failure looks exactly like a broken sync from the outside.
+- [ ] **Only sync commits publish.** A merged pull request still needs a manual
+      `deploy-prod.sh`; this deliberately did not turn every push to `main` into
+      an automatic production release.
+- [ ] The key is a single long-lived credential with force-push rights to
+      production, held by a CI system. That is the trade this option is — the
+      alternative was making the production build depend on Rank One being up.

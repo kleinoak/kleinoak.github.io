@@ -51,6 +51,8 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    outputs:
+      dataChanged: ${{ steps.fetch.outputs.dataChanged }}
     steps:
       - uses: actions/checkout@v4
 
@@ -126,3 +128,73 @@ jobs:
               echo "No schedule changes — only the checked-at timestamp moved."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # Publish to production, so the page shows the last sync that *ran* rather
+  # than the last one somebody happened to deploy. Without this the "last
+  # checked" stamp goes stale within a day and reads as broken even though it
+  # is accurate about the deployed build — a stamp nobody deploys is worse than
+  # no stamp at all.
+  #
+  # It runs after EVERY successful sync, not only when the fixtures changed.
+  # Gating on `dataChanged` was the first instinct and it is wrong for exactly
+  # the reason the stamp exists: through a quiet week the page would keep
+  # claiming Tuesday while the job had checked twenty times since. Production
+  # history is explicitly a deploy artefact rather than a source of truth (see
+  # scripts/deploy-prod.sh), so three force-pushes a day cost nothing that
+  # matters.
+  #
+  # `environment: production` is load-bearing security, not decoration. This key
+  # can force-push the live site, and content editors are repository
+  # collaborators with Write access — so without an environment whose branch
+  # policy is restricted to `main`, any collaborator could push a branch whose
+  # workflow simply printed the secret.
+  publish:
+    needs: sync
+    if: ${{ !inputs.dryRun }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # deploy-prod.sh builds a commit with `git commit-tree -p main`, and a
+          # push whose parent is a shallow boundary is rejected outright.
+          fetch-depth: 0
+
+      - name: Publish to kleinoakvolleyball.com
+        env:
+          DEPLOY_IDENTITY: ${{ secrets.PROD_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_IDENTITY" ]; then
+            echo "PROD_DEPLOY_KEY is not set — skipping the deploy."
+            echo "The sync still committed; production updates on the next manual deploy."
+            echo "### Deploy skipped — PROD_DEPLOY_KEY is not set" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_IDENTITY" > ~/.ssh/prod_id
+          chmod 600 ~/.ssh/prod_id
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+          # deploy-prod.sh is reused rather than reimplemented, so the tree that
+          # reaches production is stripped by exactly the same code a person
+          # runs locally. It expects a remote named `prod`.
+          git config user.name  "rankone-sync[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add prod git@github.com:kleinoak/kleinoak.github.io.git
+
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/prod_id -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          sh scripts/deploy-prod.sh | tee /tmp/deploy.log
+
+          {
+            echo "### Published to production"
+            echo
+            echo '```'
+            cat /tmp/deploy.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Forget the identity file
+        if: always()
+        run: rm -f ~/.ssh/prod_id
