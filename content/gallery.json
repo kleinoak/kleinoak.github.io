@@ -397,6 +397,42 @@
         "thumbHeight": 900
       },
       {
+        "id": "varsity-var-ball-toss",
+        "src": "/images/gallery/varsity/var-ball-toss.webp",
+        "thumb": "/images/gallery/varsity/var-ball-toss-thumb.webp",
+        "width": 1400,
+        "height": 1094,
+        "thumbWidth": 600,
+        "thumbHeight": 469
+      },
+      {
+        "id": "varsity-var-boots",
+        "src": "/images/gallery/varsity/var-boots.webp",
+        "thumb": "/images/gallery/varsity/var-boots-thumb.webp",
+        "width": 1024,
+        "height": 1535,
+        "thumbWidth": 600,
+        "thumbHeight": 899
+      },
+      {
+        "id": "varsity-var-cap",
+        "src": "/images/gallery/varsity/var-cap.webp",
+        "thumb": "/images/gallery/varsity/var-cap-thumb.webp",
+        "width": 1400,
+        "height": 1782,
+        "thumbWidth": 600,
+        "thumbHeight": 764
+      },
+      {
+        "id": "varsity-var-college-flags",
+        "src": "/images/gallery/varsity/var-college-flags.webp",
+        "thumb": "/images/gallery/varsity/var-college-flags-thumb.webp",
+        "width": 1400,
+        "height": 934,
+        "thumbWidth": 600,
+        "thumbHeight": 400
+      },
+      {
         "id": "varsity-var-smile",
         "src": "/images/gallery/varsity/var-smile.webp",
         "thumb": "/images/gallery/varsity/var-smile-thumb.webp",

@@ -871,3 +871,64 @@ The Waller Tournament row — same shape, varsity-only — already used `"x"`, h
 
 ### Not yet done
 - [ ] Nothing checks this class of error. A row whose level is absent from that level's feed should be `"x"`, and only a person comparing the two notices when it is not — the same gap as everything else in this hand-made copy.
+
+---
+
+## 20260905 — Four photos into Varsity, and a filename that would have named a student
+
+IDLC item 18. Four frames handed over as a drop: three players holding the college
+flags they have signed with, and three individual studio portraits. Varsity goes
+from 38 photos to 42 and the gallery from 138 to 142.
+
+The mechanical part was the documented path and nothing else — drop the originals
+into `content/images/kovb-collection-karlyco/varsity/`, run
+`scripts/build-gallery.mjs`, commit the manifest and the eight new WebPs. The
+generator re-encoded **4** photos and left the other 138 alone, and every count on
+the page followed from the manifest with nothing edited by hand.
+
+### Decisions
+- **The source filenames were changed before the generator ever saw them.** They
+  arrived named after the players in them. `build-gallery.mjs` slugs the filename
+  straight into the served path, so a file named for the player in it would have
+  shipped as a permanent, guessable `/images/gallery/varsity/<first-name>.webp` — on a site whose alt text goes out
+  of its way to name nobody, and for photographs of minors. They are now named for
+  what is in the frame (`var-college-flags`, `var-ball-toss`, `var-boots`,
+  `var-cap`), which is also what the photographer's own `A28A####.jpg` drops
+  achieve by accident. The names are recoverable from the originals in `Downloads`;
+  they are deliberately not written down in a committed file.
+- **That rule went into the documentation rather than staying a one-off.** The
+  "adding photos" section listed five things worth knowing before re-running the
+  script and this was not among them, because until now every photo had come from
+  one photographer with camera-generated names. The next drop will come from a
+  parent's phone.
+- **The two portraits arrived as PNG and were left as PNG sources.** `IMAGE_RE`
+  already accepts them and the output is WebP either way, so there was nothing to
+  convert; `var-boots` caps at 1024px wide rather than 1400 because its source is
+  1024 and `withoutEnlargement` is on. That is the correct behaviour — upscaling to
+  hit a number would only make a softer file that costs more.
+- **No count was edited by hand, again.** The only prose numbers are in
+  PROJECT-DOCUMENTATION: the gallery's opening line (138 → 142) and two alt-text
+  examples, one of which (`photo 7 of 33`) had been stale since the JV removal on
+  the 24th and now reads 32.
+
+### Verified
+- [x] `validate:content` → 12 files OK; `next build` → 16 routes, compiled clean.
+- [x] The exported `/gallery` page reads "142 photos"; Varsity holds 42 unique
+      thumbnails and the alt text runs to "Varsity — photo 42 of 42".
+- [x] `git status` on `public/images/gallery/` shows exactly eight new files and no
+      others — the first pass under the original filenames left no orphaned
+      derivative behind, and `content/gallery.json` is a purely additive 36-line diff.
+
+### Not yet done
+- [ ] **Nothing enforces the filename rule.** It is now written down, but a drop
+      named after a student still generates and ships without complaint. A check in
+      `build-gallery.mjs` against the roster's first names would catch the obvious
+      case and is maybe ten lines.
+- [ ] **Still no record of consent for any of these frames**, including a photo of
+      three named signees that is plainly meant to be public and three portraits
+      that carry no such signal. Unchanged since the gallery shipped, and unchanged
+      by this entry.
+- [ ] **These four exist in exactly two places** — the gitignored drop and
+      `~/Downloads`. Same gap as the rest of `content/images/`.
+- [ ] Not committed, not deployed. IDLC item 18 asked for the photos and the
+      write-up, not a release; production still shows 138.
