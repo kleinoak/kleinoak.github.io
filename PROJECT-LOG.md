@@ -1614,3 +1614,41 @@ on the 26th instead of sitting on "Ongoing" until somebody notices.
 - [ ] The pantry drive's Amazon wish list is still only a QR code in the poster.
 - [ ] `announcementId` is stored and never used by any code — it exists so a
       maintainer can trace the pair, and nothing enforces that the id resolves.
+
+---
+
+## 20260905 — The spirit calendar leads the home page
+
+The program asked for "Upcoming Events at a Glance" to come before Announcements
+rather than after it.
+
+### Decisions
+- **Component order only — no styling changed.** The backgrounds already worked
+  out: `SpiritCalendar` is `surface` and `Announcements` is the default white, so
+  swapping them turns the three content bands into surface → white → surface.
+  Before the swap the calendar sat next to `UpcomingEvents`, which is *also*
+  `surface`, and the two ran together as one long grey block. The reorder fixed
+  an alternation problem nobody had asked about.
+- **`QuickAccess` above is `surface` too**, so the calendar now shares a
+  background with the bar directly above it. Checked in a browser rather than
+  reasoned about: it reads fine, because QuickAccess is a compact bordered strip
+  of white cells rather than a padded section, and its bottom border draws the
+  line. Noted in the page comment so the next person does not "fix" it.
+- **The ordering rationale went into the comment and the documentation**, not
+  just the commit. "Spirit calendar first" is a content decision that will look
+  arbitrary to whoever next edits this file.
+
+### Verified
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 13 files OK;
+      `next build` → 16 routes.
+- [x] Section order read out of the rendered DOM: Upcoming Events at a Glance →
+      Announcements → Upcoming Events → The Team Experience → Culture →
+      Sponsors.
+- [x] Both band transitions looked at in a browser, not inferred.
+- [x] The pantry drive announcement now shows **September 21–25** on the page
+      rather than "Ongoing" — the date fix from the previous entry is visible.
+
+### Not yet done
+- [ ] The home page is long, and this puts the longest section first. It shrinks
+      as dates pass, but a visitor in September now scrolls sixteen cards before
+      reaching the announcements.

@@ -316,7 +316,9 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 
 ### The spirit calendar
 
-"Upcoming Events at a Glance" on the home page: what to wear, what to bring, and who is being honoured. Content is `content/spirit-events.json`, an editable collection.
+"Upcoming Events at a Glance" — **the first section on the home page** after the hero and the quick-access bar: what to wear, what to bring, and who is being honoured. Content is `content/spirit-events.json`, an editable collection.
+
+**It leads, ahead of Announcements**, because it is what the program most wants a visitor to act on; the announcements are the standing notices behind it, and Upcoming Events follows with when each level actually plays. The three alternate backgrounds — surface, white, surface — so they read as bands rather than one wall. `QuickAccess` above is also `surface`, but it is a compact bordered bar rather than a padded section, so it reads as part of the header region rather than merging with this one.
 
 **It is not the schedule, and holds no start times.** The schedule says *when each level plays*; this says *wear gold and it is Alumni Night*. Keeping times out of it is the point — a date carrying a time in two files will eventually carry two different times, and the one nobody is looking at will be the wrong one. The section closes with a link to `/schedule` for exactly that reason.
 

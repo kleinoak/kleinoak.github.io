@@ -41,16 +41,24 @@ export default function Home() {
         ]}
       />
       <QuickAccess />
-      <Announcements />
-      {/* The spirit calendar sits between the announcements (what is happening)
-          and Upcoming Events (when each level plays). It answers the question
-          those two do not: what to wear, what to bring, and who is being
-          honoured. Build-time grouping is passed in so the prerendered HTML is
-          complete; the component re-filters against the real date on mount. */}
+      {/* The spirit calendar leads, ahead of the announcements: it is the
+          thing the program most wants a visitor to act on — which night, what
+          to wear, what to bring — and the announcements are the standing
+          notices behind it. Upcoming Events follows with when each level
+          actually plays.
+
+          Build-time grouping is passed in so the prerendered HTML is complete;
+          the component re-filters against the real date on mount.
+
+          Backgrounds alternate down the page — surface, white, surface — so the
+          three run together as bands rather than one wall. QuickAccess above is
+          also `surface`, but it is a compact bordered bar rather than a padded
+          section, so it reads as part of the header region. */}
       <SpiritCalendar
         events={spiritEvents}
         initial={groupByMonth(upcomingSpiritEvents(spiritEvents, programDate()))}
       />
+      <Announcements />
       <UpcomingEvents />
       <TeamExperience />
       <Culture />
