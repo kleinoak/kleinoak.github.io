@@ -1772,3 +1772,76 @@ next rotation pushes it back down.
       stacked there while using `sm` sizing. Switching it to a row at `md`
       rather than `lg` would bring it to roughly the banners' height, but the
       headline needs checking at 768px first.
+
+---
+
+## 20260906 — The arrows were dead, and my own test said they were fine
+
+Reported within the hour of the previous deploy: "the carousel arrows don't work
+properly on a desktop in our home page. i cannot click on it."
+
+### The bug — mine, from the entry above
+
+The dots' wrapper is `absolute inset-x-0 bottom-4`. `inset-x-0` is there only so
+`justify-center` has something to centre against, but it makes the element a
+**transparent strip across the full width of the carousel**. It comes after the
+arrows in the DOM, so it paints on top of them and takes every click along that
+line. `elementFromPoint` at each arrow's centre returned the wrapper, not the
+button.
+
+That strip has always been there. It never mattered while the arrows were at
+`top-1/3` / `top-1/2`, well clear of it. Moving them into the control lane put
+them directly underneath it. The dots kept working because they are *inside* the
+strip.
+
+It was broken on phones too. It was only noticed on a desktop.
+
+### Why the previous pass missed it
+
+The verification for the previous entry checked **rectangle intersection between
+the controls and the slide content** — does a control cover any text or image —
+across nine widths and all three slides. It came back clear, and it was right:
+nothing overlaps the arrows *visually*. What it never asked was whether the
+arrows could be **hit**.
+
+Worse, every slide change in that pass was driven with `element.click()`, which
+dispatches straight at the node and **bypasses hit-testing entirely**. A
+synthetic click works perfectly on a button buried under an overlay. The whole
+suite was green against a carousel whose arrows a real mouse could not reach.
+
+### Decisions
+
+- **`pointer-events-none` on the wrapper, `pointer-events-auto` on the pill.**
+  The wrapper is a layout box, not a target; saying so is the fix, and it keeps
+  the centring idiom intact. Moving the pill to `left-1/2 -translate-x-1/2`
+  would also have worked, but it leaves the same trap for the next full-width
+  wrapper someone adds.
+- **Verification now drives real mouse events, and it is committed.**
+  `scripts/check-carousel-clicks.mjs` dispatches `Input.dispatchMouseEvent` at
+  each control's measured centre and asserts the live region's announcement
+  actually changed, exiting non-zero if any control does not respond.
+  `element.click()` is no longer trusted to prove a control works. It went in
+  the repo rather than a scratchpad because the next person to move a control
+  needs it more than I did.
+
+### Verified
+
+- [x] Every control — next, previous, a dot, pause — driven with real mouse
+      events at 390 / 768 / 1280 / 1440px: **all pass**.
+- [x] The same harness run against the unfixed production site: **both arrows
+      FAIL**, dots and pause pass, at 390 and 1280. The test detects the bug it
+      was written for, which is the only reason to believe it detects anything.
+- [x] `tsc` clean; `eslint` clean; `next build` → 17 static pages.
+
+### Not yet done
+
+- [ ] **Nothing runs `check-carousel-clicks.mjs` automatically.** It needs a
+      served site and a headless Chrome on port 9333, so it is invoked by hand.
+      It exits non-zero and could gate `deploy-prod.sh` or run in CI; neither is
+      wired up. A carousel is exactly the kind of component that breaks silently
+      — nothing about a dead arrow shows up in a build, a type check, or a
+      screenshot.
+- [ ] **The audit that missed this is still the only automated geometry check.**
+      Rectangle overlap between controls and slide content is worth keeping, but
+      it answers "does this cover something", not "can this be hit". Only the
+      new script asks the second question, and only for the carousel.

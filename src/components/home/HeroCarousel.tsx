@@ -175,9 +175,16 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
               slide is showing, so every slide reserves `pb-20` for it rather
               than trusting that its content happens to stop short — a new slide
               that fills its own height would otherwise put the dots on top of
-              its own call to action, which is exactly what the hero did. */}
-          <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-2 backdrop-blur-sm">
+              its own call to action, which is exactly what the hero did.
+
+              `pointer-events-none` on this wrapper, `auto` on the pill itself.
+              `inset-x-0` is only here to centre the pill, but it makes the
+              wrapper a full-width transparent strip that is painted after the
+              arrows and swallowed every click on them — the arrows were dead on
+              every screen while the dots inside this div still worked. A layout
+              box that spans the carousel must not also be a click target. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 flex items-center justify-center gap-3">
+            <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-2 backdrop-blur-sm">
               {slides.map((slide, position) => (
                 <button
                   key={slide.id}
