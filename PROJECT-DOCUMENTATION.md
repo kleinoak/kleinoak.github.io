@@ -343,7 +343,9 @@ So a named location must be recognisable in the feed's venue name before its add
 
 **Results: curated always wins, and the feed only fills gaps.** A level takes a score from the feed only when it played exactly one game that date, so there is no question which score belongs to which row. A tournament falls through to whatever a person reconciled — which is where records like "9–0" come from and where they have to keep coming from.
 
-**The page says which is which, in two places.** `SyncStatus` sits above the Rank One callout and carries the automated half — "Last checked Sat, Sep 5 at 5:32 PM Central" plus the date the data last actually moved. The callout below keeps the human half: "Start times and tournament records are reconciled by hand — last done on …". Two different claims, so two elements: a parser reading four calendars three times a day, and a person deciding which fixture belongs to which row.
+**The page says which is which, in two places.** `SyncStatus` closes the schedule page — below the fixtures and Program Dates, just above the site footer — and carries the automated half — "Last checked Sat, Sep 5 at 5:32 PM Central" plus the date the data last actually moved. The callout at the top keeps the human half: "Start times and tournament records are reconciled by hand — last done on …". Two different claims, so two elements: a parser reading four calendars three times a day, and a person deciding which fixture belongs to which row.
+
+**The stamp is at the foot on purpose.** It began above the callout and moved down. It is a provenance note — *where did this come from, and how old is it* — and a reader asks that after reading the schedule, not before. At the top it also competed with the Rank One callout, which is the thing a parent actually needs to act on when a time changes late in the week.
 
 **Two timestamps, and the difference is the point.**
 

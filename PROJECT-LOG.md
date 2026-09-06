@@ -1498,3 +1498,45 @@ Two bugs, and the second is much worse than the first.
       A second BSD-ism would fail the same way.
 - [ ] The green-on-failure shape existed for the whole of the previous entry's
       lifetime and would have hidden any deploy failure, not just this one.
+
+---
+
+## 20260905 — The sync stamp moves to the foot of the schedule
+
+The program asked for it at the bottom of the page rather than above the Rank One
+callout, where the previous entry had put it — annotated on a screenshot, so
+there was nothing to interpret.
+
+### Decisions
+- **It closes the page**, after the fixtures and Program Dates and immediately
+  above the site footer. That is the right place on the merits as well as by
+  request: it is a provenance note — *where did this come from, and how old is
+  it* — and a reader asks that after reading the schedule, not before.
+- **It was competing at the top.** The Rank One callout is the thing a parent
+  needs to act on when a time changes late in the week, and two boxes stacked
+  above the filter both wanted to be read first. Moving one down settles it.
+- **Its own `<section>` with an `aria-label`**, not appended to the Program Dates
+  block. Program Dates is a dark full-bleed section; the stamp is a light band
+  between it and the dark footer, which is what makes it read as a footnote
+  rather than as an orphan of the section above.
+- **The comment in the callout was updated, not left.** It said the automated
+  half "moved into SyncStatus above" — three words that would have been wrong the
+  moment this shipped, and the kind of stale comment that costs someone ten
+  minutes a year from now.
+
+### Verified
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 12 files OK;
+      `next build` → 16 routes.
+- [x] Driven in a browser: the stamp is the **last** `<section>` on the page —
+      order reads hero, Live Match Schedule, filter, the three schedule sections,
+      Program Dates, sync stamp.
+- [x] The top of the page has no leftover gap where it used to sit; the callout
+      is now flush under the hero.
+- [x] 390 and 1280px, no horizontal scroll; on the phone the strip stacks and
+      still sits between the dark Program Dates block and the dark footer.
+
+### Not yet done
+- [ ] Nothing links to it, so a reader who wants to know how fresh the page is
+      has to scroll to the bottom to find out. That is the trade of moving it —
+      less prominent is the point, but "less prominent" and "hard to find" are
+      the same thing to somebody who does not know it exists.
