@@ -115,6 +115,8 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 
 **Why sponsor logos are a separate collection.** A tier's `sponsors` is a `stringList`, which cannot hold objects, so the artwork cannot live inside the tier. `sponsor-logos.json` is joined to a tier entry by exact business name. A sponsor with no matching entry renders as its name instead — so a business can be listed the moment it signs up, without waiting on artwork. The join is by name, which means **renaming a sponsor in one file and not the other silently drops the logo**; nothing validates the pairing.
 
+**The order of `sponsor-tiers.json` decides how big the logos are.** The first tier's artwork is drawn largest, the second tier's smaller, and every tier below shares one size — see [The sponsor wall](#the-sponsor-wall). Reordering the list in `/admin` therefore changes who is most prominent on both the home page and the sponsors page, which is why the collection's description says so.
+
 **Field types**: `text`, `textarea`, `slug`, `url`, `email`, `link`, `select`, `boolean`, `number`, `stringList`, `image`. Fields carry `required`, `maxLength`, `help`, `placeholder`, `options`, and `deriveFrom` (a slug generated from another field when left blank). Dotted names address nested keys (`socials.facebook`).
 
 **Collection metadata** that drives the editor UI: `group` (sidebar grouping), `description` and `usedOn` (so an editor knows where a change will show up), `labelField` (row titles), `identifierField` (uniqueness, and how items are matched when diffing), `itemNoun` ("Add announcement"), and `preview` (which real site card to render live beside the form).
@@ -279,7 +281,7 @@ ko-volleyball-web/
 │   ├── images/coaches/             # coach portraits, circle-masked WebP with alpha
 │   ├── images/brand/               # prepared logo art (hero lockup, banners)
 │   ├── images/gallery/             # GENERATED WebP derivatives, 2 per photo
-│   ├── images/sponsors/            # sponsor artwork
+│   ├── images/sponsors/            # sponsor artwork, one file per business
 │   ├── images/uploads/             # photos committed by the editor
 │   ├── documents/                  # the sponsorship form PDF
 │   └── robots.txt                  # disallows /admin
@@ -428,6 +430,28 @@ Four coaches as full-width profile rows — circular portrait, name, title, bio 
 **`bio` is the content and `bioAvailable` is the switch**, deliberately two fields. Turning the switch off hides a bio and shows "Bio coming soon" *without deleting the text*, which is what a coach asking for theirs to come down actually needs. `CoachProfile` renders the bio only when both are present.
 
 **`CoachCard` still exists and is unchanged.** Program Administration has names and titles and nothing else, so it keeps the compact monogram card; the coaches collection previews as `coachProfile` in `/admin` and administration as `coach`. Two preview types rather than one component trying to be both.
+
+### The sponsor wall
+
+Two pages render the same six businesses: `/sponsors` (`src/app/(site)/sponsors/page.tsx`) is the full record, and the home page's `SponsorsSection` is the thank-you strip. Both draw every plate with `SponsorLogoCard`, and both take their sizes from the same place.
+
+**Prominence is what a business buys, so one function decides it.** `sponsorTierSize(position)` in `src/data/sponsors.ts` maps the first tier in `content/sponsor-tiers.json` to `feature`, the second to `large`, and everything below to `standard`. It is keyed on **position, not on the tier's `id` or name** — `id` is a `slug` field an editor can regenerate from the tier name, so matching on `"platinum"` would let a rename silently shrink the business paying the most. The published order of the file is the one signal that cannot disagree with what a visitor sees.
+
+`SponsorLogoCard` turns those three names into pixels, and nothing else does:
+
+| Size | Logo cap (`sm`+) | Plate | Row |
+|---|---|---|---|
+| `feature` | 192px | 256px tall, gold border, raised | full container width |
+| `large` | 128px | 192px tall, faint gold border | two columns of a `max-w-3xl` row |
+| `standard` | 80px | 128px tall, ordinary card border | two / three / four across |
+
+Three things about that are deliberate and easy to undo by accident:
+
+- **The plate is white at every tier.** Tinting it to signal rank would make the first dark-background logo a sponsor sends unreadable. Rank reads through size and framing instead. The `/admin` upload help asks for white or transparent artwork for the same reason.
+- **The caps bind on height for an upright mark and on width for a long wordmark**, so two logos in one row are the same *size* without being the same height. That is the only promise that can be kept when one sponsor sends a square badge and the next sends a 4:1 wordmark.
+- **Rows are flex-wrapped and centred, never gridded.** A grid leaves a short last row hard against the left edge — four sponsors in three columns strand the fourth in the bottom-left corner, which reads as a layout that broke. `justify-center` centres the remainder at any count. Column widths are `calc(<share> - <share of the 1rem gap>)` so they still add up exactly.
+
+A sponsor with no artwork renders as its business name, at a font size that scales with the tier — so a platinum sponsor whose logo has not arrived yet still gets the prominence they paid for.
 
 ### The announcements section
 
@@ -711,6 +735,9 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **Staged images are capped by browser storage** (~5 MB for `localStorage`). Beyond that the editor keeps them in memory for the tab only and says so.
 - **Coach bios are published; player bios and photos are still gated.** `bioAvailable` and the optional `photo` remain the switches, and for coaches both are now on — the program supplied the text and each coach's chosen portrait. Nothing equivalent exists for players, and `teams.json` still models no player photos, jersey numbers or statistics.
 - **Two coach portraits include family, one of them children.** They are the photographs the coaches themselves picked for the program's "Meet The Coaches" deck, and the bios name family members, so this is the program's material and the coaches' choice rather than an editorial decision made here. It is still worth knowing that a slide shown at a parents' evening and a page on the open web are not the same audience. Alt text describes the group without naming any child. Removing one is a single field: clear `photo` on that coach, or switch `bioAvailable` off to pull the text too.
+- **The sponsorship form PDF and the tier prices are not checked against anything.** `site.sponsorFormUrl` still points at `sponsor-letter-2025-2026.pdf` and the tiers still read $1,000+ / $500 / $300; the 2026 sponsor list arrived as a slide of logos with no amounts on it. Both are one edit in `/admin` when the Booster Club confirms the season's figures, and nothing warns that the letter's year no longer matches the page's heading.
+- **One sponsor's artwork is a business card, not a logo.** Blaine Scelfo's file carries a photograph, a street address and a phone number, and renders at 126×80 in the black tier where none of that text is legible. It is what the sponsor supplied; the card scales it without cropping, which is the most the code can do. The same applies to any future sponsor who sends a flyer instead of a mark.
+- **No sponsor is linked to anywhere.** `sponsor-logos.json` models `name` and `logo` and no URL, so the wall thanks six businesses without sending a visitor to any of them. Adding it is a schema field plus an anchor around the plate.
 - **`content/` is the only editable surface.** Page structure, navigation, and copy outside the schema still require a developer.
 - **Analytics are opt-in per environment.** GA4 is rendered only when `NEXT_PUBLIC_GA_ID` is set at build time, which is how development and the hand-deployed staging copy report nothing — there is no filter to maintain. Production reads it from the `GA_MEASUREMENT_ID` repository variable via `deploy.yml`. Two things are easy to get wrong: the env var must appear as the literal `process.env.NEXT_PUBLIC_GA_ID` (Next inlines it by textual substitution), and `<GoogleAnalytics>` does **not** track client-side navigation — `src/components/analytics/PageViews.tsx` sends `page_view` on route change, so GA4's Enhanced measurement "page changes based on browser history events" must stay **off** or every internal navigation is counted twice. See `GOOGLE-ANALYTICS-SETUP.md`.
 - **Hero banners are code, not content.** The home page rotates between the program hero, the VBIF campaign banner and the Waller ISD champion banner (`HeroCarousel`, `CampaignBanner`, `ChampionBanner`); the slide list lives in `src/app/(site)/page.tsx`, so adding or removing a banner needs a developer. Three design constraints are load-bearing and should survive any change. The **slides are stacked in one grid cell** so the box is always the tallest slide's height — never measured in JavaScript, which is what used to make the page jump on a phone. Inactive slides are **`visibility: hidden` plus `inert`**, not unmounted and not merely faded: hiding them any other way leaves their links focusable, which is the standard carousel accessibility bug. And the **first slide is server-rendered**, so it is what appears on load and the only one that renders without JavaScript. A fourth thing a new slide must respect: every slide reserves `pb-20` as the **control lane** for the dot-and-pause pill and the arrows, which float over the foot of whichever slide is showing. The pill's wrapper is `inset-x-0` — full width, only so the pill sits centred — so it carries `pointer-events-none` with `pointer-events-auto` on the pill itself. Without that it is a transparent strip painted after the arrows, and it swallows every click on them.

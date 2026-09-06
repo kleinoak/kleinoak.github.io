@@ -6,37 +6,94 @@ import { PageHero } from "@/components/layout/PageHero";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SponsorLogoCard } from "@/components/cards/SponsorLogoCard";
 import { Badge } from "@/components/ui/Badge";
-import { sponsorSteps, sponsorTiers } from "@/data/sponsors";
+import {
+  SponsorLogoSize,
+  sponsorSteps,
+  sponsorTierSize,
+  sponsorTiers,
+} from "@/data/sponsors";
 import { site } from "@/data/site";
 
 export const metadata: Metadata = { title: "Sponsors" };
+
+/**
+ * How each tier's row is laid out, per logo size: `row` sizes and centres the
+ * row itself, `item` sets how many plates fit across it, and `rule` is the
+ * hairline between the tier's name and its price.
+ *
+ * Rows are flex-wrapped rather than gridded, because a grid leaves a short last
+ * row hard against the left edge — four black sponsors in a three-column grid
+ * put the fourth business alone in the bottom-left corner, which reads as a
+ * layout that broke rather than a wall of supporters. Flex with `justify-center`
+ * centres whatever is left over, at any number of sponsors.
+ *
+ * The top tier spans the container; the second is held to two columns of a
+ * `max-w-3xl` row, so even with one business in each the step down is a step in
+ * both dimensions and the plate stays close-fitting around the mark instead of
+ * stranding it in the middle of a wide empty box. The widths are expressed as
+ * `calc(<share> - <share of the 1rem gap>)` so the columns add up exactly.
+ */
+const TIER_LAYOUT: Record<SponsorLogoSize, { row: string; item: string; rule: string }> = {
+  feature: { row: "", item: "w-full", rule: "bg-accent/60" },
+  large: {
+    row: "mx-auto w-full max-w-3xl",
+    item: "w-full sm:w-[calc(50%-0.5rem)]",
+    rule: "bg-accent/30",
+  },
+  standard: {
+    row: "",
+    item:
+      "w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-0.667rem)] lg:w-[calc(25%-0.75rem)]",
+    rule: "bg-border",
+  },
+};
 
 export default function SponsorsPage() {
   return (
     <>
       <PageHero
         eyebrow="Community Support - Booster Club"
-        title="2025 Sponsors"
+        title="2026 Sponsors"
         description="Klein Oak Volleyball is booster-run and community-supported. Thank you to every sponsor that makes the program possible."
       />
 
+      {/* The wall. Tiers run top to bottom in the order they are published in,
+          and the logos shrink as they go: a visitor who never reads a tier name
+          still sees who backs the program hardest, which is the whole of what a
+          business buys with a platinum sponsorship. */}
       <section className="py-16 sm:py-20">
-        <Container className="flex flex-col gap-14">
-          {sponsorTiers.map((tier) => (
-            <div key={tier.id}>
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="font-display text-2xl font-bold uppercase tracking-tight text-primary">
+        <Container className="flex flex-col gap-14 sm:gap-16">
+          {sponsorTiers.map((tier, position) => {
+            const size = sponsorTierSize(position);
+            const layout = TIER_LAYOUT[size];
+
+            return (
+              <section key={tier.id} aria-labelledby={`tier-${tier.id}`}>
+                {/* Name, rule, price — the same header shape the spirit
+                    calendar uses for its months, so the page reads as part of
+                    this site rather than a separate one. The rule warms towards
+                    gold as the tier goes up. */}
+                <h2
+                  id={`tier-${tier.id}`}
+                  className="flex items-center gap-4 font-display text-xl font-bold uppercase tracking-tight text-primary sm:text-2xl"
+                >
                   {tier.name}
+                  <span aria-hidden="true" className={`h-px flex-1 ${layout.rule}`} />
+                  <Badge tone="gold">{tier.price}</Badge>
                 </h2>
-                <Badge tone="gold">{tier.price}</Badge>
-              </div>
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {tier.sponsors.map((name) => (
-                  <SponsorLogoCard key={name} name={name} />
-                ))}
-              </div>
-            </div>
-          ))}
+
+                <div
+                  className={`mt-6 flex flex-wrap justify-center gap-4 ${layout.row}`}
+                >
+                  {tier.sponsors.map((name) => (
+                    <div key={name} className={layout.item}>
+                      <SponsorLogoCard name={name} size={size} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </Container>
       </section>
 

@@ -628,7 +628,8 @@ export const collections: Collection[] = [
     group: "Sponsors",
     file: "content/sponsor-tiers.json",
     kind: "list",
-    description: "Sponsorship levels and the businesses in each one.",
+    description:
+      "Sponsorship levels and the businesses in each one. Tiers publish in this order, and the order sets how big the logos are drawn: the first tier's are the largest, the second tier's are smaller, and every tier below that shares one size. Reordering this list therefore changes who is most prominent on the page.",
     usedOn: ["Home page — Sponsors", "Sponsors page"],
     labelField: "name",
     identifierField: "id",
@@ -673,7 +674,7 @@ export const collections: Collection[] = [
         label: "Logo",
         type: "image",
         required: true,
-        help: "Upload the artwork supplied by the sponsor. Landscape marks read best; the card scales anything to fit.",
+        help: "Upload the artwork supplied by the sponsor. Landscape marks read best; the card scales anything to fit without cropping. Send a file with a white or transparent background — the plate behind every logo is white, so a dark-background image shows as a dark rectangle.",
       },
     ],
   },

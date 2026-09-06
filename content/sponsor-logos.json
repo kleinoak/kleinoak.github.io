@@ -1,14 +1,5 @@
 [
   {
-    "name": "Stewart Builders",
-    "logo": {
-      "src": "/images/sponsors/stewart-builders.jpg",
-      "alt": "Stewart Builders logo",
-      "width": 600,
-      "height": 239
-    }
-  },
-  {
     "name": "Planet Ford",
     "logo": {
       "src": "/images/sponsors/planet-ford.png",
@@ -18,39 +9,39 @@
     }
   },
   {
-    "name": "TAV",
+    "name": "MoCo Mavs",
     "logo": {
-      "src": "/images/sponsors/tav.png",
-      "alt": "TAV Houston logo",
-      "width": 400,
-      "height": 400
+      "src": "/images/sponsors/moco-mavs.png",
+      "alt": "MoCo Mavs volleyball club logo",
+      "width": 760,
+      "height": 525
     }
   },
   {
-    "name": "GulfPoint",
+    "name": "Klein Eyecare",
     "logo": {
-      "src": "/images/sponsors/gulfpoint.jpg",
-      "alt": "GulfPoint Services logo",
-      "width": 508,
-      "height": 132
+      "src": "/images/sponsors/klein-eyecare.png",
+      "alt": "Klein Eyecare, The Best in Sight, logo",
+      "width": 600,
+      "height": 171
     }
   },
   {
-    "name": "NHE",
+    "name": "D1 Baseball",
     "logo": {
-      "src": "/images/sponsors/nhe.png",
-      "alt": "NH Elite Volleyball Club logo",
-      "width": 375,
-      "height": 375
+      "src": "/images/sponsors/d1-baseball.png",
+      "alt": "D1 Baseball logo",
+      "width": 600,
+      "height": 148
     }
   },
   {
-    "name": "Blaine Tomball",
+    "name": "Blaine Scelfo State Farm",
     "logo": {
-      "src": "/images/sponsors/blaine-tomball.jpg",
+      "src": "/images/sponsors/blaine-scelfo.jpg",
       "alt": "Blaine Scelfo, State Farm agent in Tomball, logo",
       "width": 600,
-      "height": 379
+      "height": 381
     }
   },
   {
@@ -59,7 +50,7 @@
       "src": "/images/sponsors/blue-louis.png",
       "alt": "Blue Louis Boutique logo",
       "width": 600,
-      "height": 298
+      "height": 297
     }
   }
 ]

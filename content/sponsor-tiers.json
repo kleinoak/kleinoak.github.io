@@ -3,18 +3,18 @@
     "id": "platinum",
     "name": "Platinum Sponsor",
     "price": "$1,000+",
-    "sponsors": ["Stewart Builders", "Planet Ford", "TAV"]
+    "sponsors": ["Planet Ford"]
   },
   {
     "id": "gold",
     "name": "Gold Sponsor",
     "price": "$500",
-    "sponsors": ["GulfPoint", "NHE"]
+    "sponsors": ["MoCo Mavs"]
   },
   {
     "id": "black",
     "name": "Black Sponsor",
     "price": "$300",
-    "sponsors": ["Blaine Tomball", "Blue Louis"]
+    "sponsors": ["Klein Eyecare", "D1 Baseball", "Blaine Scelfo State Farm", "Blue Louis"]
   }
 ]

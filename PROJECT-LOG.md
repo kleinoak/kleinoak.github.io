@@ -1845,3 +1845,135 @@ suite was green against a carousel whose arrows a real mouse could not reach.
       Rectangle overlap between controls and slide content is worth keeping, but
       it answers "does this cover something", not "can this be hit". Only the
       new script asks the second question, and only for the carousel.
+
+---
+
+## 20260906 — The sponsor wall, sized by what a business paid
+
+"I have here in this file an updated list of sponsors for 2026. Use this file as
+the data source for sponsors." Four instructions followed: rename the heading to
+2026, make Planet Ford stand out as the platinum sponsor, make MoCo Mavs bigger
+than the rest but smaller than platinum, and give every remaining business the
+same size.
+
+### The source
+
+`sponsor logos.pptx` — one slide, six pictures, no alt text and no captions. A
+`.pptx` is a zip, so the artwork came straight out of `ppt/media/` and each logo
+was identified by looking at it. That is the whole 2026 list:
+
+| | Business | Tier |
+|---|---|---|
+| `image4` | Randall Reed's Planet Ford | Platinum |
+| `image6` | MoCo Mavs | Gold |
+| `image1` | Klein Eyecare | Black |
+| `image2` | D1 Baseball | Black |
+| `image5` | Blaine Scelfo — State Farm | Black |
+| `image3` | Blue Louis Boutique | Black |
+
+Four businesses in the 2025 list are **not** in the deck — Stewart Builders,
+TAV, GulfPoint and NH Elite — so they came out of `sponsor-tiers.json` and their
+artwork out of `public/images/sponsors/`. Git still has the files; a season that
+brings any of them back is a `git checkout` of four paths, not a re-scan.
+
+### Decisions
+
+- **The tier's position sets the size, not its name.** `sponsorTierSize(position)`
+  in `src/data/sponsors.ts` maps the first tier to `feature`, the second to
+  `large`, everything else to `standard`. Keying on `id === "platinum"` was the
+  obvious alternative and it is a trap: `id` is a `slug` field an editor can
+  regenerate from the tier name, so renaming "Platinum Sponsor" would silently
+  shrink the business paying the most, with nothing on the page to explain why.
+  The order of `sponsor-tiers.json` is already the order tiers are published in,
+  so it is the one signal that cannot drift from what a visitor sees. The
+  collection's description in `/admin` now says so outright.
+- **One size table, three consumers.** The sponsors page, the home page and the
+  `/admin` preview all render `SponsorLogoCard`, so the sizes live in that one
+  component and the tier→size rule lives in one function. Prominence is the
+  thing a sponsor actually buys; two files disagreeing about it is the failure
+  worth designing out.
+- **The logo caps step 192 / 128 / 80px** at `sm` and up (128 / 96 / 64 on a
+  phone). Platinum stands two and a half times a black-tier mark on the same
+  screen — a difference nobody has to be told about. Card heights step with them,
+  256 / 192 / 128, and the rows narrow too: platinum spans the container, gold is
+  two columns of a `max-w-3xl` row, black is four across.
+- **The plate stays white at every tier.** Tinting it to signal rank is the
+  obvious idea and the wrong one: sponsors send whatever artwork they have, and
+  the first business to send a dark-background file would find its logo
+  unreadable on a coloured card. Rank reads through size and framing instead — a
+  gold border and a lift on platinum, a faint gold border on gold, the ordinary
+  card border below.
+- **The deck's Planet Ford artwork is not the one that shipped.** It has a
+  `#202020` rectangle baked into it and white "RANDALL REED'S" lettering, which
+  is a black box on a white plate. The existing `planet-ford.png` is the same
+  mark drawn for light backgrounds — transparent, dark lettering, and it carries
+  "SPRING, TX" as well — so it stayed. Every other logo in the deck is the
+  higher-resolution file and replaced what was there.
+- **Rows are flex-wrapped and centred, not gridded.** Four black sponsors in a
+  three-column grid put the fourth alone in the bottom-left corner at tablet
+  width, which reads as a row that failed to load rather than a wall of
+  supporters. `flex flex-wrap justify-center` centres whatever is left over at
+  any number of sponsors; the widths are `calc(<share> - <share of the gap>)` so
+  the columns still add up exactly.
+- **The home section was rebuilt because the data change broke it.** It rendered
+  `sponsorTiers.find(t => t.id === "platinum")` into a four-column grid — fine
+  with three businesses in that tier, a single stranded card now that there is
+  one. It now gives the top tier the same feature plate it has on the sponsors
+  page and puts every other sponsor in one uniform centred strip below it. The
+  prominence a platinum sponsor paid for should not hold only on the page nobody
+  lands on first.
+
+### Artwork
+
+Six files, built with `sharp`, all ≥2× at their rendered size:
+
+- `moco-mavs.png` 760×525 (the gold tier renders largest after platinum, so it
+  gets the most pixels), `klein-eyecare.png` 600×171, `d1-baseball.png` 600×148,
+  `blue-louis.png` 600×297, `blaine-scelfo.jpg` 600×381.
+- **Three rows of near-black ran across the top of the D1 Baseball artwork** — a
+  crop artifact from wherever it was lifted, and a hard black rule on a white
+  card looks like a rendering fault. Cut before resizing.
+- Blaine Scelfo's file is a photographic business card rather than a flat mark,
+  so it is JPEG at q86; the rest are PNG.
+
+### Verified
+
+Measured in a real browser over CDP against the built static export, not
+inspected by eye:
+
+- [x] 1280px — platinum card 1088×256 with a 298×192 logo; gold 376×192 with
+      185×128; black four across at 260×128, logos 226×64 / 226×56 / 126×80 /
+      162×80. Every logo ≥2.01× its rendered size (`dpr` 2.01–4.76).
+- [x] 768px — the fourth black card lands at x264, **centred** under the three
+      above it, which is the case that was broken before the flex change.
+- [x] 390px — platinum 358×192, gold 358×160, black 2×2 at 171×112; page
+      3049px, no horizontal scroll.
+- [x] Home page at 1280 and 390 — feature plate plus a five-card strip; the odd
+      fifth card centres on a phone.
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 13 files; `next build` →
+      17 static pages.
+
+### Not yet done
+
+- [ ] **Nothing validates the tier↔logo join.** It is by exact business name
+      across two files, and a mismatch silently renders the name as text instead
+      of the artwork — which now also means silently rendering it at whatever
+      size the tier says, in a font, on the platinum plate. This has been a known
+      gap since the collection was split; this change raises what it costs. It
+      cannot be a hard failure (a sponsor with no artwork yet is legitimate), so
+      it wants a warning, and `validate-content.mts` only knows pass and fail.
+- [ ] **The sponsorship form is still `sponsor-letter-2025-2026.pdf`,** and the
+      tier prices ($1,000+ / $500 / $300) are carried over unchanged. The deck
+      contained no amounts, so nothing here confirms they are the 2026 figures.
+- [ ] **Blaine Scelfo's mark is a business card,** with an address and a phone
+      number that are illegible at 126×80. It is what the sponsor supplied and
+      no code change fixes it; a plain logo would.
+- [ ] **No sponsor links anywhere.** Not one of the six has a URL in
+      `sponsor-logos.json`, so the wall thanks them without sending anyone to
+      them. Adding a `url` field is a schema change plus an `<a>` wrapper.
+- [ ] `fonts.googleapis.com` was unreachable from this machine, so `next build`
+      could not fetch Geist and Oswald. Local preview ran against a temporary
+      font stub, reverted before committing — `src/app/layout.tsx` and
+      `globals.css` are untouched. It means the screenshots above are in a
+      fallback display face; every number in them is geometry, which the font
+      does not change, but nothing here re-checked the tier headings in Oswald.
