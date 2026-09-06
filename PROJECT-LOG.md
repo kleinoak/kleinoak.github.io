@@ -1652,3 +1652,123 @@ rather than after it.
 - [ ] The home page is long, and this puts the longest section first. It shrinks
       as dates pass, but a visitor in September now scrolls sixteen cards before
       reaching the announcements.
+
+---
+
+## 20260906 — The banner stopped moving the page under your thumb
+
+Reported from an iPhone: "the banner adjusts in height thereby losing focus on my
+current content." Reproduced and measured before touching anything.
+
+### The bug
+
+`HeroCarousel` sized itself in JavaScript. It measured the active slide with a
+`ResizeObserver`, kept the tallest height it had seen as a floor, and dropped
+that floor on `window.resize` — so a height measured at desktop width would not
+leave a black band after rotating to a phone. Sensible on a desktop. On iOS it
+is a trap: **scrolling collapses Safari's URL bar, and that fires `resize`.**
+
+At 390px, with the third slide showing:
+
+| Event | Carousel height | Content below |
+| --- | --- | --- |
+| Rotating normally | 677px (held) | steady |
+| **A `resize` fires** | **677 → 318px** | **jumps up 359px** |
+
+No banner change is involved. The reader scrolls, the URL bar collapses, the
+floor is dropped, and the whole page yanks 359px under their thumb. Then the
+next rotation pushes it back down.
+
+### Decisions
+
+- **The height is CSS now, and never measured.** All three slides live in one
+  grid cell (`col-start-1 row-start-1`); the row is auto-sized, so the browser
+  makes the box as tall as the tallest slide at whatever the current width is.
+  Correct in the server-rendered HTML, correct before hydration, correct with
+  JavaScript off, correct at every width, and identical on every slide. The
+  `ResizeObserver`, the floor state and the resize listener are all gone. The
+  fix is a deletion.
+- **Inactive slides are `visibility: hidden` plus `inert`, not unmounted.**
+  Mounting one slide at a time was the old defence against tabbing into an
+  invisible slide's links, and that concern is real — but `visibility: hidden`
+  already removes a subtree from the tab order and the accessibility tree
+  *while reserving its space*, which is exactly what the layout needs, and
+  `inert` states it outright. This is the change that makes the CSS height
+  possible.
+- **The entrance fade survives without a remount.** `animate-hero-slide` is
+  added to whichever slide becomes active. Adding an animation to an element
+  that had none starts it, so it retriggers on every change — verified through
+  `getAnimations()` rather than assumed, including returning to a slide that
+  had already played it.
+- **Rotation pauses when the carousel is off-screen** (`IntersectionObserver`,
+  default `true` so it still works if the observer never reports). A banner
+  nobody is looking at should not be advancing; on a phone the hero is
+  off-screen for most of the visit.
+- **The hero was tightened for phones, because the fix exposed how tall it
+  was.** A stable box is the tallest slide's height, and the hero was 677px of
+  it against 280–318px of banner — 397px of dead black on the other two slides.
+  Four things were costing height for nothing: the buttons wrapped to two rows
+  (102px where one row is 46px), the eyebrow wrapped to two lines, the mark was
+  208px wide in a stacked layout, and the padding was desktop padding. Two
+  equal columns for the buttons, tighter mobile letter-spacing, `w-36`, `pt-8`.
+  Hero 677 → 565px, and `QuickAccess` is now visible above the fold on an
+  iPhone, which it was not before.
+- **The banner slides run edge to edge below `sm`.** The gutters bought nothing
+  — the artwork is already dark and self-contained — and the extra 32px of
+  width is height the banner does not have to give back to the letterbox.
+- **Every slide reserves `pb-20` as a control lane.** The dot-and-pause pill is
+  absolutely positioned at the foot of the whole carousel, and the tightened
+  hero's buttons now ended exactly where it floats — it landed on top of "View
+  Schedule" on a phone and cleared it by four pixels at 768px. Applying the
+  same lane to all three slides keeps their heights matched, so the desktop
+  hero and both banners still agree to within 2px.
+- **The prev/next arrows moved into that lane too.** At mid-height they sat
+  wherever the slide's content happened to be: they cut the ends off "Klein Oak
+  High School · Panther Volleyball" once the eyebrow fitted on one line, and
+  clipped the panther mark at exactly 1024px where the hero becomes a row. In
+  the lane they are over reserved black at every width, and on a phone they are
+  within thumb reach rather than halfway up the screen.
+- **`fetchPriority="low"` on the two banner images.** Stacking means all three
+  slides load from the first paint — 137KB that used to arrive a few seconds
+  later. Low priority keeps them out of the hero logo's way on a phone
+  connection.
+
+### Verified
+
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 13 files; `next build`
+      → 17 static pages.
+- [x] **Layout stability**, driven in a real browser at 320 / 375 / 390 / 430 /
+      640 / 768 / 1024 / 1280px: click through all three slides, fire the
+      `resize` that iOS fires, click through them again. Carousel height and the
+      offset of the section below it are a **single value** at every width.
+      Before the change the same script returned two values 359px apart.
+- [x] **No hydration shift.** With script execution disabled the carousel is
+      565px at 390 and 453px at 1280 — the same numbers the hydrated page
+      reports. Slide 1 visible, slides 2 and 3 `hidden` and `inert`.
+- [x] **No control overlaps anything**, checked by rectangle intersection
+      between the pill and the arrows and every `a`/`h1`/`p`/`img`/`span` in the
+      visible slide, on all three slides at nine widths. Clear everywhere. This
+      is what caught both the pill-on-the-button and the arrows-through-the-
+      eyebrow collisions.
+- [x] Rotation held on slide 1 for nine seconds while scrolled 2000px away, and
+      advanced within eight seconds of scrolling back.
+- [x] Fade retriggers on every change, read from `getAnimations()`.
+- [x] Looked at, not just measured: all three slides at 390px, plus 768 and
+      1280.
+
+### Not yet done
+
+- [ ] **A phone still letterboxes the banner slides by ~190–230px**, and 320px
+      devices by 318px. The slides have genuinely different natural shapes and
+      the box has to be one height, so something is centred in black. Cropping
+      cannot close it — the VBIF lockup and the champion headline each have
+      about 7% of safe side margin and the gap needs more than double. Portrait
+      variants of the two banners for mobile would; that is a design task.
+- [ ] **Nothing enforces the control lane.** A fourth slide added to the list in
+      `page.tsx` without `pb-20` will put the dots on top of its own content.
+      The rule is written in `HeroCarousel`'s comment next to the pill, which is
+      where someone would look, but it is a convention rather than a constraint.
+- [ ] The 640–1023px band is the tallest box (641px) because the hero is still
+      stacked there while using `sm` sizing. Switching it to a row at `md`
+      rather than `lg` would bring it to roughly the banners' height, but the
+      headline needs checking at 768px first.

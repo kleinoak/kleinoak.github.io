@@ -16,14 +16,29 @@ const ROTATE_MS = 7000;
 /**
  * Rotating hero.
  *
- * Only the active slide is mounted, rather than hiding the others with CSS.
- * That is the difference between a carousel that works with a keyboard and one
- * that does not: a hidden slide still contains focusable links, and tabbing
- * into content nobody can see is the classic carousel accessibility bug.
+ * **The height is set by CSS, never measured.** All slides are stacked in one
+ * grid cell, so the browser sizes the box to the tallest of them at whatever
+ * the current width is. The height is therefore correct in the server-rendered
+ * HTML, correct before hydration, correct with JavaScript off, and identical no
+ * matter which slide is showing — the page below cannot move when the banner
+ * changes.
  *
- * The first slide is rendered on the server, so it is what a visitor sees
- * before hydration — and the whole of it, with JavaScript off. The controls
- * simply do nothing in that case.
+ * It used to measure instead: hold the tallest height seen so far, and drop
+ * that floor on `resize` so a desktop measurement would not leave a black band
+ * after rotating to a phone. On a phone that is a trap. Scrolling in iOS Safari
+ * collapses the URL bar, which fires `resize`, which dropped the floor — the
+ * hero went 677px to 318px and yanked the whole page up 359px under the
+ * reader's thumb, mid-scroll, with no banner change involved at all. Measuring
+ * a layout in JavaScript is what created that bug; the layout engine already
+ * knows the answer.
+ *
+ * Only the active slide is visible, and the rest are `visibility: hidden` plus
+ * `inert`. That was the reason the old version mounted one slide at a time —
+ * a slide hidden with `opacity` or `display` sleight-of-hand still holds
+ * focusable links, and tabbing into content nobody can see is the classic
+ * carousel bug. `visibility: hidden` reserves the space while removing its
+ * subtree from the tab order and the accessibility tree, and `inert` states it
+ * outright. Both, and the layout stays honest.
  */
 export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
@@ -32,35 +47,23 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   // the play/pause state the visitor chose.
   const [interacting, setInteracting] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-
-  // Slides are different heights — a stacked hero on a phone is roughly twice
-  // a banner image — and only one is mounted at a time, so the page would jump
-  // by hundreds of pixels on every change. Hold the tallest height seen and
-  // let shorter slides sit inside it. Undefined until measured, so the
-  // server-rendered markup carries no height and nothing shifts on hydration.
-  const slideRef = useRef<HTMLDivElement>(null);
-  const [floor, setFloor] = useState<number>();
+  // Rotating a banner nobody is looking at is motion for its own sake, and on a
+  // phone the hero is off-screen for most of the visit. Assume visible so the
+  // carousel still works if the observer never reports.
+  const [onScreen, setOnScreen] = useState(true);
+  const regionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const element = slideRef.current;
+    const element = regionRef.current;
     if (!element) return;
 
-    const remember = () =>
-      setFloor((tallest) => Math.max(tallest ?? 0, element.getBoundingClientRect().height));
-
-    remember();
-    const observer = new ResizeObserver(remember);
+    const observer = new IntersectionObserver(
+      ([entry]) => setOnScreen(entry.isIntersecting),
+      // Any sliver counts: a banner half out of frame is still being read.
+      { threshold: 0 },
+    );
     observer.observe(element);
-
-    // Drop the floor on a viewport change: a height measured at desktop width
-    // would otherwise leave a tall empty band after rotating to a phone.
-    const reset = () => setFloor(undefined);
-    window.addEventListener("resize", reset);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", reset);
-    };
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -79,7 +82,8 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   // Reduced motion means no automatic movement at all — the visitor advances it
   // themselves. WCAG 2.2.2 also requires a way to stop anything that moves for
   // more than five seconds, which is what the pause button is for.
-  const rotating = playing && !interacting && !reduceMotion && slides.length > 1;
+  const rotating =
+    playing && !interacting && !reduceMotion && onScreen && slides.length > 1;
 
   useEffect(() => {
     if (!rotating) return;
@@ -96,6 +100,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <div
+      ref={regionRef}
       role="region"
       aria-roledescription="carousel"
       aria-label="Featured"
@@ -114,26 +119,46 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
         }
       }}
     >
-      {/* `grid` so a slide shorter than the floor stretches to fill it rather
-          than leaving a gap below. */}
-      <div
-        ref={slideRef}
-        key={active.id}
-        aria-roledescription="slide"
-        aria-label={`${index + 1} of ${slides.length}: ${active.label}`}
-        style={floor ? { minHeight: floor } : undefined}
-        className={`grid ${reduceMotion ? "" : "animate-hero-slide"}`}
-      >
-        {active.node}
+      {/* Every slide in row 1, column 1. The row is auto-sized, so its height
+          is the tallest slide's — recomputed by the browser on every reflow,
+          which is the part JavaScript kept getting wrong. */}
+      <div className="grid">
+        {slides.map((slide, position) => {
+          const isActive = position === index;
+          return (
+            <div
+              key={slide.id}
+              // `grid` again so a slide shorter than the row stretches to fill
+              // it rather than leaving a gap below.
+              className={`col-start-1 row-start-1 grid ${
+                isActive ? (reduceMotion ? "" : "animate-hero-slide") : "invisible"
+              }`}
+              aria-roledescription="slide"
+              aria-label={`${position + 1} of ${slides.length}: ${slide.label}`}
+              aria-hidden={isActive ? undefined : true}
+              inert={!isActive}
+            >
+              {slide.node}
+            </div>
+          );
+        })}
       </div>
 
       {slides.length > 1 && (
         <>
+          {/* The arrows sit in the control lane with the dots, not floating at
+              mid-height over the artwork. Mid-height put them wherever the
+              slide's own content happened to be: they cut the ends off "Klein
+              Oak High School · Panther Volleyball" on a phone and clipped the
+              panther mark at exactly 1024px, where the hero turns into a row.
+              Down here they are over reserved black at every width, and on a
+              phone they are within reach of a thumb rather than halfway up the
+              screen. */}
           <button
             type="button"
             onClick={() => go(index - 1)}
             aria-label="Previous banner"
-            className="absolute left-2 top-1/3 -translate-y-1/2 sm:top-1/2 rounded-sm border border-white/25 bg-black/40 p-2 text-white/80 backdrop-blur-sm transition-colors hover:border-accent hover:text-accent"
+            className="absolute bottom-4 left-2 rounded-sm border border-white/25 bg-black/40 p-2 text-white/80 backdrop-blur-sm transition-colors hover:border-accent hover:text-accent"
           >
             <ChevronLeft aria-hidden="true" className="h-5 w-5" />
           </button>
@@ -141,11 +166,16 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
             type="button"
             onClick={() => go(index + 1)}
             aria-label="Next banner"
-            className="absolute right-2 top-1/3 -translate-y-1/2 sm:top-1/2 rounded-sm border border-white/25 bg-black/40 p-2 text-white/80 backdrop-blur-sm transition-colors hover:border-accent hover:text-accent"
+            className="absolute bottom-4 right-2 rounded-sm border border-white/25 bg-black/40 p-2 text-white/80 backdrop-blur-sm transition-colors hover:border-accent hover:text-accent"
           >
             <ChevronRight aria-hidden="true" className="h-5 w-5" />
           </button>
 
+          {/* The control lane. This pill floats over the foot of whichever
+              slide is showing, so every slide reserves `pb-20` for it rather
+              than trusting that its content happens to stop short — a new slide
+              that fills its own height would otherwise put the dots on top of
+              its own call to action, which is exactly what the hero did. */}
           <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-3">
             <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-2 backdrop-blur-sm">
               {slides.map((slide, position) => (
