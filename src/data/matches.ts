@@ -5,8 +5,11 @@
 // second pass against all four team calendars rather than varsity alone, which
 // is where the per-level results and start times come from. Rank One remains
 // the live source of truth for changes; the schedule page links to it and
-// shows when it was last checked (`site.scheduleUpdated`). Note that
-// kleinoakvolleyball.com, the original reference, is now this site.
+// carries the automated sync's own stamp (`SyncStatus`) in the same panel. The
+// hand-reconciliation date that used to sit there was retired with this change,
+// so nothing on the site now says when a person last checked the start times —
+// only when the scraper last ran. Note that kleinoakvolleyball.com, the
+// original reference, is now this site.
 //
 // Each level has its own Rank One calendar, and a level missing from its own
 // feed on a date is not playing that date — which is why some entries carry

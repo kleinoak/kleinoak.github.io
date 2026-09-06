@@ -727,13 +727,6 @@ export const collections: Collection[] = [
         help: "The program's live Rank One schedule — the source of truth for last-minute changes.",
       },
       {
-        name: "scheduleUpdated",
-        label: "Schedule last checked",
-        type: "text",
-        placeholder: "2026-08-25",
-        help: "YYYY-MM-DD — the day someone last reconciled the schedule and results against Rank One. Shown on the Schedule page so a parent can see how fresh the times are. Update it whenever you check, even if nothing changed: the point is the check, not the change.",
-      },
-      {
         name: "sponsorFormUrl",
         label: "Sponsorship form",
         type: "text",

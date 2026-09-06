@@ -213,8 +213,10 @@ async function main() {
   // page could not say when it last checked, only when it last changed, and
   // "checked at 6am and nothing had moved" is exactly the reassurance a parent
   // wants the night before a match. The cost is three commits a day, each a
-  // one-line diff. `content/matches.json` already makes this call the other way
-  // round for the same reason — see `site.scheduleUpdated`.
+  // one-line diff. `site.scheduleUpdated` used to carry the hand-reconciliation
+  // date on the same reasoning; it was retired when the sync stamp moved into
+  // the Rank One callout, so these two fields are now the only freshness signals
+  // the schedule page has.
   const dataChanged = !previous || JSON.stringify(previous.levels) !== JSON.stringify(levels);
 
   const payload = {

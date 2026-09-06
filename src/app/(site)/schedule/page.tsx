@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ExternalLink, RefreshCw } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/layout/PageHero";
 import { EventCard } from "@/components/cards/EventCard";
@@ -16,25 +16,6 @@ const scheduleSections = matchSections
   .map((section) => ({ ...section, matches: matchesInSection(section.key) }))
   .filter((section) => section.matches.length > 0);
 
-/**
- * "Aug 25, 2026" from a YYYY-MM-DD string, without letting the runtime read it
- * as UTC midnight and print the day before in Central time. Parsed by hand for
- * that reason rather than through `new Date(string)`.
- */
-function formatCheckedDate(iso: string): string | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
-  if (!match) return null;
-
-  const [, year, month, day] = match;
-  return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-const lastChecked = site.scheduleUpdated ? formatCheckedDate(site.scheduleUpdated) : null;
-
 export default function SchedulePage() {
   return (
     <>
@@ -46,32 +27,40 @@ export default function SchedulePage() {
 
       <section className="py-12 sm:py-16">
         <Container>
-          <div className="flex flex-col gap-6 rounded-sm border border-accent-strong/40 bg-accent/10 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="font-display text-lg font-semibold uppercase tracking-tight text-primary">
-                Live Match Schedule
-              </h2>
-              <p className="mt-1 max-w-xl text-sm text-text-muted">
-                Rank One is Klein ISD&apos;s official scheduling system and the most accurate
-                source for changes — with the ability to sync games to your personal calendar.
-              </p>
-              {/* Only the hand-reconciled half is left here; the automated half
-                  is in SyncStatus at the foot of the page. Keeping both would
-                  have said the same thing twice in two different formats. */}
-              {lastChecked && (
-                <p className="mt-3 flex items-start gap-2 text-xs text-text-muted">
-                  <RefreshCw aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-strong" />
-                  <span>
-                    Start times and tournament records are reconciled by hand — last done on{" "}
-                    <time dateTime={site.scheduleUpdated}>{lastChecked}</time>.
-                  </span>
+          {/* One panel: what the live source is, the way to it, and when it was
+              last read. The sync stamp used to close the page instead, on the
+              reasoning that provenance is something a reader asks *after* the
+              schedule. In practice it stranded the answer a thousand pixels
+              below the question — a parent reading "times can change late in the
+              week" wants "and we checked at 12:32 today" in the same glance, not
+              past the fixtures and the program dates. */}
+          <div className="rounded-sm border border-accent-strong/40 bg-accent/10">
+            <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-display text-lg font-semibold uppercase tracking-tight text-primary">
+                  Live Match Schedule
+                </h2>
+                <p className="mt-1 max-w-xl text-sm text-text-muted">
+                  Rank One is Klein ISD&apos;s official scheduling system and the most accurate
+                  source for changes — with the ability to sync games to your personal calendar.
                 </p>
-              )}
+              </div>
+              {/* `sm:shrink-0` once it is beside the copy: without it the
+                  paragraph's `max-w-xl` wins the row at tablet width and squeezes
+                  the button until "Open Rank One" breaks across two lines. */}
+              <Button
+                href={site.rankOneScheduleUrl}
+                variant="secondary"
+                external
+                className="sm:shrink-0 sm:whitespace-nowrap"
+              >
+                Open Rank One
+                <ExternalLink aria-hidden="true" className="h-4 w-4" />
+              </Button>
             </div>
-            <Button href={site.rankOneScheduleUrl} variant="secondary" external>
-              Open Rank One
-              <ExternalLink aria-hidden="true" className="h-4 w-4" />
-            </Button>
+
+            {/* Supplies no chrome of its own — it is the panel's bottom band. */}
+            <SyncStatus />
           </div>
         </Container>
       </section>
@@ -96,17 +85,6 @@ export default function SchedulePage() {
               <EventCard key={event.id} event={event} />
             ))}
           </div>
-        </Container>
-      </section>
-
-      {/* The sync stamp closes the page rather than opening it. It is a
-          provenance note — "where did this come from, and how old is it" — and
-          a reader asks that after reading the schedule, not before. At the top
-          it also competed with the Rank One callout, which is the thing a
-          parent actually needs to act on when a time changes late in the week. */}
-      <section aria-label="Schedule data freshness" className="py-10 sm:py-12">
-        <Container>
-          <SyncStatus />
         </Container>
       </section>
     </>

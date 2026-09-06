@@ -13,12 +13,6 @@ export type Site = {
   contactEmail: string;
   parentPortalUrl: string;
   rankOneScheduleUrl: string;
-  /**
-   * YYYY-MM-DD: when the schedule and results were last reconciled against
-   * Rank One. Optional because the site rendered for weeks without it, and a
-   * missing value should hide the line rather than print "unknown".
-   */
-  scheduleUpdated?: string;
   /** Path under `public/`, so it must go through `assetPath()` before use. */
   sponsorFormUrl: string;
   socials: {

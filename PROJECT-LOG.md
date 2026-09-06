@@ -1977,3 +1977,92 @@ inspected by eye:
       `globals.css` are untouched. It means the screenshots above are in a
       fallback display face; every number in them is geometry, which the font
       does not change, but nothing here re-checked the tier headings in Oswald.
+
+---
+
+## 20260906 — The sync stamp comes back up, into the callout
+
+An annotated screenshot, two marks. Red circle round the hand-reconciliation
+line inside the Rank One callout: *"Remove this."* Green circle round the
+automated sync strip at the foot of the page: *"Place this at top banner instead
+replacing the one we removed."*
+
+### The stamp has now been in three places
+
+It began above the callout. On 20260905 it moved to the foot of the page, and
+the reasoning was written down here: provenance is *where did this come from and
+how old is it*, and a reader asks that after reading the schedule, not before.
+
+That was wrong in a way that only shows up on the built page. The foot is a
+thousand pixels below the question. The hero says "times can change late in the
+week — Rank One is always the live source of truth"; the answer to *how late, and
+when did you last look* was past the fixtures, past Program Dates, sitting on the
+site footer. The reader who needs it never scrolls that far, and the reader who
+does has stopped asking.
+
+It is now the **bottom band of the callout itself** — not above it, not below the
+page, inside it. One panel carries what the live source is, the way to it, and
+when it was last read.
+
+### Decisions
+
+- **`SyncStatus` supplies no chrome of its own.** It was a bordered grey card on
+  `bg-surface`; dropped inside a gold-tinted callout that reads as a patch stuck
+  over the panel. It now renders as a hairline and the panel's own padding, and
+  inherits the tint. The cost is that it is no longer free-standing — rendering
+  it anywhere else means giving it a container there — which is written at the
+  top of the file so the next person does not have to find out.
+- **The hand-reconciliation line is gone, as asked, and the field went with it.**
+  `site.scheduleUpdated` was read in exactly one place: that line. Removing the
+  line would have left an editor a form field in `/admin`, with help text reading
+  *"Shown on the Schedule page so a parent can see how fresh the times are"*,
+  that changed nothing on any page. A field that lies to the person filling it in
+  is worse than no field, so it came out of the schema, `src/data/site.ts` and
+  `content/site.json` together. Last stored value `2026-08-25`; git has it.
+- **`sm:shrink-0` on the Rank One button.** Not asked for, noticed while
+  measuring: at tablet width the paragraph's `max-w-xl` won the flex row and
+  squeezed "Open Rank One" onto two lines. Pre-existing, one class, in a panel
+  already being rebuilt.
+
+### What this costs, and it is not nothing
+
+**Nothing on the site now says when a person last checked the start times.** The
+two dates used to draw a real line — a parser reading four Rank One calendars
+three times a day, and a person deciding which fixture belongs to which row. Only
+the parser's half survives, and the parser does **not** verify start times: they
+are still transcribed by hand into `matches.json`, nothing warns when Rank One
+moves one, and tournament records are still totted up by a person. A reader now
+sees "last checked 12:32 PM" and will reasonably assume it covers the times.
+
+That is the instruction, and it is recorded rather than argued: restoring the
+disclosure is a line in `SyncStatus` plus putting the field back, and both are in
+the history. Logged under Known Limitations too, where the claim that "the two
+dates say which half is which" was until today.
+
+### Verified
+
+Measured against the built static export, at three widths:
+
+- [x] 1280 — one panel, 1088×193: a 120px head row (heading, copy, button) and a
+      71px sync band beneath a hairline.
+- [x] 768 — 705×233; "Open Rank One" back on one line after `sm:shrink-0`.
+- [x] 390 — 358×369, everything stacked, no horizontal overflow.
+- [x] Exactly **one** rendered "Automated Rank One sync" element on the page, and
+      it is inside the gold callout. (`document.body.textContent` reports two —
+      the second is the RSC flight payload in a `<script>`, not markup. Counting
+      elements, not text, is the check that answers the question.)
+- [x] No "reconciled by hand" text anywhere in the rendered page.
+- [x] The page's last section is Program Dates — the freshness section is gone,
+      not orphaned.
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 13 files; `next build` →
+      17 static pages.
+
+### Not yet done
+
+- [ ] **The lost disclosure, above.** It is a product decision, not a bug, and it
+      is the user's to reverse.
+- [ ] `fonts.googleapis.com` is still unreachable from this machine, so the build
+      was verified against a temporary local font stub, reverted before
+      committing — `src/app/layout.tsx` and `globals.css` are untouched. Every
+      number above is geometry, which the display face does not change, but the
+      callout was not re-checked in Oswald.

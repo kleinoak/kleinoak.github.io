@@ -2,7 +2,14 @@ import { RefreshCw } from "lucide-react";
 import { changedAt, checkedAt, gameCount } from "@/data/rankone";
 
 /**
- * "When did the robot last look?", above the Rank One callout.
+ * "When did the robot last look?" — the footer strip of the Rank One callout.
+ *
+ * It renders as the bottom band of that panel rather than as a card of its own:
+ * no background, no rounding, just a hairline above it and the panel's own
+ * padding. A bordered grey card dropped inside a gold-tinted callout reads as a
+ * patch over it. Because the chrome belongs to the caller, this is not a
+ * free-standing component — moving it somewhere else means giving it a
+ * container there.
  *
  * Two facts, and the distinction is the whole point:
  *
@@ -61,7 +68,7 @@ export function SyncStatus() {
   const changed = formatDay(changedAt);
 
   return (
-    <div className="flex flex-col gap-3 rounded-sm border border-border bg-surface px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+    <div className="flex flex-col gap-3 border-t border-accent-strong/25 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
       <div className="flex items-start gap-3">
         <span className="relative mt-0.5 flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
           <span className="absolute inline-flex h-full w-full rounded-full bg-success/40" />
