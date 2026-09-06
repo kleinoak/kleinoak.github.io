@@ -96,6 +96,7 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 | Collection | Kind | File | Appears on |
 |---|---|---|---|
 | Announcements | list | `content/announcements.json` | Home page — cards, and the archive behind them |
+| Spirit calendar | list | `content/spirit-events.json` | Home page — "Upcoming Events at a Glance" |
 | Key dates | list | `content/events.json` | Home page, Schedule |
 | Teams | list | `content/teams.json` | Home, Teams, team detail pages |
 | Match schedule | list | `content/matches.json` | Schedule |
@@ -110,7 +111,7 @@ Every editable thing on the site is declared once in `src/cms/schema.ts`. Three 
 
 **Two content files are generated, not edited: `gallery.json` and `rankone.json`.** Neither is in the schema, so `/admin` never shows them and `validate-content.mts` ignores both. The gallery's reasons are below; the Rank One feed's are in [Keeping the schedule in sync](#keeping-the-schedule-in-sync).
 
-**The photo gallery is deliberately *not* a collection.** `content/gallery.json` sits beside the twelve files above but is **generated** — `scripts/build-gallery.mjs` writes it — and is not in the schema, so `/admin` never shows it and `validate-content.mts` ignores it. Two reasons it is built rather than edited: a hundred-odd photos added one at a time through the editor would be miserable, and every field in the manifest (derivative paths, pixel dimensions) is a value an editor has no way to supply correctly. To add photos, drop a folder under `content/images/` and re-run the script. See [The photo gallery](#the-photo-gallery) below.
+**The photo gallery is deliberately *not* a collection.** `content/gallery.json` sits beside the collections above but is **generated** — `scripts/build-gallery.mjs` writes it — and is not in the schema, so `/admin` never shows it and `validate-content.mts` ignores it. Two reasons it is built rather than edited: a hundred-odd photos added one at a time through the editor would be miserable, and every field in the manifest (derivative paths, pixel dimensions) is a value an editor has no way to supply correctly. To add photos, drop a folder under `content/images/` and re-run the script. See [The photo gallery](#the-photo-gallery) below.
 
 **Why sponsor logos are a separate collection.** A tier's `sponsors` is a `stringList`, which cannot hold objects, so the artwork cannot live inside the tier. `sponsor-logos.json` is joined to a tier entry by exact business name. A sponsor with no matching entry renders as its name instead — so a business can be listed the moment it signs up, without waiting on artwork. The join is by name, which means **renaming a sponsor in one file and not the other silently drops the logo**; nothing validates the pairing.
 
@@ -257,6 +258,7 @@ ko-volleyball-web/
 │   │   ├── home/ChampionBanner.tsx # the Waller ISD slide; links to the gallery
 │   │   ├── home/UpcomingEventsList.tsx  # re-filters the dated list in the browser
 │   │   ├── home/AnnouncementsBrowser.tsx # cards + detail dialog + archive dialog
+│   │   ├── home/SpiritCalendar.tsx      # themes, spirit nights, drives — by month
 │   │   ├── ui/Modal.tsx                 # the shared dialog: trap, Escape, scroll lock
 │   │   ├── cards/CoachProfile.tsx       # coach row: circular portrait + bio
 │   │   ├── cards/CoachCard.tsx          # compact monogram card — administration
@@ -269,6 +271,7 @@ ko-volleyball-web/
 │   └── data/                       # thin typed loaders over content/*.json
 │       ├── calendar.ts             # merges events + matches into one dated feed
 │       ├── announcements.ts        # the feed, plus the current/archived split
+│       ├── spiritEvents.ts        # the spirit calendar, filtered and grouped
 │       └── rankone.ts              # venue/result lookups over the scraped feed
 ├── logo-redesign/                  # brand exploration — logo options + source renders
 ├── public/
@@ -310,6 +313,25 @@ The filter is a `<fieldset>` of real radio inputs styled with `peer-checked:`, n
 **Why the `(site)` route group.** The public header and footer moved out of the root layout into `(site)/layout.tsx` so `/admin` can render as its own full-screen application without the program's navigation wrapped around it. URLs are unchanged — route groups do not appear in paths.
 
 **Every image `src` must go through `assetPath()` (`src/lib/asset.ts`).** `next/image` does not rewrite `src` when the image is `unoptimized` — which it always is here, because Pages cannot run Next's optimizer. A bare `/images/…` src therefore resolves against the *domain* root and 404s whenever the site is served from a sub-path: a GitHub Pages project site, or a folder inside another Pages repo. `assetPath()` prefixes `NEXT_PUBLIC_BASE_PATH`. This applies equally to literal paths in components and to paths coming out of `content/*.json`. Nothing in the build catches a missed call, so the check is `grep` the export for `src="/` paths that lack the base path.
+
+### The spirit calendar
+
+"Upcoming Events at a Glance" on the home page: what to wear, what to bring, and who is being honoured. Content is `content/spirit-events.json`, an editable collection.
+
+**It is not the schedule, and holds no start times.** The schedule says *when each level plays*; this says *wear gold and it is Alumni Night*. Keeping times out of it is the point — a date carrying a time in two files will eventually carry two different times, and the one nobody is looking at will be the wrong one. The section closes with a link to `/schedule` for exactly that reason.
+
+**Every fixture was checked against `content/matches.json` when it was written** — all thirteen agreed on date, opponent and home/away. Nothing enforces that afterwards, which is the obvious gap: an editor can put a Gold Out on a night the team is away and the site will render it cheerfully.
+
+**The theme drives the design rather than sitting in it as a word.** Each card carries a rule across the top in the colour being called for, and the chip repeats it as a swatch, so "which night do I wear gold" is answerable by scanning rather than reading. Two details that are load-bearing rather than decorative:
+
+- **Only a themed night gets a coloured rule.** The first version gave unthemed cards a light grey one, which made a *White Hot* night and an away night look identical along the top — and telling those apart at a glance is the entire reason the rule exists. Unthemed is blank now, with the height reserved so rows still line up.
+- **`themeTone` is a separate field from `themeLabel`.** "White Hot" and "White Out" are the same colour under two names, and a label cannot be coloured in.
+
+**The emoji were dropped, and the copy was not.** The program's list is written with emoji — 🏆💛🖤🤠 — and pasting those next to a design built on lucide icons and a black-and-gold palette reads as a different website spliced in. What the emoji encoded (theme colour, kind of night) is now the swatch and the icon, which also means a screen reader announces "Gold Out" rather than "trophy yellow-heart". The sentences themselves are verbatim, exclamation marks included: that voice is the program's.
+
+**Three entries exist in two places on purpose.** The two Spirit Nights and the pantry drive are also Announcements, because those carry the flyers. The spirit card holds the facts a reader needs at a glance and the announcement holds the poster; `announcementId` ties them together for a maintainer. It is duplication, and it is the kind that is cheaper than the alternative — one card that tries to be both would be a flyer nobody can scan or a summary with no flyer.
+
+**It empties itself.** Entries drop the day after they pass, re-checked in the browser against the real date like every other dated list here, and when the last one goes the whole section unmounts — a heading shouting "Upcoming Events" over nothing is worse than no section.
 
 ### Keeping the schedule in sync
 
@@ -691,7 +713,7 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **The VBIF banner has no destination and no real accessible name.** Its alt text is just `"VBIF"`, and the artwork is an image of text, so the wordmark neither scales with the reader's font size nor is available to a screen reader (WCAG 1.4.5). The champion banner is the same kind of artwork handled the other way — its alt text carries the banner's own words and the whole banner links to `/gallery` — which is the pattern to copy if VBIF is ever revisited. Both remain images of text and would be better as real markup over a background.
 - **Two deployment hazards, both documented in [Deployment path](#-deployment-path--engineering-to-prod) and neither fixed.** `kleinoak/kleinoak.github.io` carries a diverged `production` branch that is *not* what Pages serves — `main` is — and the name invites exactly the wrong assumption. And staging has no deploy script, so it drifts silently: on 2026-09-05 it was two releases behind minutes after a production deploy. A `deploy-staging.sh` and deleting that branch are both small, separate changes.
 - **The dialog behaviour exists twice.** `Modal` was extracted for the announcements section, but `GalleryBrowser` still carries its own focus trap, Escape handler and scroll lock, written before it. They agree today; nothing makes them stay that way. Migrating the lightbox is a contained change that was deliberately not bundled with a content update.
-- **The pantry drive has no date, because its flyer has none.** It reads "Ongoing" and never auto-archives — somebody has to tick Archived when it ends. Its Amazon wish list is a QR code in the poster and the URL behind it could not be recovered from the image, so the site cannot link it; a reader has to open the flyer and scan. Both are fixable the moment the program supplies the dates and the link.
+- **The pantry drive's Amazon wish list is still a QR code.** The URL behind it could not be recovered from the poster image, so the site cannot link it; a reader has to open the flyer and scan. (Its *dates* are no longer missing — the program's events list supplied September 21–25, and the announcement now archives itself after the 25th.)
 - **Two of the three flyers are photographs of a screen.** They were rotated, de-bezelled and re-encoded, but the moiré and the glare are in the source and no processing removes them. The pantry flyer is a 345px-wide PNG, so its "full" size in the dialog is the same file as its thumbnail and it is soft on a large display. Replacing all three with the original digital artwork is a straight swap of two files each.
 - **Gallery alt text is honest, not descriptive.** Each photo announces its album and position ("Junior Varsity — photo 7 of 32") because nobody has described the frames. That is better than `IMG_2604` and better than inventing what is happening, but a screen-reader user still cannot tell a huddle from a serve. Real alt text needs someone who was at the matches; it is `photoAlt()` in `src/data/gallery.ts` and touching one function fixes every caller.
 - **The gallery is not editable, and removing a photo is a developer job.** It is generated, so `/admin` cannot show it: taking a photo down means deleting its source and both derivatives and re-running `scripts/build-gallery.mjs`. Worth knowing in advance, because *"please take that one of my daughter down"* is a request that arrives on a weekend. These are photographs of minors on a public site — whether each one may be published is the program's call, not the code's, and nothing here records who consented.

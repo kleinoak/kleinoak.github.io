@@ -1540,3 +1540,77 @@ there was nothing to interpret.
       has to scroll to the bottom to find out. That is the trade of moving it —
       less prominent is the point, but "less prominent" and "hard to find" are
       the same thing to somebody who does not know it exists.
+
+---
+
+## 20260905 — The spirit calendar lands on the home page
+
+The program supplied "Upcoming Events at a Glance" — sixteen dates with dress-up
+themes, honoured nights, rally cries, two Spirit Nights and a pantry drive — for
+the landing page.
+
+### Checked before built
+Every fixture in the list was cross-referenced against `content/matches.json`
+before a line of UI was written: **thirteen games, all thirteen agreeing on date,
+opponent and home/away.** Nothing was wrong, which is worth recording precisely
+because it is the outcome that leaves no trace otherwise.
+
+The list also **closed an open question**. The pantry drive's flyer carried no
+date at all — logged twice as needing the program — and this list gives
+**September 21–25**. The announcement now has real dates and will archive itself
+on the 26th instead of sitting on "Ongoing" until somebody notices.
+
+### Decisions
+- **A new collection rather than more fields on the schedule.** The schedule says
+  *when each level plays*; this says *wear gold and it is Alumni Night*. Holding
+  no start times here is deliberate: a date carrying a time in two files will
+  eventually carry two different times, and the one nobody is looking at will be
+  the wrong one. The section ends with a link to `/schedule` for that reason.
+- **The theme drives the design instead of sitting in it as a word.** A rule
+  across the top of each card in the colour being called for, and a chip
+  repeating it as a swatch, so "which night do I wear gold" is answerable by
+  scanning.
+- **Only a themed night gets a rule** — caught in the browser, not in review. The
+  first version gave unthemed cards a light grey rule, which made a *White Hot*
+  night and an away night identical along the top. That is precisely the
+  distinction the rule exists to draw. Unthemed is blank now, height reserved so
+  rows still align.
+- **`themeTone` is separate from `themeLabel`.** "White Hot" and "White Out" are
+  one colour under two names, and a label cannot be coloured in.
+- **The emoji went; the copy stayed.** A wall of 🏆💛🖤🤠 next to a design built
+  on lucide icons and black-and-gold reads as a different website spliced in, and
+  a screen reader would announce "trophy yellow-heart" where it now says "Gold
+  Out". The sentences are verbatim, exclamation marks included — that voice is
+  the program's and not mine to flatten. Flagged to the user rather than done
+  quietly.
+- **Three entries duplicate an Announcement, on purpose.** The Spirit Nights and
+  the drive live in both: the announcement carries the flyer, the spirit card
+  carries the facts at a glance. `announcementId` ties them for a maintainer. One
+  card trying to be both would be a flyer nobody can scan or a summary with no
+  flyer.
+- **`mt-auto` came off the detail paragraph.** In a stretched grid cell it pushed
+  the text to the bottom and left a hole through the middle of every short card.
+- **The section unmounts when the season ends** rather than rendering a heading
+  shouting "Upcoming Events" over nothing.
+
+### Verified
+- [x] `tsc` clean; `eslint` clean; `validate:content` → **13** files (the new
+      collection is registered and its data passes); `next build` → 16 routes.
+- [x] Rendered in a browser: 16 cards, 8 in September and 8 in October, month
+      headings derived from the dates rather than stored.
+- [x] Theme rules read correctly at a glance — gold, blank, grey, blank, blank,
+      black down the September grid.
+- [x] 390 and 1280px, no horizontal scroll; cards stack on the phone.
+
+### Not yet done
+- [ ] **Nothing checks a spirit card against the schedule.** All sixteen agree
+      today because they were checked by hand once. An editor can put a Gold Out
+      on a night the team is away and the site will render it cheerfully. A
+      validator rule comparing `startDate` + `opponent` + `homeAway` against
+      `matches.json` is maybe twenty lines and is the obvious next thing.
+- [ ] **Sixteen cards is a lot of landing page.** It shrinks as the season passes
+      — by late October it is a handful — but right now the home page is long.
+      Nobody has seen it on a phone in the wild yet.
+- [ ] The pantry drive's Amazon wish list is still only a QR code in the poster.
+- [ ] `announcementId` is stored and never used by any code — it exists so a
+      maintainer can trace the pair, and nothing enforces that the id resolves.

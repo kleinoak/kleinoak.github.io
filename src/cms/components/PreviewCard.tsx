@@ -11,6 +11,8 @@ import { EventCard } from "@/components/cards/EventCard";
 import { TeamCard } from "@/components/cards/TeamCard";
 import { CoachCard } from "@/components/cards/CoachCard";
 import { CoachProfile } from "@/components/cards/CoachProfile";
+import { SpiritEventCard } from "@/components/home/SpiritCalendar";
+import type { SpiritEvent, SpiritTone } from "@/data/spiritEvents";
 import { ResourceCard } from "@/components/cards/ResourceCard";
 import { SponsorLogoCard } from "@/components/cards/SponsorLogoCard";
 import type { Collection } from "../schema";
@@ -124,6 +126,35 @@ export function PreviewCard({ collection, item }: { collection: Collection; item
           }}
         />
       );
+
+    case "spiritEvent": {
+      const kind = text(item, "kind");
+      const homeAway = text(item, "homeAway");
+      const tone = text(item, "themeTone");
+      return (
+        <SpiritEventCard
+          event={{
+            id: text(item, "id", "preview"),
+            startDate: text(item, "startDate"),
+            endDate: text(item, "endDate") || undefined,
+            date: text(item, "date", "Date"),
+            kind: kind === "spirit-night" || kind === "drive" ? kind : "game",
+            homeAway: homeAway === "home" || homeAway === "away" ? homeAway : undefined,
+            opponent: text(item, "opponent") || undefined,
+            title: text(item, "title") || undefined,
+            themeLabel: text(item, "themeLabel") || undefined,
+            themeTone: (["gold", "white", "black"] as const).includes(tone as SpiritTone)
+              ? (tone as SpiritTone)
+              : undefined,
+            occasion: text(item, "occasion") || undefined,
+            rally: text(item, "rally") || undefined,
+            detail: text(item, "detail"),
+            location: text(item, "location") || undefined,
+            time: text(item, "time") || undefined,
+          } satisfies SpiritEvent}
+        />
+      );
+    }
 
     case "resource":
       return (

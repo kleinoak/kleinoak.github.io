@@ -1,0 +1,176 @@
+[
+  {
+    "id": "sep-8-klein-forest",
+    "startDate": "2026-09-08",
+    "date": "September 8",
+    "kind": "game",
+    "homeAway": "home",
+    "opponent": "Klein Forest",
+    "themeLabel": "Gold Out",
+    "themeTone": "gold",
+    "detail": "Wear your gold and fill the stands with Panther Pride!"
+  },
+  {
+    "id": "sep-11-klein-cain",
+    "startDate": "2026-09-11",
+    "date": "September 11",
+    "kind": "game",
+    "homeAway": "away",
+    "opponent": "Klein Cain",
+    "rally": "Let's calm the storm!",
+    "detail": "Bring the energy and help our Panthers take down the Hurricanes!"
+  },
+  {
+    "id": "sep-15-tomball",
+    "startDate": "2026-09-15",
+    "date": "September 15",
+    "kind": "game",
+    "homeAway": "home",
+    "opponent": "Tomball",
+    "themeLabel": "White Hot",
+    "themeTone": "white",
+    "detail": "Wear white and watch our Panthers get WHITE HOT!"
+  },
+  {
+    "id": "sep-18-magnolia-west",
+    "startDate": "2026-09-18",
+    "date": "September 18",
+    "kind": "game",
+    "homeAway": "away",
+    "opponent": "Magnolia West",
+    "rally": "Round up those Mustangs!",
+    "detail": "Let's ride into Magnolia West ready to compete!"
+  },
+  {
+    "id": "sep-21-25-ko-pantry-drive",
+    "startDate": "2026-09-21",
+    "endDate": "2026-09-25",
+    "date": "September 21–25",
+    "kind": "drive",
+    "title": "KO Pantry Food & Hygiene Drive",
+    "rally": "Let's stock the KO Pantry!",
+    "detail": "Bring food and hygiene items to the game and help support our Klein Oak community. Every donation makes a difference — the flyer above lists everything needed.",
+    "announcementId": "food-hygiene-drive"
+  },
+  {
+    "id": "sep-22-klein-collins",
+    "startDate": "2026-09-22",
+    "date": "September 22",
+    "kind": "game",
+    "homeAway": "home",
+    "opponent": "Klein Collins",
+    "themeLabel": "Black Out",
+    "themeTone": "black",
+    "occasion": "Teacher Appreciation Night",
+    "detail": "Wear black and help us show our amazing teachers how much we appreciate them!"
+  },
+  {
+    "id": "sep-25-klein",
+    "startDate": "2026-09-25",
+    "date": "September 25",
+    "kind": "game",
+    "homeAway": "home",
+    "opponent": "Klein",
+    "themeLabel": "Gold Out",
+    "themeTone": "gold",
+    "occasion": "Alumni Night",
+    "detail": "Break out the gold and cheer our Panthers to victory as we welcome back our Alumni!"
+  },
+  {
+    "id": "sep-29-stratford",
+    "startDate": "2026-09-29",
+    "date": "September 29",
+    "kind": "game",
+    "homeAway": "away",
+    "opponent": "Stratford",
+    "rally": "Their Spartan shield won't save them!",
+    "detail": "Let's bring the Panther power!"
+  },
+  {
+    "id": "oct-1-spirit-night-center-court",
+    "startDate": "2026-10-01",
+    "date": "October 1",
+    "kind": "spirit-night",
+    "title": "Spirit Night at Center Court Pizza",
+    "location": "24345 Gosling Rd, Spring, TX 77389",
+    "time": "11:00 AM – 10:00 PM",
+    "detail": "Mention Klein Oak Volleyball when you order. Center Court Pizza donates a portion of the proceeds back to the program.",
+    "announcementId": "spirit-night-center-court-2026"
+  },
+  {
+    "id": "oct-6-magnolia",
+    "startDate": "2026-10-06",
+    "date": "October 6",
+    "kind": "game",
+    "homeAway": "home",
+    "opponent": "Magnolia",
+    "themeLabel": "White Hot",
+    "themeTone": "white",
+    "occasion": "Middle School Night",
+    "detail": "Wear white and help us welcome our future Panthers!"
+  },
+  {
+    "id": "oct-9-klein-forest",
+    "startDate": "2026-10-09",
+    "date": "October 9",
+    "kind": "game",
+    "homeAway": "away",
+    "opponent": "Klein Forest",
+    "rally": "The Golden Eagles will land… hard!",
+    "detail": "Let's bring the Panther fight!"
+  },
+  {
+    "id": "oct-13-klein-cain",
+    "startDate": "2026-10-13",
+    "date": "October 13",
+    "kind": "game",
+    "homeAway": "home",
+    "opponent": "Klein Cain",
+    "themeLabel": "Black Out",
+    "themeTone": "black",
+    "detail": "Wear black and bring the noise for our Panthers!"
+  },
+  {
+    "id": "oct-14-spirit-night-natalitas",
+    "startDate": "2026-10-14",
+    "date": "October 14",
+    "kind": "spirit-night",
+    "title": "Spirit Night at Natalita's",
+    "location": "24814 Kuykendahl Rd, Tomball, TX 77375",
+    "time": "4:00 PM – 9:30 PM",
+    "detail": "Mention Klein Oak Volleyball when you order. Natalita's donates a portion of the proceeds back to the program.",
+    "announcementId": "spirit-night-natalitas-2026"
+  },
+  {
+    "id": "oct-16-tomball",
+    "startDate": "2026-10-16",
+    "date": "October 16",
+    "kind": "game",
+    "homeAway": "away",
+    "opponent": "Tomball",
+    "rally": "Declaw the Cougars!",
+    "detail": "Let's show them what Panther Pride is all about!"
+  },
+  {
+    "id": "oct-20-magnolia-west",
+    "startDate": "2026-10-20",
+    "date": "October 20",
+    "kind": "game",
+    "homeAway": "home",
+    "opponent": "Magnolia West",
+    "themeLabel": "White Out",
+    "themeTone": "white",
+    "occasion": "Senior Night",
+    "detail": "Come celebrate and honor our incredible Klein Oak Volleyball seniors!"
+  },
+  {
+    "id": "oct-23-klein-collins",
+    "startDate": "2026-10-23",
+    "date": "October 23",
+    "kind": "game",
+    "homeAway": "away",
+    "opponent": "Klein Collins",
+    "rally": "Tame the Tigers!",
+    "detail": "Let's finish strong and bring home the win!"
+  }
+]

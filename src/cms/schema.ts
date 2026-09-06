@@ -64,7 +64,15 @@ export type Collection = {
   /** Wording for the "add" button, e.g. "Add announcement". */
   itemNoun?: string;
   /** Card component used for the live preview, if any. */
-  preview?: "announcement" | "event" | "team" | "coach" | "coachProfile" | "resource" | "sponsorTier";
+  preview?:
+    | "announcement"
+    | "event"
+    | "team"
+    | "coach"
+    | "coachProfile"
+    | "spiritEvent"
+    | "resource"
+    | "sponsorTier";
   fields: Field[];
 };
 
@@ -176,6 +184,124 @@ export const collections: Collection[] = [
         help: "On moves this into the archive immediately, whatever the dates say. This is the only way to retire an announcement that has no sort date.",
       },
       verifiedField,
+    ],
+  },
+  {
+    name: "spiritEvents",
+    label: "Spirit calendar",
+    group: "Program news",
+    file: "content/spirit-events.json",
+    kind: "list",
+    description:
+      "The 'Upcoming Events at a Glance' cards on the home page — themes, spirit nights and drives. Not the schedule: start times live in Key dates and the match schedule, and a date that carries a time in two files will eventually carry two different times. Anything whose date has passed drops off the page on its own.",
+    usedOn: ["Home page"],
+    labelField: "date",
+    identifierField: "id",
+    itemNoun: "event",
+    preview: "spiritEvent",
+    fields: [
+      { name: "id", label: "ID", type: "slug", required: true, help: "Internal only — lowercase letters, numbers and dashes." },
+      {
+        name: "startDate",
+        label: "Sort date",
+        type: "text",
+        required: true,
+        placeholder: "2026-09-08",
+        help: "YYYY-MM-DD, the real calendar date. The card disappears from the home page the day after it passes.",
+      },
+      {
+        name: "endDate",
+        label: "Last day",
+        type: "text",
+        placeholder: "2026-09-25",
+        help: "Only for something running over several days, like a donation drive.",
+      },
+      {
+        name: "date",
+        label: "Date label",
+        type: "text",
+        required: true,
+        placeholder: "September 8",
+        help: "How the date should read on the card, e.g. 'September 8' or 'September 21–25'.",
+      },
+      {
+        name: "kind",
+        label: "Kind",
+        type: "select",
+        required: true,
+        options: [
+          { value: "game", label: "Game" },
+          { value: "spirit-night", label: "Spirit night (restaurant)" },
+          { value: "drive", label: "Donation drive" },
+        ],
+      },
+      {
+        name: "homeAway",
+        label: "Home or away",
+        type: "select",
+        options: [
+          { value: "home", label: "Home" },
+          { value: "away", label: "Away" },
+        ],
+        help: "Games only. Check it against the schedule page — the two must agree.",
+      },
+      { name: "opponent", label: "Opponent", type: "text", placeholder: "Klein Forest", help: "Games only." },
+      {
+        name: "title",
+        label: "Title",
+        type: "text",
+        placeholder: "Spirit Night at Center Court Pizza",
+        help: "For anything that is not a game. A game builds its own title from the opponent.",
+      },
+      {
+        name: "themeLabel",
+        label: "Theme name",
+        type: "text",
+        placeholder: "Gold Out",
+        help: "Optional. The dress-up theme, e.g. 'Gold Out', 'White Hot', 'Black Out'.",
+      },
+      {
+        name: "themeTone",
+        label: "Theme colour",
+        type: "select",
+        options: [
+          { value: "gold", label: "Gold" },
+          { value: "white", label: "White" },
+          { value: "black", label: "Black" },
+        ],
+        help: "Which colour the theme actually is. This draws the stripe across the top of the card and the dot on the chip — the name alone cannot be coloured in.",
+      },
+      {
+        name: "occasion",
+        label: "Occasion",
+        type: "text",
+        placeholder: "Senior Night",
+        help: "Optional. Who is being honoured — Senior Night, Alumni Night, Teacher Appreciation Night.",
+      },
+      {
+        name: "rally",
+        label: "Rally cry",
+        type: "text",
+        placeholder: "Tame the Tigers!",
+        help: "Optional. The line shown large and in gold — used on away games and drives.",
+      },
+      {
+        name: "detail",
+        label: "Detail",
+        type: "textarea",
+        required: true,
+        rows: 3,
+        maxLength: 300,
+        help: "One or two sentences, in the program's own voice.",
+      },
+      { name: "location", label: "Location", type: "text", help: "Spirit nights — the restaurant address." },
+      { name: "time", label: "Time", type: "text", placeholder: "4:00 PM – 9:30 PM", help: "Spirit nights only." },
+      {
+        name: "announcementId",
+        label: "Linked announcement ID",
+        type: "text",
+        help: "Optional. The id of the Announcement that carries this event's flyer, so the two are traceable to each other. Not shown on the page.",
+      },
     ],
   },
   {

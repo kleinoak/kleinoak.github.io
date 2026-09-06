@@ -49,7 +49,7 @@
   },
   {
     "id": "food-hygiene-drive",
-    "date": "Ongoing",
+    "date": "September 21–25",
     "title": "Food & Hygiene Drive — KO Pantry",
     "summary": "Help stock the KO Pantry, which supports students and families across the Klein Oak feeder pattern. Donations go to the Counseling Office.",
     "location": "Drop-off: Counseling Office",
@@ -71,7 +71,9 @@
       "thumbWidth": 345,
       "thumbHeight": 578
     },
-    "verified": true
+    "verified": true,
+    "startDate": "2026-09-21",
+    "endDate": "2026-09-25"
   },
   {
     "id": "team-pictures-2026",
