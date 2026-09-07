@@ -1,7 +1,7 @@
 {
   "source": "Rank One",
-  "checkedAt": "2026-09-06T17:32:12.142Z",
-  "changedAt": "2026-09-05",
+  "checkedAt": "2026-09-07T06:30:43.679Z",
+  "changedAt": "2026-09-07",
   "levels": {
     "varsity": {
       "label": "Varsity",
@@ -1339,13 +1339,37 @@
         },
         {
           "date": "2026-09-05",
-          "time": "8:30 AM",
+          "time": "1:00 PM",
           "home": false,
-          "opponent": "TAV Tournament",
+          "opponent": "Waller Freshman B",
           "venue": "",
           "address": "",
           "map": "",
-          "note": "TAV Tournament",
+          "note": "TAV Tournament-Battle of the Oaks",
+          "status": "",
+          "result": ""
+        },
+        {
+          "date": "2026-09-05",
+          "time": "2:00 PM",
+          "home": false,
+          "opponent": "Caney Creek Freshman",
+          "venue": "",
+          "address": "",
+          "map": "",
+          "note": "TAV Tournament-Battle of the Oaks",
+          "status": "",
+          "result": ""
+        },
+        {
+          "date": "2026-09-05",
+          "time": "4:00 PM",
+          "home": false,
+          "opponent": "Waller Freshman A",
+          "venue": "",
+          "address": "",
+          "map": "",
+          "note": "TAV Tournament-Battle of the Oaks",
           "status": "",
           "result": ""
         },
