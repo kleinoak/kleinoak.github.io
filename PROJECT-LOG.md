@@ -2066,3 +2066,203 @@ Measured against the built static export, at three widths:
       committing — `src/app/layout.tsx` and `globals.css` are untouched. Every
       number above is geometry, which the display face does not change, but the
       callout was not re-checked in Oswald.
+
+---
+
+## 20260907 — Production had been running its own scraper, greenly, for weeks
+
+Reported as a stale timestamp: *"I saw that Rank One synchronization happened at
+9/6/2026 11:12PM. The website though did not update the time stamp."* — with a
+link to the **production** repository's Actions tab.
+
+That link was the whole answer. There should be no Rank One runs there at all.
+
+### What was actually happening
+
+`scripts/deploy-prod.sh` stripped every tracked `*.md` and nothing else, so each
+deploy shipped `.github/workflows/rankone.yml` to the mirror. GitHub scheduled
+it there, exactly as it does in the source repository, and it ran three times a
+day.
+
+The workflow's own header had predicted half of this. It opens with "WHY THIS
+RUNS HERE AND NOT IN PRODUCTION" and explains that a commit made inside the
+mirror is force-pushed away by the next deploy. Nobody had checked whether the
+file was *reaching* production, so the comment described a hazard the repository
+was walking into on every deploy.
+
+The half nobody predicted is the one that bit: **a commit pushed with
+`GITHUB_TOKEN` triggers no other workflow.** GitHub does that deliberately, to
+stop workflows recursing. So the mirror's sync committed `content/rankone.json`,
+`deploy.yml` never fired, and the fetched data never reached a build.
+
+The evidence, from the mirror's own run list:
+
+```
+sync 2026-09-06T04:11:47Z  -> next build 2026-09-06T05:57:22Z   (a hand deploy)
+sync 2026-09-06T11:08:59Z  -> next build 2026-09-06T13:51:08Z   (engineering's publish)
+sync 2026-09-06T15:08:06Z  -> next build 2026-09-06T17:32:46Z   (engineering's publish)
+sync 2026-09-07T04:12:17Z  -> next build NONE
+```
+
+Every build that followed a prod-local sync came from somewhere else. Not one of
+those syncs ever rebuilt the site. The 04:12 run was the one the reporter saw,
+and it had fetched a **real fixture change** — commit subject "Sync schedule and
+results from Rank One", `changedAt` moved to 2026-09-07 — into a repository that
+had no way to publish it.
+
+Green ticks for work that cannot possibly have an effect is the worst shape a
+bug can take. Nothing was red. Nothing was missing. The Actions tab was
+advertising a job that had never once done anything.
+
+### The second thing, which is not a bug
+
+Engineering's crons are `0 4`, `0 11`, `0 15`. On 2026-09-06 they fired at
+08:15, 13:50 and 17:31 UTC — two and a half to four hours late. GitHub queues
+scheduled workflows at low priority and guarantees nothing. Production's copy of
+the identical cron ran within twelve minutes every time.
+
+So the mirror consistently won the race to fetch, and consistently could not
+publish. That is why the page was stale rather than merely late.
+
+### Decisions
+
+- **`deploy-prod.sh` strips the workflow, and then asserts it did.** The strip
+  list is now docs *plus* `MIRROR_ONLY_WORKFLOWS`, and after `write-tree` the
+  script re-reads the tree and fails if anything on that list survived. The
+  assertion is not paranoia: the loop that removes them is `echo | while read`,
+  which is a subshell, so a failure inside it cannot stop the script — and the
+  symptom of a leak is green runs that change nothing, which is precisely what
+  went unnoticed for weeks.
+- **`rankone.yml` refuses to run in the mirror.** `if: github.repository !=
+  'kleinoak/kleinoak.github.io'` on the sync job. Written as "not the mirror"
+  rather than "is the source repository" so a fork still syncs normally.
+  Belt and braces: the strip handles new deploys, this handles the tree already
+  sitting in production. `publish` needs `sync`, so one guard covers both.
+- **The general rule, written into both files:** a workflow that writes to the
+  repository it runs in must never be shipped to a mirror.
+- **`pull-request.yml` is left alone.** It also ships to production and also
+  never runs anything useful there, but it writes nothing and nobody opens pull
+  requests against the mirror. Same class, no consequence; noted rather than
+  bundled in.
+
+### Verified
+
+- [x] The strip plumbing run against `HEAD`: the production tree contains
+      `deploy.yml` and `pull-request.yml` and **not** `rankone.yml`; `README.md`
+      survives; the leak assertion reports none.
+- [x] `sh -n scripts/deploy-prod.sh` clean.
+- [x] The script's clean-tree guard correctly refused a dry run against a dirty
+      working tree, which is how the plumbing came to be tested directly.
+
+### Not yet done
+
+- [ ] **Production's `content/rankone.json` is currently ahead of
+      engineering's** — the mirror fetched a real change at 04:12 that
+      engineering has not yet seen. The next deploy force-pushes engineering's
+      tree over it. Nothing is permanently lost, because the next engineering
+      sync re-reads Rank One live and will find the same change, but until then
+      the site's data goes backwards by one fetch. Triggering the engineering
+      sync by hand after this lands closes it in one step.
+- [ ] **Nothing watches for a workflow file arriving where it should not be.**
+      The assertion in `deploy-prod.sh` only checks the list it already knows
+      about. A future workflow that writes to its own repository would ship to
+      the mirror exactly the way this one did.
+
+---
+
+## 20260907 — The State Farm card, as legible as arithmetic allows
+
+*"The logo for sponsor 'State Farm Blaine' looks small. Adjust it so the other
+details are legible but keep it the same size as the other Black sponsors."*
+
+### What could be done
+
+The plate is 260×128 with `px-4`, so 228×128 of usable box. The artwork is
+600×381, aspect 1.575, so the **height** cap binds: at `max-h-20` it rendered
+126×80 and used barely half the plate's width, while the wordmarks beside it —
+Klein Eyecare at 3.51, D1 Baseball at 4.05 — were width-bound and filling all
+228px of it. The tier looked uneven because the cap was set for the wide marks.
+
+Raising the standard cap to `max-h-24` (96px, which is a 128px plate with 16px
+of air top and bottom) takes it to **151×96**, and Blue Louis from 162×80 to
+194×96. The two wordmarks are unchanged, because width still binds for them.
+Every plate is the same size as before. The tier ladder is now 192 / 128 / 96 —
+platinum stands twice a black-tier mark rather than two and a half times, which
+is the price and it still reads.
+
+### What could not
+
+The three red contact lines are ~22px of a 381px source. At 96px render they are
+**5.5px tall**. Legible needs about 9px, which needs 156px of render height, in a
+plate 128px tall. That is arithmetic, and no cap setting reaches it.
+
+Cropping does not help either, and this was checked rather than assumed: the red
+wedge and the portrait run edge to edge from y=0 to y=380. **Only the white text
+panel has margin** — 49px above and 43px below — and trimming to it would cut
+through the man's head and the graphic. There is no vertical crop available.
+
+So: the State Farm mark and "Blaine Scelfo" are now legible and were not before.
+The street address and the phone number are not, and cannot be, at black-tier
+size with this file.
+
+### The part that resolves it, from the next request
+
+The links landed in the same pass. **The plate is now a link to
+sfwoodlands.com**, which is where a reader gets the address — so the illegible
+lines no longer need to be legible. The clean fix is still to ask the sponsor for
+a mark without the address block, which would render near full width; it is
+logged as a limitation rather than left as a mystery.
+
+---
+
+## 20260907 — Six sponsors, six links
+
+*"Add these links to the corresponding sponsor logos"* — one URL per business,
+supplied by tier. This closes the "no sponsor is linked to anywhere" item flagged
+on PR #46.
+
+### Decisions
+
+- **`url` is optional and lives on the logo entry.** A business with no website,
+  or one that has not asked to be linked, renders as a plain `<div>` — not a dead
+  link, and not an anchor with no href. The schema help says so, because the
+  instinct when a field exists is to fill it in.
+- **The whole plate is the target,** not the image alone. On a 260×128 card the
+  logo can be 126px wide; a link that only covers the artwork misses most of what
+  a reader aims at.
+- **The hover lift is scoped to the linked branch.** `group-hover:scale-[1.03]`
+  on the image, `group` only on the `<a>`. Tailwind's `group-hover:` needs an
+  ancestor carrying `group`, so an unlinked plate is completely still and never
+  suggests it can be clicked. That is one class doing the work of a prop.
+- **`rel="noopener noreferrer"` matters more here than anywhere else on the
+  site.** These are other people's domains. Without `noopener` the opened tab
+  gets a handle on this one through `window.opener` and can navigate it.
+- **Accessible name is the alt text plus an `sr-only` "(opens in a new tab)"** —
+  the same phrasing the sponsorship-form link on the same page already uses, so
+  the page says it one way. `sr-only` is absolutely positioned, so it adds no
+  flex item to the plate.
+
+### Verified
+
+Read out of the rendered DOM, at 1280 and 390:
+
+- [x] **Six** linked plates, every one `target="_blank"` with both `noopener` and
+      `noreferrer`, each href matching the business whose artwork it wraps.
+- [x] Accessible names read as intended, e.g. *"Blue Louis Boutique logo (opens
+      in a new tab)"*, *"Randall Reed's Planet Ford, Spring TX logo (opens in a
+      new tab)"*.
+- [x] Logo geometry after the cap change — 1280: platinum 298×192, gold 185×128,
+      black 226×64 / 226×56 / **151×96** / 194×96, every one at 2.01× or better.
+      390: black 137×39 / 137×34 / **126×80** / 137×68.
+- [x] `tsc` clean; `eslint` clean; `validate:content` → 13 files; `next build` →
+      17 static pages.
+
+### Not yet done
+
+- [ ] **A sponsor cannot be linked without artwork.** `url` sits on the logo
+      entry, so the name-only fallback has no link. Nobody needs it today.
+- [ ] Nothing checks that a sponsor's URL still resolves. A business that folds
+      or lets a domain lapse leaves the wall pointing at whatever replaces it.
+- [ ] `fonts.googleapis.com` is still unreachable here, so all three changes were
+      previewed behind a temporary font stub, reverted before committing —
+      `src/app/layout.tsx` and `globals.css` are untouched.

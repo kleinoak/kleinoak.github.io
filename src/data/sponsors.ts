@@ -14,6 +14,11 @@ export type SponsorTier = {
 export type SponsorLogo = {
   /** Must match the business name exactly as it appears in a tier's `sponsors`. */
   name: string;
+  /**
+   * The business's own site. Optional: a sponsor who has no website, or has not
+   * asked to be linked, is shown as a plain plate rather than a dead link.
+   */
+  url?: string;
   logo: {
     src: string;
     alt: string;

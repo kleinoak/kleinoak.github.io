@@ -16,9 +16,18 @@ name: Sync Rank One schedule
 # published a content change.
 #
 # So it runs in the source repository, commits to `main`, and reaches production
-# the same way every other change does. See PROJECT-DOCUMENTATION, "Keeping the
-# schedule in sync", for the one consequence of that (production is as fresh as
-# the last deploy, not as the last sync) and the two ways to close it.
+# the same way every other change does — the `publish` job at the bottom of this
+# file. See PROJECT-DOCUMENTATION, "Keeping the schedule in sync".
+#
+# That paragraph was written before anyone checked whether the file *reached*
+# production. It did: `deploy-prod.sh` stripped only `*.md`, so every deploy
+# shipped this workflow to the mirror, where it ran three times a day for weeks.
+# Exactly the predicted thing happened, plus one nobody had predicted — the
+# mirror's commits are made with GITHUB_TOKEN, and a GITHUB_TOKEN push triggers
+# no other workflow, so `deploy.yml` never fired and the fetched data never
+# reached a build at all. Fixed on 2026-09-07 in two places: the deploy script
+# strips this file, and the `if:` on the sync job below refuses to run in the
+# mirror even if an older tree still carries it.
 on:
   schedule:
     # Times are Central during daylight saving (UTC-5), which covers the whole
@@ -50,6 +59,14 @@ concurrency:
 
 jobs:
   sync:
+    # Belt and braces for the paragraph above. `scripts/deploy-prod.sh` now
+    # strips this file from the production tree, but an older deployed tree
+    # still carries it, and a copy of this repository that is a mirror rather
+    # than a source must never write to itself. Stated as "not the mirror"
+    # rather than "is the source repository" so a fork still syncs normally.
+    #
+    # `publish` needs `sync`, so skipping this skips that too.
+    if: github.repository != 'kleinoak/kleinoak.github.io'
     runs-on: ubuntu-latest
     outputs:
       dataChanged: ${{ steps.fetch.outputs.dataChanged }}

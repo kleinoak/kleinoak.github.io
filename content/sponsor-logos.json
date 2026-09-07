@@ -1,6 +1,7 @@
 [
   {
     "name": "Planet Ford",
+    "url": "https://www.planetford45.com/",
     "logo": {
       "src": "/images/sponsors/planet-ford.png",
       "alt": "Randall Reed's Planet Ford, Spring TX logo",
@@ -10,6 +11,7 @@
   },
   {
     "name": "MoCo Mavs",
+    "url": "https://mocomavs.com/",
     "logo": {
       "src": "/images/sponsors/moco-mavs.png",
       "alt": "MoCo Mavs volleyball club logo",
@@ -19,6 +21,7 @@
   },
   {
     "name": "Klein Eyecare",
+    "url": "https://www.kleineyecare.com/",
     "logo": {
       "src": "/images/sponsors/klein-eyecare.png",
       "alt": "Klein Eyecare, The Best in Sight, logo",
@@ -28,6 +31,7 @@
   },
   {
     "name": "D1 Baseball",
+    "url": "https://d1baseball.com/",
     "logo": {
       "src": "/images/sponsors/d1-baseball.png",
       "alt": "D1 Baseball logo",
@@ -37,6 +41,7 @@
   },
   {
     "name": "Blaine Scelfo State Farm",
+    "url": "https://www.sfwoodlands.com/?cmpid=TS45_blm_0001",
     "logo": {
       "src": "/images/sponsors/blaine-scelfo.jpg",
       "alt": "Blaine Scelfo, State Farm agent in Tomball, logo",
@@ -46,6 +51,7 @@
   },
   {
     "name": "Blue Louis",
+    "url": "https://shopbluelouis.com/",
     "logo": {
       "src": "/images/sponsors/blue-louis.png",
       "alt": "Blue Louis Boutique logo",

@@ -6,10 +6,10 @@ import { assetPath } from "@/lib/asset";
  * One sponsor's plate.
  *
  * Three sizes, because a sponsorship tier is a promise about prominence and the
- * page has to keep it. The logo caps step 192px, 128px and 80px tall at `sm` and
- * up — a difference nobody has to be told about: the platinum mark stands two
- * and a half times the height of a black-tier one on the same screen. Which tier
- * gets which size is decided by `sponsorTierSize`, never here.
+ * page has to keep it. The logo caps step 192px, 128px and 96px tall at `sm` and
+ * up — a difference nobody has to be told about: the platinum mark stands twice
+ * the height of a black-tier one on the same screen. Which tier gets which size
+ * is decided by `sponsorTierSize`, never here.
  *
  * The caps bind on height for an upright mark and on width for a long wordmark,
  * so two logos in the same row are the same *size* without being the same
@@ -45,7 +45,11 @@ const SIZES: Record<
   },
   standard: {
     plate: "h-28 px-4 sm:h-32 border-border",
-    logo: "max-h-16 sm:max-h-20",
+    // 80/96 rather than 64/80: the cap binds on height for an upright mark, so
+    // the tallest artwork in this tier was rendering at barely half the plate's
+    // usable width while the wide wordmarks beside it filled every pixel of it.
+    // 96 is what a 128px plate takes with 16px of air above and below.
+    logo: "max-h-20 sm:max-h-24",
     fallback: "text-base sm:text-lg",
   },
 };
@@ -60,29 +64,53 @@ export function SponsorLogoCard({
   const entry = sponsorLogoFor(name);
   const styles = SIZES[size];
 
-  return (
-    <div
-      className={`flex w-full items-center justify-center rounded-sm border bg-white text-center transition-colors hover:border-accent-strong ${styles.plate}`}
+  const plate = `flex w-full items-center justify-center rounded-sm border bg-white text-center transition-colors hover:border-accent-strong ${styles.plate}`;
+
+  const artwork = entry ? (
+    <Image
+      src={assetPath(entry.logo.src)}
+      alt={entry.logo.alt}
+      width={entry.logo.width}
+      height={entry.logo.height}
+      // The lift only exists when an ancestor carries `group`, which only the
+      // linked version does — so an unlinked plate stays completely still and
+      // never suggests it can be clicked.
+      className={`w-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.03] ${styles.logo}`}
+    />
+  ) : (
+    // No artwork on file — the business name is the fallback, so a sponsor
+    // can be listed the moment they sign up. It scales with the tier too:
+    // a platinum sponsor whose logo has not arrived yet still gets the
+    // prominence they paid for.
+    <span
+      className={`font-display font-semibold uppercase tracking-tight text-primary ${styles.fallback}`}
     >
-      {entry ? (
-        <Image
-          src={assetPath(entry.logo.src)}
-          alt={entry.logo.alt}
-          width={entry.logo.width}
-          height={entry.logo.height}
-          className={`w-auto max-w-full object-contain ${styles.logo}`}
-        />
-      ) : (
-        // No artwork on file — the business name is the fallback, so a sponsor
-        // can be listed the moment they sign up. It scales with the tier too:
-        // a platinum sponsor whose logo has not arrived yet still gets the
-        // prominence they paid for.
-        <span
-          className={`font-display font-semibold uppercase tracking-tight text-primary ${styles.fallback}`}
-        >
-          {name}
-        </span>
-      )}
-    </div>
+      {name}
+    </span>
+  );
+
+  // A sponsor with no `url` is a plain plate, not a dead link: businesses
+  // without a website, or that have not asked to be linked, are normal.
+  if (!entry?.url) {
+    return <div className={plate}>{artwork}</div>;
+  }
+
+  return (
+    <a
+      href={entry.url}
+      target="_blank"
+      // noopener/noreferrer: without it the opened tab gets a handle on this
+      // one via window.opener and could navigate it elsewhere. These are other
+      // people's sites, which is exactly when that matters.
+      rel="noopener noreferrer"
+      className={`group ${plate}`}
+    >
+      {artwork}
+      {/* The link's accessible name is the alt text plus this, so it reads
+          "Blue Louis Boutique logo (opens in a new tab)" — the same phrasing
+          the sponsorship-form link on this page already uses. `sr-only` is
+          absolutely positioned, so it adds no flex item to the plate. */}
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
   );
 }

@@ -670,6 +670,13 @@ export const collections: Collection[] = [
         help: "Must match the name in Sponsor tiers exactly, character for character — that is how the logo is matched to the sponsor.",
       },
       {
+        name: "url",
+        label: "Website",
+        type: "url",
+        placeholder: "https://example.com/",
+        help: "The sponsor's own site. The whole logo becomes a link to it, opening in a new tab. Leave blank for a business with no website, or one that has not asked to be linked — the logo is then shown as a plain plate rather than a dead link.",
+      },
+      {
         name: "logo",
         label: "Logo",
         type: "image",
