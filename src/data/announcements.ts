@@ -19,6 +19,18 @@ export type AnnouncementFlyer = {
   thumb?: string;
   thumbWidth?: number;
   thumbHeight?: number;
+  /**
+   * Where the card's strip crop should sit, as a CSS `object-position` — e.g.
+   * `"center 20%"`. Defaults to the middle of the poster.
+   *
+   * A poster is tall and the card shows a 176px band of it, so the default
+   * lands wherever the middle happens to be. That is right for the two Spirit
+   * Night posters, whose headline is identical and whose middle is the part
+   * that differs, and wrong for a poster whose title *is* the thing a reader
+   * recognises: centred, the Invitational card sliced the word INVITATIONAL
+   * in half, which reads as a rendering fault rather than a crop.
+   */
+  focus?: string;
 };
 
 export type Announcement = {

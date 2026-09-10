@@ -166,6 +166,13 @@ export const collections: Collection[] = [
         help: "Optional poster. It is cropped to a strip on the card and shown whole when the announcement is opened, so the alt text must carry everything the poster says — a reader who cannot see it gets nothing else.",
       },
       {
+        name: "flyer.focus",
+        label: "Flyer crop",
+        type: "text",
+        placeholder: "center 20%",
+        help: "Optional. The card shows a wide band of the flyer, taken from the middle by default. If that band cuts through the title, put a smaller percentage here to move it up — \"center 20%\" shows nearer the top, \"center 80%\" nearer the bottom.",
+      },
+      {
         name: "actionLabel",
         label: "Link text",
         type: "text",

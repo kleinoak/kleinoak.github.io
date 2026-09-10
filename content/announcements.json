@@ -1,5 +1,33 @@
 [
   {
+    "id": "middle-school-invitational-2026",
+    "startDate": "2026-10-06",
+    "date": "Tuesday, October 6",
+    "time": "JV 4:30 PM · Varsity 5:30 PM",
+    "title": "Middle School Invitational",
+    "summary": "Every middle school that feeds into Klein Oak is invited to come watch the Panthers play Magnolia — and there is a gift for all future Panthers.",
+    "location": "Klein Oak High School — Main Gym",
+    "details": [
+      "Open to all middle schools that feed into Klein Oak High School.",
+      "JV plays at 4:30 PM, varsity at 5:30 PM, both against Magnolia.",
+      "A gift for all future Panthers.",
+      "Klein Oak High School, Main Gym."
+    ],
+    "actionLabel": "See the schedule",
+    "actionHref": "/schedule",
+    "flyer": {
+      "src": "/images/announcements/middle-school-invitational.webp",
+      "thumb": "/images/announcements/middle-school-invitational-thumb.webp",
+      "alt": "Middle School Invitational flyer: Klein Oak High School Volleyball invites all middle schools that feed into Klein Oak to come watch our volleyball match. We will have a gift for all future Panthers. October 6, JV game 4:30 PM, varsity game 5:30 PM, Klein Oak High School Main Gym. Come support our Panthers!",
+      "width": 1000,
+      "height": 1503,
+      "thumbWidth": 500,
+      "thumbHeight": 751,
+      "focus": "center 17%"
+    },
+    "verified": true
+  },
+  {
     "id": "spirit-night-center-court-2026",
     "startDate": "2026-10-01",
     "date": "Thursday, October 1",

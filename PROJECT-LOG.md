@@ -2266,3 +2266,111 @@ Read out of the rendered DOM, at 1280 and 390:
 - [ ] `fonts.googleapis.com` is still unreachable here, so all three changes were
       previewed behind a temporary font stub, reverted before committing —
       `src/app/layout.tsx` and `globals.css` are untouched.
+
+---
+
+## 20260909 — The Invitational flyer, and the day it prints wrong
+
+A new poster arrived as an iPad screenshot: *"Make the necessary crop
+adjustments and render it at our home page specifically under the Announcements
+section."*
+
+### The cross-check found something
+
+Before writing any content I checked the poster against the two schedule
+sources, which is the check nothing automates. It disagrees with both, in one
+word:
+
+| | day | date | JV | varsity | venue |
+|---|---|---|---|---|---|
+| The flyer | **Monday** | October 6 | 4:30 PM | 5:30 PM | KOHS Main Gym |
+| `matches.json` | **Tuesday** | October 6 | 4:30 | 5:30 | Home vs Magnolia |
+| Rank One | **Tuesday** | 2026-10-06 | 4:30 PM | 5:30 PM | Klein Oak Competition Gym |
+
+October 6 2026 is a Tuesday. Rank One has nothing on Monday the 5th at all, and
+carries all four levels at home against Magnolia on the 6th at exactly the two
+times the poster prints. **The date and the times are right; the weekday is
+wrong.**
+
+So the card and the dialog say "Tuesday, October 6" — the site's own text is
+correct and is what a reader meets first. The poster is unaltered, which means
+**the dialog shows the correct day directly above a poster saying Monday.**
+
+That was a deliberate choice rather than an oversight. The two alternatives were
+worse: editing the artwork means a developer retouching the Booster Club's
+flyer, and adding a line of copy explaining the discrepancy means the website
+publicly correcting the Booster Club. Both are the program's call. Raised on the
+PR as the first thing to read, because the failure mode is a middle-school family
+arriving on the wrong evening.
+
+### The crop
+
+The source was a screenshot of a browser on an iPad: toolbar above, poster in
+the middle, home-indicator pill below. Two things made the poster's rectangle
+harder to find than it looks:
+
+- **The poster's white lettering is the page's background colour.** A
+  background-subtraction scan therefore reported the rows through
+  "INVITATIONAL" as mostly *empty*, and the longest-run heuristic locked onto
+  the bottom half of the poster. Measuring the edge columns instead fixed it.
+- **The home-indicator pill is dark and non-background**, so a naive
+  first-to-last scan down the poster's centre column ran to y=1624 and swallowed
+  40px of iPad. Printing the *runs* rather than the extremes showed the poster
+  ending at 1577, a gap, then the pill at 1614.
+
+Final rectangle: x 756..1644, y 242..1577 of a 2360×1640 screenshot.
+
+**The rounded corners needed filling.** A rectangular crop of a rounded poster
+takes four notches of page background with it — white wedges on a black poster.
+Filled per row, walking inward from each end until the first poster pixel,
+rather than flood-filling from the corners: the poster's own white lettering and
+the white panels of the volleyball are the same colour as the page, and a flood
+that found a way through the border would have eaten them. 0.61% of the crop was
+filled, which is corners and nothing else.
+
+Output follows the section's existing convention — `middle-school-invitational.webp`
+at 1000×1503 (172 kB) and a 500×751 thumb (73 kB).
+
+### `flyer.focus`
+
+The card shows a 176px band of the poster, centred. That default exists for a
+good reason recorded in the code: the two Spirit Night posters share a headline,
+so top-aligned they are the same picture twice and only the middle tells them
+apart. It is the wrong default here — centred, the band sliced the word
+INVITATIONAL in half, which reads as a rendering fault rather than a crop.
+
+`focus` is an optional CSS `object-position` on the flyer, applied as an inline
+style because the value comes from JSON and Tailwind only compiles class names
+it can see in the source. Chosen by measurement, not by eye: the poster's bands
+of ink are the header at 2–10%, the title block at 19–44%, the body paragraph
+from 46%. The card's band is 34% of the height, so `center 17%` puts it at
+11–45% — **both cuts land in a gap** and the title is whole.
+
+### Verified
+
+- [x] 1280 — card 347×491 with a 345×176 strip showing the panther, "Middle
+      School INVITATIONAL" and "YOU'RE INVITED!", cut cleanly at both ends, and
+      sitting level with the two Spirit Night cards beside it.
+- [x] 390 — 358×463, same band, no overflow.
+- [x] The dialog opens with the right title, "Tuesday, October 6 · JV 4:30 PM ·
+      Varsity 5:30 PM", the location, four detail bullets, the "See the
+      schedule" link, and the full 1000×1503 poster wrapped in a real `<a>` to
+      the image.
+- [x] The corner fill touched 0.61% of the crop — no leak into the lettering or
+      the ball, checked by eye at full size.
+- [x] `tsc` clean; `validate:content` → 13 files; `next build` → 17 static pages.
+
+### Not yet done
+
+- [ ] **The wrong weekday on the artwork**, above. The site is right and the
+      poster is not, and they appear together.
+- [ ] **The cross-check that caught this is still a person doing it by hand.**
+      Nothing compares an announcement's `startDate` against `matches.json` or
+      the Rank One feed, and nothing checks that a date's weekday matches the
+      day named in its own `date` string — which is a dozen lines and would have
+      caught this without anyone looking.
+- [ ] The three older flyers still have no `focus`, so they keep the centred
+      default. The pantry drive card cuts through the word DRIVE the same way
+      this one cut INVITATIONAL; it is now one content field to fix.
+- [ ] `fonts.googleapis.com` remains unreachable here, so this was previewed
+      behind a temporary font stub, reverted before committing.

@@ -44,10 +44,11 @@ export function AnnouncementCard({
       {flyer && thumbSrc && (
         // The flyer is cropped to a strip rather than shown whole: these are
         // tall posters, and a card that renders one at full aspect ratio is
-        // mostly poster. The crop is centred rather than top-aligned because
-        // the two Spirit Night posters share a headline — cropped to the top
-        // they are the same picture twice, and the middle band is where the
-        // restaurant actually appears.
+        // mostly poster. The crop is centred by default rather than
+        // top-aligned, because the two Spirit Night posters share a headline —
+        // cropped to the top they are the same picture twice, and the middle
+        // band is where the restaurant actually appears. A poster whose title
+        // is the recognisable part sets `flyer.focus` to move the band.
         <div className="relative border-b border-border bg-primary">
           {onOpen ? (
             <a
@@ -68,6 +69,10 @@ export function AnnouncementCard({
                 height={flyer.thumbHeight ?? flyer.height}
                 loading="lazy"
                 sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
+                // An inline style, not a Tailwind class: the value comes from
+                // content, and Tailwind only compiles class names it can see
+                // in the source.
+                style={flyer.focus ? { objectPosition: flyer.focus } : undefined}
                 className="h-44 w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
               />
               <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-sm bg-black/70 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">
@@ -82,6 +87,7 @@ export function AnnouncementCard({
               width={flyer.thumbWidth ?? flyer.width}
               height={flyer.thumbHeight ?? flyer.height}
               loading="lazy"
+              style={flyer.focus ? { objectPosition: flyer.focus } : undefined}
               className="h-44 w-full object-cover object-center"
             />
           )}
