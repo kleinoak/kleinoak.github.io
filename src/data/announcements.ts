@@ -87,9 +87,47 @@ export type AnnouncementSplit = {
 };
 
 /**
- * Split the feed into what is current and what is archived, preserving the
- * order the content file is written in — the schema tells editors it is
- * newest-first and the home page honours that.
+ * Order a list by `startDate`, nearest to today first.
+ *
+ * `startDate` is `YYYY-MM-DD`, so a plain string comparison is a date
+ * comparison — the same trick `isArchived` uses two functions up, and the
+ * reason that format is required rather than merely conventional.
+ *
+ * **An undated announcement sorts last and keeps its place.** A standing drive
+ * with no `startDate` has nothing to compare, and inventing a position for it
+ * from the date it was added would be a claim the content never made. Ties and
+ * undated pairs both fall through to `Array.prototype.sort`, which has been
+ * stable since ES2019 — so equal dates stay in the order the editor wrote them,
+ * and that order remains the tiebreak an editor can actually control.
+ *
+ * Multi-day entries sort on the day they begin, not the day they end: the
+ * pantry drive belongs where a reader would look for "starts September 21".
+ */
+function byDate(list: Announcement[], direction: 1 | -1): Announcement[] {
+  return [...list].sort((a, b) => {
+    if (a.startDate === undefined || b.startDate === undefined) {
+      if (a.startDate === b.startDate) return 0;
+      return a.startDate === undefined ? 1 : -1;
+    }
+    if (a.startDate === b.startDate) return 0;
+    return (a.startDate < b.startDate ? -1 : 1) * direction;
+  });
+}
+
+/**
+ * Split the feed into what is current and what is archived, and order each.
+ *
+ * **Both lists run nearest-to-today first**, which is one rule that comes out
+ * looking like two: current announcements ascend, so the next thing to happen
+ * is the first card, and archived ones descend, so the thing that happened most
+ * recently is the top of the archive. A reader scanning either list is asking
+ * "what is closest to now", and gets it in both.
+ *
+ * The content file's own order used to be the page's order, which meant the
+ * cards were sorted by whenever somebody happened to add them. Adding the
+ * Invitational put October 6 in front of October 1. Editors keep the freedom to
+ * order the file however they like — it is still the tiebreak for two things on
+ * the same day — but it no longer decides what a visitor sees first.
  *
  * Pure, like `upcomingFrom`: give it a date and it gives you the split, which
  * is what lets the browser re-run it against the real clock.
@@ -103,5 +141,5 @@ export function splitAnnouncements(
   for (const announcement of list) {
     (isArchived(announcement, today) ? archived : current).push(announcement);
   }
-  return { current, archived };
+  return { current: byDate(current, 1), archived: byDate(archived, -1) };
 }

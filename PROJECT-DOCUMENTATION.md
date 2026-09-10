@@ -476,6 +476,16 @@ That rule cannot cover everything, so there are two ways into the archive and ea
 
 `splitAnnouncements()` in `src/data/announcements.ts` is the whole rule, and it is pure — which is what lets it run twice.
 
+**Both lists are ordered nearest-to-today first**, which is one rule that comes out looking like two: current announcements ascend by `startDate`, so the next thing to happen is the first card, and archived ones descend, so the most recent is the top of the archive. A reader scanning either list is asking "what is closest to now".
+
+Until 2026-09-09 the content file's own order *was* the page's order, which meant the cards were sorted by whenever somebody happened to add them — adding the Invitational put October 6 in front of October 1. Editors keep the freedom to order the file however they like, and it is still the tiebreak for two announcements on the same day, but it no longer decides what a visitor sees first. Three details worth knowing:
+
+- **`startDate` is `YYYY-MM-DD`, so a string comparison is a date comparison** — the same trick `isArchived` uses, and the reason that format is required rather than merely conventional.
+- **An undated announcement sorts last and keeps its place.** A standing drive has nothing to compare, and inventing a position for it from the date it was added would be a claim the content never made.
+- **Ties fall through to `Array.prototype.sort`, stable since ES2019**, so two announcements on the same day stay in the order the editor wrote them — which keeps file order meaningful exactly where an editor can still use it.
+
+Multi-day entries sort on the day they begin, not the day they end: the pantry drive belongs where a reader would look for "starts September 21".
+
 **The split is computed twice, exactly like Upcoming Events.** This is a static export, so what is baked into the HTML is only as fresh as the last build; `AnnouncementsBrowser` re-runs the same function in the browser against the real date, and again when the tab returns to the foreground. First render is the server's, so hydration matches and nothing flickers. See [Deployment](#deployment) for why the nightly rebuild is the other half of this.
 
 **Flyers are a dialog, not the page.** A flyer is a poster the program hands over, stored as two WebPs in `public/images/announcements/` — a ~500px derivative cropped to a strip on the card, and a ~1000px one shown whole when the announcement is opened. Three reasons it is not simply rendered on the card at full size: the posters are tall and would swamp the section, they are ~200 KB each and only a reader who wants one should pay for it, and the two Spirit Night posters are *the same picture* down to the headline — which is why the card crop is centred by default rather than top-aligned, so the restaurant is what shows.

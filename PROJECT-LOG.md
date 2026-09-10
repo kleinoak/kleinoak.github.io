@@ -2374,3 +2374,75 @@ from 46%. The card's band is 34% of the height, so `center 17%` puts it at
       this one cut INVITATIONAL; it is now one content field to fix.
 - [ ] `fonts.googleapis.com` remains unreachable here, so this was previewed
       behind a temporary font stub, reverted before committing.
+
+---
+
+## 20260909 — Announcements sort themselves
+
+*"Sort the Announcements at our home page based on date in ascending order."*
+
+### What it was doing
+
+Rendering in the order `content/announcements.json` happened to be written in.
+The schema even told editors so — *"Newest first — the page shows them in this
+order"* — which made file order a thing an editor had to maintain by hand and
+get right.
+
+Yesterday's entry is what exposed it. Inserting the Invitational at the top of
+the file put **October 6 in front of October 1**, and the section read Oct 6,
+Oct 1, Oct 14, Sep 21. That was not a mistake in the insert; it was the section
+having no opinion about dates at all.
+
+### Decisions
+
+- **The sort lives in `splitAnnouncements`, not in the component.** That
+  function is already pure and already runs twice — once at build for the
+  prerendered HTML, once in the browser against the real clock. Sorting anywhere
+  else would mean the server and the client could disagree about order, which is
+  a hydration mismatch rather than a cosmetic one.
+- **Nearest-to-today first, in both lists.** Current ascends so the next thing
+  to happen is the first card; the archive descends so the most recent is at the
+  top. That reads as two rules and is one: a reader scanning either list is
+  asking *what is closest to now*. The instruction was "ascending", which is
+  what the cards do; an archive that put the oldest item of the season first
+  would have been the letter of it and the opposite of its point.
+- **Undated announcements sort last and keep their place.** A standing drive has
+  no `startDate` to compare, and giving it a position derived from when it was
+  added would be a claim the content never made.
+- **Ties fall through to `Array.prototype.sort`.** Stable since ES2019, so two
+  announcements on the same day keep the order the editor wrote — which leaves
+  file order meaningful in exactly the place an editor can still use it, and
+  nowhere else.
+- **`startDate` string comparison, not `Date` parsing.** It is `YYYY-MM-DD`, so
+  lexicographic order *is* chronological order — the same thing `isArchived`
+  does two functions up, and one more reason that format is required rather
+  than conventional.
+- **The schema description was a lie the moment this landed**, so it changed in
+  the same commit. It now tells editors the page sorts by Sort date and that
+  their file order does not decide what a visitor sees first.
+
+### Verified
+
+Read out of the rendered page, not reasoned about:
+
+- [x] **The prerendered HTML** — `out/index.html`, the no-JavaScript path —
+      lists Sep 21–25, Oct 1, Oct 6, Oct 14. Checked here rather than only in
+      the browser, because the server's order is the one a crawler and a reader
+      with scripting off get.
+- [x] **The hydrated DOM** gives the identical order, so the browser's re-run
+      against the real clock agrees with the build and nothing reorders under
+      the reader.
+- [x] **The archive**, opened from its dialog: Aug 9, Aug 6, Aug 3, then the
+      undated "2026 Season" last — descending, with the undated entry at the end
+      exactly as the rule says.
+- [x] `tsc` clean; `validate:content` → 13 files; `next build` → 17 static pages.
+
+### Not yet done
+
+- [ ] **Nothing tests the sort.** It is a pure function with three interesting
+      cases — ascending, descending, and undated-last — and the repository has
+      no test runner at all, so it was verified by reading the built page. That
+      is real verification but it is not a regression guard, and the next person
+      to touch this function has nothing to catch them.
+- [ ] The same argument applies to `isArchived` and `upcomingFrom`, which are
+      pure, dated, and equally untested.

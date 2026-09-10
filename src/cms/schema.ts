@@ -91,7 +91,7 @@ export const collections: Collection[] = [
     file: "content/announcements.json",
     kind: "list",
     description:
-      "The Announcements cards on the home page. Newest first — the page shows them in this order. Anything whose date has passed moves itself into the archive behind the 'View archive' button; nothing needs deleting when an event is over.",
+      "The Announcements cards on the home page. The page sorts them by Sort date, soonest first, so the order you put them in here does not decide what a visitor sees first — an announcement with no Sort date goes last. Anything whose date has passed moves itself into the archive behind the 'View archive' button, most recent at the top; nothing needs deleting when an event is over.",
     usedOn: ["Home page"],
     labelField: "title",
     identifierField: "id",
@@ -119,7 +119,7 @@ export const collections: Collection[] = [
         label: "Sort date",
         type: "text",
         placeholder: "2026-10-01",
-        help: "YYYY-MM-DD, and it must be the real calendar date. The day after it passes, this announcement moves itself into the archive. Leave blank for something with no end date, like a donation drive — that one stays current until you tick Archived.",
+        help: "YYYY-MM-DD, and it must be the real calendar date. It does two things: it puts this card in order on the page (soonest first), and the day after it passes it moves this announcement into the archive. Leave blank for something with no end date, like a donation drive — that one sorts to the end of the list and stays current until you tick Archived.",
       },
       {
         name: "endDate",
