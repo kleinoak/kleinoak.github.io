@@ -2446,3 +2446,42 @@ Read out of the rendered page, not reasoned about:
       to touch this function has nothing to catch them.
 - [ ] The same argument applies to `isArchived` and `upcomingFrom`, which are
       pure, dated, and equally untested.
+
+---
+
+## 20260919 — Two additions to the JV roster
+
+*"In the JV team roster, add these names at the end: Journey Berry, Cindy
+Brashers."* Junior Varsity goes from 15 to 17.
+
+### "At the end" is not something the page can do
+
+`src/data/teams.ts` sorts every roster alphabetically by first name before
+rendering — deliberately, so a parent scanning for their daughter finds her
+where they expect, and so a name appended through `/admin` still lands in the
+right place without the editor having to insert it carefully. The two names
+therefore render **5th (Cindy Brashers) and 10th (Journey Berry)**, not last,
+and no content edit can change that. Moving them to the end would mean changing
+how the list sorts for all four teams.
+
+They were inserted in sorted position in `content/teams.json` rather than
+appended, which is the file's existing convention: the stored order matches the
+rendered order so `/admin` previews what a visitor actually sees.
+
+### Verified
+
+- [x] Both names present in the **prerendered** `out/teams/junior-varsity/index.html`
+      — the no-JavaScript path — at positions 5 and 10 of 17.
+- [x] The page's own "17 players" count is derived from the array length, so
+      nothing needed updating by hand.
+- [x] `validate:content` → 13 files; `next build` → 17 static pages.
+
+### Not verified, and it cannot be
+
+The roster came from the user, and **nothing on the open web can confirm it.**
+The program's old public site is now this site, so the circular-source problem
+recorded in Known Limitations applies to every addition from here on: these two
+names are as good as the person who supplied them, which is the program itself.
+That is the right authority — it is just worth writing down that no check
+happened, because for student names the failure mode is publishing a child who
+did not make the team.
