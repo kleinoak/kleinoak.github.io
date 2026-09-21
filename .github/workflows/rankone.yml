@@ -226,3 +226,94 @@ jobs:
       - name: Forget the identity file
         if: always()
         run: rm -f ~/.ssh/prod_id
+
+  # Publish to staging — codinci.com/kovb/ — on exactly the same trigger.
+  #
+  # This is a sibling of `publish`, not a step after it. Both depend only on
+  # `sync`, so they start together and neither can hold the other up or take it
+  # down with it: a production deploy that fails still leaves staging current,
+  # and a staging deploy that fails cannot stop the live site updating. That
+  # independence is the point of the job, so if a future change ever makes one
+  # `needs:` the other, this comment is what it is breaking.
+  #
+  # WHY STAGING NEEDED THIS AT ALL
+  #
+  # It was hand-deployed and nothing else rebuilt it, so its "last checked"
+  # stamp froze at whatever the data said on the day somebody last ran the
+  # commands — 2026-09-19, while the sync it was reporting on had gone on
+  # running three times a day without missing once. The page was not wrong
+  # about the build it was serving; the build was just old, and a stamp that
+  # reports its own staleness as the feed's is worse than no stamp.
+  #
+  # The fix has to be a rebuild rather than a data copy: `checkedAt` is baked
+  # into the static export, so the only way to move it is to build again. That
+  # also means every merged content change now reaches staging within a few
+  # hours for free, which is the drift the documentation used to warn about.
+  publish-staging:
+    needs: sync
+    if: ${{ !inputs.dryRun }}
+    runs-on: ubuntu-latest
+    # Same reasoning as `publish` above: this key can write to a repository
+    # that serves a live site, and repository collaborators could otherwise
+    # read it out of a workflow on a branch of their own. The environment's
+    # branch policy is what stops that, so the protection lives in the
+    # environment's settings rather than in this file.
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Publish to codinci.com/kovb/
+        env:
+          DEPLOY_IDENTITY: ${{ secrets.STAGING_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_IDENTITY" ]; then
+            echo "STAGING_DEPLOY_KEY is not set — skipping the staging deploy."
+            echo "The sync still committed; staging updates on the next manual deploy."
+            echo "### Staging deploy skipped — STAGING_DEPLOY_KEY is not set" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_IDENTITY" > ~/.ssh/staging_id
+          chmod 600 ~/.ssh/staging_id
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/staging_id -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+
+          # Reused rather than reimplemented, so the tree that reaches staging
+          # is built by exactly the code a person runs locally — including the
+          # base-path and no-analytics assertions, which are the two things
+          # about a sub-path deploy that fail silently.
+          #
+          # pipefail is not on in GitHub's default `bash -e` shell, and without
+          # it a failed deploy reports tee's exit status and goes green. That is
+          # not hypothetical: it is precisely how the first production deploy
+          # managed to report success without publishing anything.
+          set -o pipefail
+          sh scripts/deploy-staging.sh 2>&1 | tee /tmp/staging.log
+
+          # The script's two success lines. "already matches" is a real success
+          # — it means another run got there first — so accept either, and
+          # nothing else.
+          grep -qE '✓ (Pushed staging|Staging already matches)' /tmp/staging.log
+
+          {
+            echo "### Published to staging"
+            echo
+            echo '```'
+            cat /tmp/staging.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Forget the identity file
+        if: always()
+        run: rm -f ~/.ssh/staging_id

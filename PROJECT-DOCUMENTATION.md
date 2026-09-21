@@ -569,7 +569,7 @@ Three repositories, three roles. Only one of them is where work happens; the oth
 | | Repository | Branch | What it is | Serves |
 |---|---|---|---|---|
 | **Source** | [alfredsilvertonai/ko-volleyball-web](https://github.com/alfredsilvertonai/ko-volleyball-web) | `main` | Where all work happens. Full history, all branches, all internal docs. **No GitHub Pages site** — it is not an environment. | nothing |
-| **Staging** | [thecodinci/thecodinci.github.io](https://github.com/thecodinci/thecodinci.github.io/tree/main/kovb) — the `kovb/` folder | `main` | Hand-deployed **built output only**. No source, no CI. A folder inside a larger personal site. | <https://codinci.com/kovb/> |
+| **Staging** | [thecodinci/thecodinci.github.io](https://github.com/thecodinci/thecodinci.github.io/tree/main/kovb) — the `kovb/` folder | `main` | **Built output only**, no source. Rebuilt and pushed by the `publish-staging` job in `rankone.yml`, three times a day; also deployable by hand. A folder inside a larger personal site. | <https://codinci.com/kovb/> |
 | **Production** | [kleinoak/kleinoak.github.io](https://github.com/kleinoak/kleinoak.github.io) | `main` | A mirror of `main` with the internal docs stripped. GitHub Actions builds and deploys it. | <https://kleinoakvolleyball.com> |
 
 Production is on the program's real domain with HTTPS enforced. `kleinoak.github.io` and `www.kleinoakvolleyball.com` both **301 to the apex**, so there is one canonical address. The custom domain lives in the repository's Pages settings.
@@ -592,7 +592,7 @@ gh api repos/kleinoak/kleinoak.github.io/pages -q .source   # {"branch":"main","
 
 **The production tree is stripped of two things, not one.** Every tracked `.md` except `README.md`, and `.github/workflows/rankone.yml`. The second was added on 2026-09-07 after it turned out the mirror had been running the scraper all along — see [Known Limitations](#known-limitations). `deploy-prod.sh` now asserts the result: it re-reads the tree it just wrote and fails if anything on the strip list survived, because the `while` loop that removes them runs in a subshell where a failure cannot stop the script.
 
-**Staging drifts, and nothing stops it.** Production is one command and a CI run; staging is a manual `rsync` with two steps that are easy to miss, and there is no `deploy-staging.sh` — `scripts/` holds only `build-gallery.mjs`, `deploy-prod.sh` and `validate-content.mts`. On 2026-09-05, immediately after a production deploy, staging was still serving the August announcements and 138 gallery photos: roughly three weeks and two releases behind. **Check it before showing it to anyone**, because "staging" implies a freshness it does not have:
+**Staging used to drift, and now something stops it.** For most of this project's life staging was a manual `rsync` with two steps that were easy to miss, and it showed: on 2026-09-05, minutes after a production deploy, it was still serving the August announcements and 138 gallery photos, three weeks and two releases behind. On 2026-09-21 the same failure surfaced differently — the schedule page's "last checked" stamp read 19 September because that was when somebody last deployed, while the sync it reported on had never missed a run. Since then `scripts/deploy-staging.sh` exists and the `publish-staging` job in `rankone.yml` runs it on every sync, so staging is at most a few hours behind `main`. It is still worth a look before showing it to anyone, because the job is the only thing keeping it current and a skipped deploy is silent:
 
 ```bash
 curl -s https://codinci.com/kovb/gallery/ | grep -o '[0-9]* photos' | head -1
@@ -647,7 +647,19 @@ What it does: builds a tree from `main` with every tracked `*.md` except `README
 
 ### Deploying to staging
 
-Staging carries **built output only** — no source ever goes there. It is a sub-path deploy, which is the part that goes wrong if rushed:
+Staging carries **built output only** — no source ever goes there. Normally you do not deploy it at all: the `publish-staging` job in `rankone.yml` rebuilds and pushes it on every Rank One sync. To publish out of band, run the same script CI runs:
+
+```bash
+sh scripts/deploy-staging.sh
+```
+
+It builds with the base path, recreates `.nojekyll`, asserts both of the things below, and commits only `kovb/`. Point `STAGING_REPO_DIR` at a checkout you already have and the commit lands there for inspection instead of in a throwaway clone:
+
+```bash
+STAGING_REPO_DIR=~/Workspace/volunteer/thecodinci.github.io sh scripts/deploy-staging.sh
+```
+
+By hand, if you must — it is a sub-path deploy, which is the part that goes wrong if rushed:
 
 ```bash
 rm -rf out .next
@@ -672,8 +684,8 @@ cd ~/Workspace/volunteer/thecodinci.github.io && git add kovb && git commit && g
 | `SITE_BASE_PATH` / `NEXT_PUBLIC_BASE_PATH` | **unset** — served from the domain root | `/kovb` |
 | `GA_MEASUREMENT_ID` | set as a repository variable | **unset**, deliberately |
 | Analytics | active | none emitted at all |
-| Built by | GitHub Actions | by hand, locally |
-| Rebuilt nightly | yes, 06:00 Central | no — only when someone deploys |
+| Built by | GitHub Actions | GitHub Actions, or by hand |
+| Rebuilt | nightly, 06:00 Central | on every Rank One sync — 04:00, 11:00, 15:00 UTC |
 | Internal `.md` | stripped, `README.md` only | n/a, no source present |
 
 The analytics split is by construction rather than by filter: with no ID the tag is not rendered, so staging cannot pollute production's reports even by accident.
@@ -696,7 +708,7 @@ grep -c 'googletagmanager' out/index.html # 0 on staging, 1 on production
 ### Known fragility
 
 - **The custom domain is configured in Pages settings, not by a `CNAME` file in the tree.** `deploy-prod.sh` force-pushes a tree built from `main`, which has no `CNAME`; if one is ever added to the production repo by the GitHub UI, the next deploy would remove it. It has survived every deploy so far because the setting is what Pages honours for an Actions-built site — but a sudden loss of the custom domain after a deploy would have this as its first suspect.
-- **Staging drifts silently.** Nothing rebuilds it, so it is only as current as the last manual deploy. It is not a preview of `main`; it is a snapshot of whenever someone last ran the commands.
+- **Staging is rebuilt by one job and nothing else.** `publish-staging` in `rankone.yml` is the only thing that refreshes it. It deploys whatever `main` holds at sync time, so staging is a preview of `main` within a few hours — but if that job is skipped for want of `STAGING_DEPLOY_KEY`, or the schedule is disabled, it silently goes back to being a snapshot of the last manual deploy.
 - **Two repositories can accept `/admin` publishes.** An editor publishing from a production build writes to the production repo, and content there would then be overwritten by the next `deploy-prod.sh` run, which builds from `main`. This is the single most likely way to lose content, and it has not been resolved.
 
 ---
@@ -725,7 +737,7 @@ Everything above the gate — `npm ci`, `validate:content`, `next build`, `.noje
 
 The rebuild alone was not enough: between midnight and 06:00 the page still advertised fixtures already played — on 2026-08-17 a tournament that finished on the 16th sat at the top of the list. The date is computed in the program's timezone either way, so a reader in another state sees the schedule relative to Klein Oak's day rather than their own.
 
-Two things to know about it: GitHub **disables scheduled workflows on a public repo after 60 days of inactivity** (it emails first), so an off-season gap may need the schedule re-enabling from the Actions tab; and the hand-deployed staging copy at `codinci.com/kovb/` never runs CI, so its list is only as fresh as its last manual deploy.
+Two things to know about it: GitHub **disables scheduled workflows on a public repo after 60 days of inactivity** (it emails first), so an off-season gap may need the schedule re-enabling from the Actions tab; and the staging copy at `codinci.com/kovb/` is refreshed by the `publish-staging` job on the same schedule, so it lags production by less than a sync interval rather than by weeks.
 
 ---
 
@@ -768,7 +780,7 @@ Unpublished work stays in your browser, so you can close the tab and come back t
 - **Hero banners are code, not content.** The home page rotates between the program hero, the VBIF campaign banner and the Waller ISD champion banner (`HeroCarousel`, `CampaignBanner`, `ChampionBanner`); the slide list lives in `src/app/(site)/page.tsx`, so adding or removing a banner needs a developer. Three design constraints are load-bearing and should survive any change. The **slides are stacked in one grid cell** so the box is always the tallest slide's height — never measured in JavaScript, which is what used to make the page jump on a phone. Inactive slides are **`visibility: hidden` plus `inert`**, not unmounted and not merely faded: hiding them any other way leaves their links focusable, which is the standard carousel accessibility bug. And the **first slide is server-rendered**, so it is what appears on load and the only one that renders without JavaScript. A fourth thing a new slide must respect: every slide reserves `pb-20` as the **control lane** for the dot-and-pause pill and the arrows, which float over the foot of whichever slide is showing. The pill's wrapper is `inset-x-0` — full width, only so the pill sits centred — so it carries `pointer-events-none` with `pointer-events-auto` on the pill itself. Without that it is a transparent strip painted after the arrows, and it swallows every click on them.
 - **A phone letterboxes the two banner slides by roughly 190–230px.** The slides cannot be the same natural height on a narrow screen: the hero stacks a logo, a three-line headline, a paragraph and two buttons, while the banners are a single 16:9 image. Since the box must be one height for the page not to jump, the shorter slides are centred in black. Tightening the hero for phones (a smaller mark, one-line eyebrow, side-by-side buttons) and letting the banners run edge to edge cut the worst gap from 397px to 229px, and 320px-wide devices are still the worst case at 318px. Closing it further means either cropping the artwork — the VBIF lockup and the champion headline both have only ~7% of safe side margin, nowhere near enough — or commissioning portrait-shaped variants for mobile, which is a design task, not a code one.
 - **The VBIF banner has no destination and no real accessible name.** Its alt text is just `"VBIF"`, and the artwork is an image of text, so the wordmark neither scales with the reader's font size nor is available to a screen reader (WCAG 1.4.5). The champion banner is the same kind of artwork handled the other way — its alt text carries the banner's own words and the whole banner links to `/gallery` — which is the pattern to copy if VBIF is ever revisited. Both remain images of text and would be better as real markup over a background.
-- **Two deployment hazards, both documented in [Deployment path](#-deployment-path--engineering-to-prod) and neither fixed.** `kleinoak/kleinoak.github.io` carries a diverged `production` branch that is *not* what Pages serves — `main` is — and the name invites exactly the wrong assumption. And staging has no deploy script, so it drifts silently: on 2026-09-05 it was two releases behind minutes after a production deploy. A `deploy-staging.sh` and deleting that branch are both small, separate changes.
+- **Two deployment hazards, both documented in [Deployment path](#-deployment-path--engineering-to-prod) and neither fixed.** `kleinoak/kleinoak.github.io` carries a diverged `production` branch that is *not* what Pages serves — `main` is — and the name invites exactly the wrong assumption. Staging's half of this is fixed: `scripts/deploy-staging.sh` landed on 2026-09-21 and `publish-staging` runs it on every sync. Deleting the misleading `production` branch remains outstanding.
 - **The dialog behaviour exists twice.** `Modal` was extracted for the announcements section, but `GalleryBrowser` still carries its own focus trap, Escape handler and scroll lock, written before it. They agree today; nothing makes them stay that way. Migrating the lightbox is a contained change that was deliberately not bundled with a content update.
 - **The Middle School Invitational flyer prints the wrong day, and the site does not say so.** The poster reads "MONDAY, OCTOBER 6". October 6 2026 is a **Tuesday**, and both `content/matches.json` and the Rank One feed put the Magnolia home fixture on Tuesday the 6th at exactly the two times the poster prints (JV 4:30, varsity 5:30) — with nothing at all on Monday the 5th. So the date and the times are right and only the weekday is wrong. The card and the dialog carry **"Tuesday, October 6"**, which is the correct claim and is what a reader sees first, but the poster itself is unaltered directly beneath it in the dialog: **a reader who opens the flyer sees both.** Correcting the artwork is the program's to do; the alternative, a line of copy on the card explaining the discrepancy, would mean the website publicly correcting the Booster Club's own flyer, which was judged theirs to decide rather than a developer's. Until one or the other happens the contradiction is visible, and the risk it carries is families arriving on the wrong evening.
 - **The pantry drive's Amazon wish list is still a QR code.** The URL behind it could not be recovered from the poster image, so the site cannot link it; a reader has to open the flyer and scan. (Its *dates* are no longer missing — the program's events list supplied September 21–25, and the announcement now archives itself after the 25th.)
