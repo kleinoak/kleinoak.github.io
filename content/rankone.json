@@ -1,7 +1,7 @@
 {
   "source": "Rank One",
-  "checkedAt": "2026-09-23T18:54:36.633Z",
-  "changedAt": "2026-09-23",
+  "checkedAt": "2026-09-24T08:54:27.229Z",
+  "changedAt": "2026-09-24",
   "levels": {
     "varsity": {
       "label": "Varsity",
@@ -996,12 +996,36 @@
         },
         {
           "date": "2026-09-03",
+          "time": "4:30 PM",
+          "home": false,
+          "opponent": "Klein JV",
+          "venue": "TBA",
+          "address": "TBA 77379 TX",
+          "map": "https://www.google.com/maps/search/?api=1&query=TBA%2077379%20TX",
+          "note": "",
+          "status": "",
+          "result": ""
+        },
+        {
+          "date": "2026-09-03",
+          "time": "4:30 PM",
+          "home": false,
+          "opponent": "Grand Oaks Flex",
+          "venue": "TBA",
+          "address": "TBA 77379 TX",
+          "map": "https://www.google.com/maps/search/?api=1&query=TBA%2077379%20TX",
+          "note": "",
+          "status": "",
+          "result": ""
+        },
+        {
+          "date": "2026-09-03",
           "time": "8:30 PM",
           "home": false,
-          "opponent": "TAV Tournament",
-          "venue": "",
-          "address": "",
-          "map": "",
+          "opponent": "Montgomery",
+          "venue": "TBA",
+          "address": "TBA 77379 TX",
+          "map": "https://www.google.com/maps/search/?api=1&query=TBA%2077379%20TX",
           "note": "",
           "status": "",
           "result": ""
@@ -1014,6 +1038,18 @@
           "venue": "Magnolia HS",
           "address": "14250 FM 1488 77354 TX",
           "map": "https://www.google.com/maps/search/?api=1&query=14250%20FM%201488%2077354%20TX",
+          "note": "",
+          "status": "",
+          "result": ""
+        },
+        {
+          "date": "2026-09-05",
+          "time": "4:30 PM",
+          "home": false,
+          "opponent": "Caney Creek",
+          "venue": "TBA",
+          "address": "TBA 77379 TX",
+          "map": "https://www.google.com/maps/search/?api=1&query=TBA%2077379%20TX",
           "note": "",
           "status": "",
           "result": ""
