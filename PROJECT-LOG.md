@@ -2485,3 +2485,81 @@ names are as good as the person who supplied them, which is the program itself.
 That is the right authority — it is just worth writing down that no check
 happened, because for student names the failure mode is publishing a child who
 did not make the team.
+
+---
+
+## 20261018 — The playoff warm-up game gets its details
+
+*"At new schedule for varsity. Details: Playoff warm-up game at Fulshear, 5pm,
+Monday Oct 26, 2027."*
+
+### Two things in that line disagreed with the repository
+
+**The year.** The request says 2027. **Oct 26 2027 is a Tuesday**; Oct 26 **2026**
+is a Monday. The weekday and the date are only self-consistent in 2026, the
+season this schedule covers runs Aug–Nov 2026, and nobody fixes a playoff
+warm-up a year out. Taken as a typo for 2026 and recorded here rather than
+queried, because the internal evidence is unambiguous.
+
+**"A new schedule" — but one already existed.** `content/matches.json` already
+carried `oct-27-warmup-game`: Tuesday Oct 27 2026, "Warmup Game", location
+**TBD**, varsity time **TBD**, lower levels "Must attend". Location and time are
+exactly the two fields the request supplies.
+
+So this is a placeholder being confirmed, not a second fixture — and it is the
+one judgement call in the change. **Adding a row instead would have published two
+playoff warm-up games**, one of them a TBD ghost, which is actively misleading to
+a family deciding which night to turn up. Updating is also the cheaper mistake:
+a TBD placeholder carries no information, so if the program really does want two,
+restoring it is one line. Flagged at the top of the PR so it can be reversed in a
+word.
+
+The id moved with the date — `oct-27-warmup-game` → `oct-26-warmup-game` —
+because every id in this file encodes its own date. Nothing cross-references
+match ids (checked: the only occurrence in the repository was its own
+definition), so the rename is free.
+
+### Rank One cannot confirm any of it
+
+The feed carries **no playoff fixtures at all** and no mention of Fulshear, on a
+copy checked an hour before this was written. That is expected — playoff rounds
+are curated, and Rank One only publishes a fixture once it exists — but it means
+the usual cross-check was unavailable and **the program is the only source for
+this date, venue and time.**
+
+### Conventions followed rather than invented
+
+- `location: "Fulshear"` — a bare venue name, as Lake Creek, Cy Ranch, Pearland
+  and Garland already are. "Home"/"Away" is only for district play.
+- `varsity: "5:00"` — bare clock, no meridiem, like every other time in the file.
+- Lower levels stay **"Must attend"**, the pattern all seven playoff rows use.
+  That string is also why the row was already badged Confirmed rather than
+  Tentative: `fromMatch` infers tentative only when *every* level reads TBD.
+
+### Verified
+
+- [x] Playoffs table, prerendered: `Oct 26 Monday | Warmup Game | Fulshear |
+      5:00 | Must attend | Must attend | Must attend`.
+- [x] Every level filter driven in a real browser — Varsity shows **5:00**, JV,
+      Flex and Freshman each show **Must attend**, and the row survives all four
+      filters (it is not `"x"`, so nobody's view loses it).
+- [x] It reaches the home page's Upcoming Events as "Oct 26 · Warmup Game ·
+      Confirmed · Fulshear".
+- [x] No "Oct 27" warm-up remains in content or in the built site.
+- [x] `content/matches.json` is still in date order; `validate:content` → 13
+      files; `next build` → 17 static pages.
+
+### A process note worth more than the change itself
+
+This was built on a checkout **82 commits behind origin/main**, which went
+unnoticed until a stale `content/rankone.json` made the sync look dead — it was
+not; the local copy was simply a month old. Two lessons, both cheap:
+
+- **`git fetch` before reasoning about repository state.** `git log origin/main`
+  against an unfetched ref is a confident answer about the past.
+- **`gh` had silently switched to the `bschwarzchild` account**, which 404s this
+  repository and looks exactly like the workflow having been deleted. Checking
+  `gh auth status` first is already recorded in memory; it earned its place again.
+
+All 82 commits were the sync bot and `matches.json` was untouched upstream, so
+the edit rebased cleanly — but that was luck, not method.

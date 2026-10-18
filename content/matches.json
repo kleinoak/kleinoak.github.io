@@ -511,15 +511,15 @@
     }
   },
   {
-    "id": "oct-27-warmup-game",
-    "startDate": "2026-10-27",
+    "id": "oct-26-warmup-game",
+    "startDate": "2026-10-26",
     "section": "playoffs",
-    "day": "Tuesday",
-    "date": "Oct 27",
+    "day": "Monday",
+    "date": "Oct 26",
     "opponent": "Warmup Game",
-    "location": "TBD",
+    "location": "Fulshear",
     "times": {
-      "varsity": "TBD",
+      "varsity": "5:00",
       "jv": "Must attend",
       "flex": "Must attend",
       "freshmen": "Must attend"
