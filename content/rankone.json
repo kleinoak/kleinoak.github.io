@@ -1,7 +1,7 @@
 {
   "source": "Rank One",
-  "checkedAt": "2026-10-26T09:32:55.460Z",
-  "changedAt": "2026-10-22",
+  "checkedAt": "2026-10-26T20:20:45.332Z",
+  "changedAt": "2026-10-26",
   "levels": {
     "varsity": {
       "label": "Varsity",
@@ -594,7 +594,7 @@
           "map": "https://www.google.com/maps/search/?api=1&query=20811%20Ella%20Blvd.%2077388%20TX",
           "note": "",
           "status": "",
-          "result": ""
+          "result": "L 2–3"
         },
         {
           "date": "2026-10-26",
@@ -913,7 +913,7 @@
           "map": "https://www.google.com/maps/search/?api=1&query=20811%20Ella%20Blvd.%2077388%20TX",
           "note": "",
           "status": "",
-          "result": ""
+          "result": "W 2–1"
         }
       ]
     },
